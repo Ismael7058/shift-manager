@@ -37,6 +37,11 @@ namespace ShiftManagerApi.Data
       {
         // Configura la clave primaria compuesta para la tabla de unión UserRole
         entity.HasKey(e => new { e.UserId, e.RoleId });
+
+        // Mapea explícitamente la relación para usar UserId como FK y evitar UserAuthUserId
+        entity.HasOne(ur => ur.UserAuth)
+              .WithMany()
+              .HasForeignKey(ur => ur.UserId);
       });
     }
   }
