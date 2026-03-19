@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ShiftMangerApi.Data;
+using ShiftManagerApi.Data;
+using ShiftManagerApi.Interfaces;
+using ShiftManagerApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
