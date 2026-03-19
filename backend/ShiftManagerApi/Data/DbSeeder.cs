@@ -1,6 +1,7 @@
-using ShiftMangerApi.Entity;
+using ShiftManagerApi.Data;
+using ShiftManagerApi.Entity;
 
-namespace ShiftMangerApi.Data
+namespace ShiftManagerApi.Data
 {
     public static class DbSeeder
     {

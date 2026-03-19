@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ShiftMangerApi.Entity;
+using ShiftManagerApi.Entity;
 
-namespace ShiftMangerApi.Data
+namespace ShiftManagerApi.Data
 {
   public class ShiftManagerContext : DbContext
   {

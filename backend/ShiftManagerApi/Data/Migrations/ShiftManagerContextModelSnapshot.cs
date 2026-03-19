@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using ShiftMangerApi.Data;
+using ShiftManagerApi.Data;
 
 #nullable disable
 
@@ -22,7 +22,7 @@ namespace ShiftManagerApi.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.Role", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.Role", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,7 +45,7 @@ namespace ShiftManagerApi.Data.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserAuth", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserAuth", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -76,7 +76,7 @@ namespace ShiftManagerApi.Data.Migrations
                     b.ToTable("UserAuths");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserProfile", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserProfile", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -115,7 +115,7 @@ namespace ShiftManagerApi.Data.Migrations
                     b.ToTable("UserProfiles");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserRole", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserRole", b =>
                 {
                     b.Property<long>("UserId")
                         .HasColumnType("bigint");
@@ -141,26 +141,26 @@ namespace ShiftManagerApi.Data.Migrations
                     b.ToTable("UserRoles");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserAuth", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserAuth", b =>
                 {
-                    b.HasOne("ShiftMangerApi.Entity.UserProfile", "UserProfile")
+                    b.HasOne("ShiftManagerApi.Entity.UserProfile", "UserProfile")
                         .WithOne("UserAuth")
-                        .HasForeignKey("ShiftMangerApi.Entity.UserAuth", "UserId")
+                        .HasForeignKey("ShiftManagerApi.Entity.UserAuth", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("UserProfile");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserRole", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserRole", b =>
                 {
-                    b.HasOne("ShiftMangerApi.Entity.Role", "Role")
+                    b.HasOne("ShiftManagerApi.Entity.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ShiftMangerApi.Entity.UserAuth", "UserAuth")
+                    b.HasOne("ShiftManagerApi.Entity.UserAuth", "UserAuth")
                         .WithMany()
                         .HasForeignKey("UserAuthUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -171,7 +171,7 @@ namespace ShiftManagerApi.Data.Migrations
                     b.Navigation("UserAuth");
                 });
 
-            modelBuilder.Entity("ShiftMangerApi.Entity.UserProfile", b =>
+            modelBuilder.Entity("ShiftManagerApi.Entity.UserProfile", b =>
                 {
                     b.Navigation("UserAuth")
                         .IsRequired();

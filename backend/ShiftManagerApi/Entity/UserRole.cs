@@ -1,4 +1,4 @@
-namespace ShiftMangerApi.Entity
+namespace ShiftManagerApi.Entity
 {
   public class UserRole
   {
