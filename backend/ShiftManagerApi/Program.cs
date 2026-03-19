@@ -19,6 +19,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ShiftManagerContext>();
     dbContext.Database.Migrate();
+    DbSeeder.Seed(dbContext);
 }
 
 // Configure the HTTP request pipeline.
