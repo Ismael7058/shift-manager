@@ -129,14 +129,9 @@ namespace ShiftManagerApi.Data.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<long>("UserAuthUserId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserAuthUserId");
 
                     b.ToTable("UserRoles");
                 });
@@ -162,7 +157,7 @@ namespace ShiftManagerApi.Data.Migrations
 
                     b.HasOne("ShiftManagerApi.Entity.UserAuth", "UserAuth")
                         .WithMany()
-                        .HasForeignKey("UserAuthUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

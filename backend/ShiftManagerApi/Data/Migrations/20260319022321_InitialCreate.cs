@@ -77,8 +77,7 @@ namespace ShiftManagerApi.Data.Migrations
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     RoleId = table.Column<long>(type: "bigint", nullable: false),
                     AssignedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UserAuthUserId = table.Column<long>(type: "bigint", nullable: false)
+                    ExpiresAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -90,8 +89,8 @@ namespace ShiftManagerApi.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserRoles_UserAuths_UserAuthUserId",
-                        column: x => x.UserAuthUserId,
+                        name: "FK_UserRoles_UserAuths_UserId",
+                        column: x => x.UserId,
                         principalTable: "UserAuths",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
@@ -101,11 +100,6 @@ namespace ShiftManagerApi.Data.Migrations
                 name: "IX_UserRoles_RoleId",
                 table: "UserRoles",
                 column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UserRoles_UserAuthUserId",
-                table: "UserRoles",
-                column: "UserAuthUserId");
         }
 
         /// <inheritdoc />
