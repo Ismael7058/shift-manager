@@ -3,7 +3,10 @@ using ShiftManagerApi.Interfaces;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Entity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ShiftManagerApi.Services
 {
@@ -33,7 +36,7 @@ namespace ShiftManagerApi.Services
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Cliente");
         if (role == null)
         {
-            throw new InvalidOperationException("El rol 'Cliente' no existe en la base de datos.");
+          throw new InvalidOperationException("El rol 'Cliente' no existe en la base de datos.");
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -102,6 +105,79 @@ namespace ShiftManagerApi.Services
       });
 
       return userDto;
+    }
+
+    public async Task<AuthTokenDto> Login(LoginDto loginDto)
+    {
+      var userAuth = await _context.UserAuths
+          .Include(u => u.UserProfile)
+          .FirstOrDefaultAsync(u => u.Email == loginDto.Identifier || u.Username == loginDto.Identifier);
+
+      if (userAuth == null || !BC.EnhancedVerify(loginDto.Password, userAuth.PasswordHash))
+        throw new UnauthorizedAccessException("Credenciales inválidas");
+
+      var userProfile = userAuth.UserProfile;
+      if (userProfile == null){
+        userProfile = await _context.UserProfiles.FindAsync(userAuth.UserId);
+      }
+
+      var roles = await _context.UserRoles
+          .Where(ur => ur.UserId == userAuth.UserId)
+          .Include(ur => ur.Role)
+          .Select(ur => ur.Role.Name)
+          .ToListAsync();
+
+      var claims = new List<Claim>
+      {
+          new Claim(JwtRegisteredClaimNames.Sub, userAuth.Username),
+          new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+          new Claim(ClaimTypes.NameIdentifier, userAuth.UserId.ToString()),
+          new Claim(ClaimTypes.Email, userAuth.Email)
+      };
+
+      if (userProfile != null)
+      {
+        claims.Add(new Claim(ClaimTypes.GivenName, userProfile.FirstName));
+        claims.Add(new Claim(ClaimTypes.Surname, userProfile.LastName));
+      }
+
+      claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+      var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+      var token = new JwtSecurityToken(
+          issuer: _configuration["Jwt:Issuer"],
+          audience: _configuration["Jwt:Audience"],
+          claims: claims,
+          expires: DateTime.UtcNow.AddMinutes(15),
+          signingCredentials: creds
+      );
+
+      var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+      var userDto = new UserDto
+      {
+        Username = userAuth.Username,
+        Email = userAuth.Email
+      };
+
+      if (userProfile != null)
+      {
+        userDto.Id = userProfile.Id;
+        userDto.FirstName = userProfile.FirstName;
+        userDto.LastName = userProfile.LastName;
+        userDto.DateOfBirth = userProfile.DateOfBirth;
+        userDto.Gender = userProfile.Gender;
+        userDto.PhoneNumber = userProfile.PhoneNumber;
+      }
+
+      return new AuthTokenDto
+      {
+        AccessToken = accessToken,
+        Expiration = DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(15)),
+        User = userDto
+      };
     }
 
   }
