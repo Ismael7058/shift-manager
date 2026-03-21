@@ -1,5 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Interfaces;
 
@@ -9,12 +10,10 @@ namespace ShiftManagerApi.Controllers
   [Route("auth")]
   public class AuthController : ControllerBase
   {
-    private readonly ShiftManagerContext _context;
     private readonly IAuthService _authService;
 
-    public AuthController(ShiftManagerContext context, IAuthService authService)
+    public AuthController(IAuthService authService)
     {
-      _context = context;
       _authService = authService;
     }
 
@@ -32,5 +31,28 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [HttpPost("login")]
+    public async Task<IActionResult> Login(LoginDto loginDto)
+    {
+      try
+      {
+        var tokenResponse = await _authService.Login(loginDto);
+
+        var cookieOptions = new CookieOptions
+        {
+          HttpOnly = true,
+          Secure = true,
+          SameSite = SameSiteMode.Strict,
+          Expires = DateTime.UtcNow.AddMinutes(15)
+        };
+        Response.Cookies.Append("accessToken", tokenResponse.AccessToken, cookieOptions);
+
+        return Ok(tokenResponse.User);
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
+      }
+    }
   }
 }
