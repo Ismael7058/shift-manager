@@ -40,8 +40,13 @@ namespace ShiftManagerApi.Data
 
         // Mapea explícitamente la relación para usar UserId como FK y evitar UserAuthUserId
         entity.HasOne(ur => ur.UserAuth)
-              .WithMany()
+              .WithMany(ua => ua.UserRole)
               .HasForeignKey(ur => ur.UserId);
+
+        // Configuración explícita de la relación con Role
+        entity.HasOne(ur => ur.Role)
+              .WithMany()
+              .HasForeignKey(ur => ur.RoleId);
       });
     }
   }

@@ -11,6 +11,7 @@ namespace ShiftManagerApi.Entity
     public DateTime? UpdatedAt { get; set; }
 
     public UserProfile UserProfile { get; set; } = null!;
+    public List<UserRole> UserRole { get; set; } = null!;
   }
 
 }
