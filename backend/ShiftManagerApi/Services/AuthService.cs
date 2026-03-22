@@ -91,7 +91,7 @@ namespace ShiftManagerApi.Services
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             DateOfBirth = profile.DateOfBirth,
-            Gender = profile.Gender,
+            Gender = profile.Gender.ToString(),
             PhoneNumber = profile.PhoneNumber,
             Username = userAuth.Username,
             Email = userAuth.Email
@@ -168,7 +168,7 @@ namespace ShiftManagerApi.Services
         userDto.FirstName = userProfile.FirstName;
         userDto.LastName = userProfile.LastName;
         userDto.DateOfBirth = userProfile.DateOfBirth;
-        userDto.Gender = userProfile.Gender;
+        userDto.Gender = userProfile.Gender.ToString();
         userDto.PhoneNumber = userProfile.PhoneNumber;
       }
 
