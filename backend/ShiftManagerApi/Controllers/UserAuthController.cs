@@ -24,5 +24,21 @@ namespace ShiftManagerApi.Controllers
       var response = await _userAuthService.GetAll(userFilterDto);
       return Ok(response);
     }
+
+    [HttpPost]
+    public async Task<ActionResult<UserDto>> Post(CreateUserDto createUserDto)
+    {
+      try
+      {
+        var userDto = await _userAuthService.CreateUser(createUserDto);
+        return Ok(userDto);
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+
+      
+    }
   }
 }
