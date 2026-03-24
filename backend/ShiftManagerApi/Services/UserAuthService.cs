@@ -209,5 +209,14 @@ namespace ShiftManagerApi.Services
       auth.Username = editUsernameDto.Username;
       await _context.SaveChangesAsync();
     }
+
+    public async Task EditPassword(long id, EditPasswordDto editPasswordDto)
+    {
+      var auth = await _context.UserAuths.FirstOrDefaultAsync(a => a.UserId == id);
+      if (auth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+
+      auth.PasswordHash = BC.EnhancedHashPassword(editPasswordDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
+      await _context.SaveChangesAsync();
+    }
   }
 }

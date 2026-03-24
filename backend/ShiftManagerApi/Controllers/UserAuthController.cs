@@ -80,5 +80,19 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
+    
+    [HttpPatch("{id}/password")]
+    public async Task<ActionResult> EditPassword(long id, EditPasswordDto editPasswordDto)
+    {
+      try
+      {
+        await _userAuthService.EditPassword(id, editPasswordDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
   }
 }
