@@ -37,8 +37,20 @@ namespace ShiftManagerApi.Controllers
       {
         return Conflict(new { message = ex.Message });
       }
+    }
 
-      
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Put(long id, UpdateUserDto updateUserDto)
+    {
+      try
+      {
+        await _userAuthService.UpdateUser(id, updateUserDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
     }
   }
 }
