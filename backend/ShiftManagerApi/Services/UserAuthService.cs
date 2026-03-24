@@ -168,5 +168,20 @@ namespace ShiftManagerApi.Services
       });
       return userDto;
     }
+
+    public async Task UpdateUser(long id, UpdateUserDto updateUserDto)
+    {
+      var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.Id == id);
+
+      if (profile == null) throw new UnauthorizedAccessException("Usuario no encontrados");
+
+      profile.FirstName = updateUserDto.FirstName;
+      profile.LastName = updateUserDto.LastName;
+      profile.DateOfBirth = updateUserDto.DateOfBirth;
+      profile.Gender = updateUserDto.Gender;
+      profile.PhoneNumber = updateUserDto.PhoneNumber;
+
+      await _context.SaveChangesAsync();
+    }
   }
 }
