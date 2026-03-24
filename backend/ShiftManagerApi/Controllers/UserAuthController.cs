@@ -66,5 +66,19 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
+
+    [HttpPatch("{id}/username")]
+    public async Task<ActionResult> EditUsername(long id, EditUsernameDto editUsernameDto)
+    {
+      try
+      {
+        await _userAuthService.EditUsername(id, editUsernameDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
   }
 }

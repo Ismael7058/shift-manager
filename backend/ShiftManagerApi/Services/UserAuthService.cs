@@ -196,5 +196,18 @@ namespace ShiftManagerApi.Services
       auth.Email = editEmailDto.Email;
       await _context.SaveChangesAsync();
     }
+
+    public async Task EditUsername(long id, EditUsernameDto editUsernameDto)
+    {
+      var exist = await _context.UserAuths.FirstOrDefaultAsync(u => u.Username == editUsernameDto.Username);
+      if (exist != null) throw new InvalidOperationException("El username ya esta registrado");
+
+      var auth = await _context.UserAuths.FirstOrDefaultAsync(a => a.UserId == id);
+      if (auth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+
+
+      auth.Username = editUsernameDto.Username;
+      await _context.SaveChangesAsync();
+    }
   }
 }
