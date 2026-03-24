@@ -52,5 +52,19 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
+
+    [HttpPatch("{id}/email")]
+    public async Task<ActionResult> EditEmail(long id, EditEmailDto editEmailDto)
+    {
+      try
+      {
+        await _userAuthService.EditEmail(id, editEmailDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
   }
 }
