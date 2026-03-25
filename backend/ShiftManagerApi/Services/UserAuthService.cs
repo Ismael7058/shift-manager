@@ -234,7 +234,7 @@ namespace ShiftManagerApi.Services
 
       if (user == null) throw new KeyNotFoundException("Usuario no encontrado");
 
-      return new UserDto
+      var userDto = new UserDto
       {
         Id = user.UserId,
         FirstName = user.UserProfile.FirstName,
@@ -243,9 +243,12 @@ namespace ShiftManagerApi.Services
         Gender = user.UserProfile.Gender.ToString(),
         PhoneNumber = user.UserProfile.PhoneNumber,
         Username = user.Username,
-        Email = user.Email,
-        Roles = includeRol ? user.UserRole.Select(ur => ur.Role.Name).ToList() : null
+        Email = user.Email
       };
+
+      if (includeRol) userDto.Roles = user.UserRole.Select(ur => ur.Role.Name).ToList();
+
+      return userDto;
     }
 
     public async Task EditPasswordProfile(long id, EditPasswordProfileDto editPasswordProfileDto)
