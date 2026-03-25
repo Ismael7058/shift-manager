@@ -39,15 +39,7 @@ namespace ShiftManagerApi.Controllers
       try
       {
         var tokenResponse = await _authService.Login(loginDto);
-
-        var cookieOptions = new CookieOptions
-        {
-          HttpOnly = true,
-          Secure = true,
-          SameSite = SameSiteMode.Strict,
-          Expires = DateTime.UtcNow.AddMinutes(15)
-        };
-        Response.Cookies.Append("accessToken", tokenResponse.AccessToken, cookieOptions);
+        _cookieService.SetTokenCookie(tokenResponse.AccessToken);
 
         return Ok(tokenResponse.User);
       }
