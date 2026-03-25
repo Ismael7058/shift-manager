@@ -218,5 +218,34 @@ namespace ShiftManagerApi.Services
       auth.PasswordHash = BC.EnhancedHashPassword(editPasswordDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
       await _context.SaveChangesAsync();
     }
+
+    public async Task<UserDto> GetById(long id, bool includeRol = true)
+    {
+      var query = _context.UserAuths
+        .Include(u => u.UserProfile)
+        .AsQueryable();
+
+      if (includeRol)
+      {
+        query = query.Include(u => u.UserRole).ThenInclude(ur => ur.Role);
+      }
+
+      var user = await query.FirstOrDefaultAsync(u => u.UserId == id);
+
+      if (user == null) throw new KeyNotFoundException("Usuario no encontrado");
+
+      return new UserDto
+      {
+        Id = user.UserId,
+        FirstName = user.UserProfile.FirstName,
+        LastName = user.UserProfile.LastName,
+        DateOfBirth = user.UserProfile.DateOfBirth,
+        Gender = user.UserProfile.Gender.ToString(),
+        PhoneNumber = user.UserProfile.PhoneNumber,
+        Username = user.Username,
+        Email = user.Email,
+        Roles = includeRol ? user.UserRole.Select(ur => ur.Role.Name).ToList() : null
+      };
+    }
   }
 }
