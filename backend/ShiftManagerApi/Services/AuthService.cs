@@ -14,11 +14,13 @@ namespace ShiftManagerApi.Services
   {
     private readonly ShiftManagerContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ITokenService _tokenService;
 
-    public AuthService(ShiftManagerContext context, IConfiguration configuration)
+    public AuthService(ShiftManagerContext context, IConfiguration configuration, ITokenService tokenService)
     {
       _context = context;
       _configuration = configuration;
+      _tokenService = tokenService;
     }
 
     public async Task<UserDto> Register(RegisterDto registerDto)
@@ -127,34 +129,7 @@ namespace ShiftManagerApi.Services
           .Select(ur => ur.Role.Name)
           .ToListAsync();
 
-      var claims = new List<Claim>
-      {
-          new Claim(JwtRegisteredClaimNames.Sub, userAuth.Username),
-          new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-          new Claim(ClaimTypes.NameIdentifier, userAuth.UserId.ToString()),
-          new Claim(ClaimTypes.Email, userAuth.Email)
-      };
-
-      if (userProfile != null)
-      {
-        claims.Add(new Claim(ClaimTypes.GivenName, userProfile.FirstName));
-        claims.Add(new Claim(ClaimTypes.Surname, userProfile.LastName));
-      }
-
-      claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-      var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-      var token = new JwtSecurityToken(
-          issuer: _configuration["Jwt:Issuer"],
-          audience: _configuration["Jwt:Audience"],
-          claims: claims,
-          expires: DateTime.UtcNow.AddMinutes(15),
-          signingCredentials: creds
-      );
-
-      var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
+      var accessToken = _tokenService.GenerateToken(userAuth, userProfile, roles);
 
       var userDto = new UserDto
       {
