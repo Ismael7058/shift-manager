@@ -39,6 +39,19 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<UserDto>> GetById(long id, bool includeRol = true)
+    {
+      try
+      {
+        return Ok( await _userAuthService.GetById(id, includeRol));
+      }
+      catch (KeyNotFoundException ex)
+      {
+        return NotFound(new { message = ex.Message });
+      }
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult> Put(long id, UpdateUserDto updateUserDto)
     {
