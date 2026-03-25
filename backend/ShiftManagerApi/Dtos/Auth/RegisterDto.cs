@@ -26,8 +26,16 @@ namespace ShiftManagerApi.Dtos
     [Required]
     [EmailAddress]
     public string Email { get; set; } = string.Empty;
-    [Required]
+    [Required(ErrorMessage = "Password es requerido")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "NewPassword debe tener entre 8 y 100 caracteres")]
+    [RegularExpression(
+      @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$",
+      ErrorMessage = "NewPassword debe contener al menos una mayuscula, una minuscula, un numero y un simbolo"
+    )]
     public string Password { get; set; } = string.Empty;
+    [Required(ErrorMessage = "ConfirmPassword es requerido")]
+    [Compare("NewPassword", ErrorMessage = "Las contraseñas no coinciden")]
+    public string ConfirmPassword { get; set; } = null!;
 
   }
 }
