@@ -247,5 +247,17 @@ namespace ShiftManagerApi.Services
         Roles = includeRol ? user.UserRole.Select(ur => ur.Role.Name).ToList() : null
       };
     }
+
+    public async Task EditPasswordProfile(long id, EditPasswordProfileDto editPasswordProfileDto)
+    {
+      var auth = await _context.UserAuths.FirstOrDefaultAsync(a => a.UserId == id);
+      if (auth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+
+      if (auth == null || !BC.EnhancedVerify(editPasswordProfileDto.OldPassword, auth.PasswordHash))
+        throw new UnauthorizedAccessException("La contraseña anterior es invalida");
+
+      auth.PasswordHash = BC.EnhancedHashPassword(editPasswordProfileDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
+      await _context.SaveChangesAsync();
+    }
   }
 }

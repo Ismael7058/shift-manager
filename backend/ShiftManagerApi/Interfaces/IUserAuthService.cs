@@ -11,5 +11,6 @@ namespace ShiftManagerApi.Interfaces
     Task EditEmail(long Id, EditEmailDto editEmailDto);
     Task EditUsername(long Id, EditUsernameDto editUsernameDto);
     Task EditPassword(long Id, EditPasswordDto editPasswordDto);
+    Task EditPasswordProfile(long Id, EditPasswordProfileDto editPasswordProfileDto);
   }
 }
