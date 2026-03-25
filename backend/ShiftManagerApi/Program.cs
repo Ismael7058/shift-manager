@@ -17,6 +17,7 @@ builder.Services.AddSwaggerGen(c =>
   c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shift Manager Api", Version = "v1" });
 });
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAuthService, UserAuthService>();
 
