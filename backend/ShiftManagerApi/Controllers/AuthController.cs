@@ -7,7 +7,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Route("auth")]
+  [Route("")]
   public class AuthController : ControllerBase
   {
     private readonly IAuthService _authService;
@@ -52,6 +52,19 @@ namespace ShiftManagerApi.Controllers
       catch (UnauthorizedAccessException ex)
       {
         return Unauthorized(new { message = ex.Message });
+      }
+    }
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+      try
+      {
+        Response.Cookies.Delete("accessToken");
+        return NoContent();
+      }
+      catch (Exception)
+      {
+        return NoContent();
       }
     }
   }
