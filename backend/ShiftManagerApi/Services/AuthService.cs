@@ -15,12 +15,14 @@ namespace ShiftManagerApi.Services
     private readonly ShiftManagerContext _context;
     private readonly IConfiguration _configuration;
     private readonly ITokenService _tokenService;
+    private readonly ICookieService _cookieService;
 
-    public AuthService(ShiftManagerContext context, IConfiguration configuration, ITokenService tokenService)
+    public AuthService(ShiftManagerContext context, IConfiguration configuration, ITokenService tokenService, ICookieService cookieService)
     {
       _context = context;
       _configuration = configuration;
       _tokenService = tokenService;
+      _cookieService = cookieService;
     }
 
     public async Task<UserDto> Register(RegisterDto registerDto)
@@ -153,6 +155,24 @@ namespace ShiftManagerApi.Services
         Expiration = DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(15)),
         User = userDto
       };
+    }
+
+    public async Task GenerateAndSetTokenCookie(long userId)
+    {
+      var userAuth = await _context.UserAuths
+          .Include(u => u.UserProfile)
+          .FirstOrDefaultAsync(u => u.UserId == userId);
+
+      if (userAuth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
+
+      var roles = await _context.UserRoles
+          .Where(ur => ur.UserId == userId)
+          .Include(ur => ur.Role)
+          .Select(ur => ur.Role.Name)
+          .ToListAsync();
+
+      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles);
+      _cookieService.SetTokenCookie(accessToken);
     }
 
   }

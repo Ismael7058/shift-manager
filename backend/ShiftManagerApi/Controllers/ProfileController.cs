@@ -13,10 +13,14 @@ namespace ShiftManagerApi.Controllers
   {
 
     private readonly IUserAuthService _userAuthService;
+    private readonly IAuthService _authService;
+    private readonly ICookieService _cookieService;
 
-    public ProfileController(IUserAuthService userAuthService)
+    public ProfileController(IUserAuthService userAuthService, IAuthService authService, ICookieService cookieService)
     {
       _userAuthService = userAuthService;
+      _authService = authService;
+      _cookieService = cookieService;
     }
 
     [HttpGet]
@@ -41,7 +45,10 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        await _userAuthService.UpdateUser(GetUserId(), updateUserDto);
+        var userId = GetUserId();
+        await _userAuthService.UpdateUser(userId, updateUserDto);
+        await _authService.GenerateAndSetTokenCookie(userId);
+
         return NoContent();
       }
       catch (InvalidOperationException ex)
@@ -59,7 +66,9 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        await _userAuthService.EditEmail(GetUserId(), editEmailDto);
+        var userId = GetUserId();
+        await _userAuthService.EditEmail(userId, editEmailDto);
+        await _authService.GenerateAndSetTokenCookie(userId);
         return NoContent();
       }
       catch (InvalidOperationException ex)
@@ -77,7 +86,10 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        await _userAuthService.EditUsername(GetUserId(), editUsernameDto);
+        var userId = GetUserId();
+        await _userAuthService.EditUsername(userId, editUsernameDto);
+        await _authService.GenerateAndSetTokenCookie(userId);
+        
         return NoContent();
       }
       catch (InvalidOperationException ex)
@@ -119,5 +131,6 @@ namespace ShiftManagerApi.Controllers
       }
       return userId;
     }
+
   }
 }

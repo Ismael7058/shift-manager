@@ -6,5 +6,6 @@ namespace ShiftManagerApi.Interfaces
     {
         Task<UserDto> Register(RegisterDto registerDto);
         Task<AuthTokenDto> Login(LoginDto loginDto);
+        Task GenerateAndSetTokenCookie(long userId);
     }
 }
