@@ -4,10 +4,7 @@ namespace ShiftManagerApi.Dtos
 {
   public record UserFilterDto
   {
-    [RegularExpression(
-      @"^[A-Za-z\s]+$",
-      ErrorMessage = "Name solo puede contener letras, espacios y sin tildes"
-    )]
+    [RegularExpression(@"^[\p{L}\s]+$", ErrorMessage = "FirstName solo puede contener letras y espacios")]
     public string? Name { get; set; }
     public string? Email { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "Role debe ser mayor a 0")]
