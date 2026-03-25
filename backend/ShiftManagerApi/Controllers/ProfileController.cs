@@ -13,12 +13,10 @@ namespace ShiftManagerApi.Controllers
   {
 
     private readonly IUserAuthService _userAuthService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ProfileController(IUserAuthService userAuthService, IHttpContextAccessor httpContextAccessor)
+    public ProfileController(IUserAuthService userAuthService)
     {
       _userAuthService = userAuthService;
-      _httpContextAccessor = httpContextAccessor;
     }
 
     [HttpGet]
@@ -26,19 +24,15 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var userPrincipal = _httpContextAccessor.HttpContext?.User;
-
-        var userIdClaim = userPrincipal?.Claims.FirstOrDefault(c =>
-            c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-          throw new UnauthorizedAccessException("Usuario no autenticado");
-
-        return Ok( await _userAuthService.GetById(userId, false));
+        return Ok(await _userAuthService.GetById(GetUserId(), false));
       }
       catch (KeyNotFoundException ex)
       {
         return NotFound(new { message = ex.Message });
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
       }
     }
 
@@ -47,20 +41,16 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var userPrincipal = _httpContextAccessor.HttpContext?.User;
-
-        var userIdClaim = userPrincipal?.Claims.FirstOrDefault(c =>
-            c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-          throw new UnauthorizedAccessException("Usuario no autenticado");
-
-        await _userAuthService.UpdateUser(userId, updateUserDto);
+        await _userAuthService.UpdateUser(GetUserId(), updateUserDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)
       {
         return Conflict(new { message = ex.Message });
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
       }
     }
 
@@ -69,20 +59,16 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var userPrincipal = _httpContextAccessor.HttpContext?.User;
-
-        var userIdClaim = userPrincipal?.Claims.FirstOrDefault(c =>
-            c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-          throw new UnauthorizedAccessException("Usuario no autenticado");
-
-        await _userAuthService.EditEmail(userId, editEmailDto);
+        await _userAuthService.EditEmail(GetUserId(), editEmailDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)
       {
         return Conflict(new { message = ex.Message });
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
       }
     }
 
@@ -91,20 +77,16 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var userPrincipal = _httpContextAccessor.HttpContext?.User;
-
-        var userIdClaim = userPrincipal?.Claims.FirstOrDefault(c =>
-            c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-          throw new UnauthorizedAccessException("Usuario no autenticado");
-
-        await _userAuthService.EditUsername(userId, editUsernameDto);
+        await _userAuthService.EditUsername(GetUserId(), editUsernameDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)
       {
         return Conflict(new { message = ex.Message });
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
       }
     }
 
@@ -113,22 +95,29 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var userPrincipal = _httpContextAccessor.HttpContext?.User;
-
-        var userIdClaim = userPrincipal?.Claims.FirstOrDefault(c =>
-            c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-        if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-          throw new UnauthorizedAccessException("Usuario no autenticado");
-
-        await _userAuthService.EditPasswordProfile(userId, editPasswordProfileDto);
+        await _userAuthService.EditPasswordProfile(GetUserId(), editPasswordProfileDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)
       {
         return Conflict(new { message = ex.Message });
       }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
+      }
     }
 
+    private long GetUserId()
+    {
+      var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => 
+          c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
+
+      if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o ID inválido");
+      }
+      return userId;
+    }
   }
 }
