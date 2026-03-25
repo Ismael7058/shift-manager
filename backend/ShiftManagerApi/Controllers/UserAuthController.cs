@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Interfaces;
@@ -5,6 +6,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
+  [Authorize(Policy = "Administrador")]
   [Route("users")]
   public class UserAuthController : ControllerBase
   {
