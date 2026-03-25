@@ -186,7 +186,7 @@ namespace ShiftManagerApi.Services
 
     public async Task EditEmail(long id, EditEmailDto editEmailDto)
     {
-      var exist = await _context.UserAuths.FirstOrDefaultAsync(u => u.Email == editEmailDto.Email);
+      var exist = await _context.UserAuths.FirstOrDefaultAsync(u => u.Email == editEmailDto.Email && u.UserId != id);
       if (exist != null) throw new InvalidOperationException("El email ya esta registrado");
 
       var auth = await _context.UserAuths.FirstOrDefaultAsync(a => a.UserId == id);
@@ -199,7 +199,7 @@ namespace ShiftManagerApi.Services
 
     public async Task EditUsername(long id, EditUsernameDto editUsernameDto)
     {
-      var exist = await _context.UserAuths.FirstOrDefaultAsync(u => u.Username == editUsernameDto.Username);
+      var exist = await _context.UserAuths.FirstOrDefaultAsync(u => u.Username == editUsernameDto.Username && u.UserId != id);
       if (exist != null) throw new InvalidOperationException("El username ya esta registrado");
 
       var auth = await _context.UserAuths.FirstOrDefaultAsync(a => a.UserId == id);
