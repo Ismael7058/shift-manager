@@ -11,10 +11,12 @@ namespace ShiftManagerApi.Controllers
   public class AuthController : ControllerBase
   {
     private readonly IAuthService _authService;
+    private readonly ICookieService _cookieService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ICookieService cookieService)
     {
       _authService = authService;
+      _cookieService = cookieService;
     }
 
     [HttpPost("register")]
@@ -59,7 +61,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        Response.Cookies.Delete("accessToken");
+        _cookieService.DeleteTokenCookie();
         return NoContent();
       }
       catch (Exception)
