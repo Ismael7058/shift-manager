@@ -59,5 +59,22 @@ namespace ShiftManagerApi.Services
       };
     }
 
+    public async Task<ServiceDto> GetByDto(long id)
+    {
+      var service = await _context.Service.FirstOrDefaultAsync(s => s.Id == id);
+
+      if (service == null) throw new KeyNotFoundException("Servicio no encontrado");
+
+      var serviceDto = new ServiceDto
+      {
+          Id = service.Id,
+          Name = service.Name,
+          Description = service.Description,
+          DurationMinutes = service.DurationMinutes,
+          IsActive = service.IsActive
+      };
+      return serviceDto;
+    }
+
   }
 }
