@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
+using ShiftManagerApi.Entity;
 using ShiftManagerApi.Interfaces;
 
 namespace ShiftManagerApi.Services
@@ -74,6 +75,29 @@ namespace ShiftManagerApi.Services
           IsActive = service.IsActive
       };
       return serviceDto;
+    }
+
+    public async Task<ServiceDto> CreateService(CreateServiceDto createServiceDto)
+    {
+      var service = new Service
+      {
+        Name = createServiceDto.Name,
+        Description = createServiceDto.Description,
+        DurationMinutes = createServiceDto.DurationMinutes,
+        IsActive = true
+      };
+
+      _context.Service.Add(service);
+      await _context.SaveChangesAsync();
+
+      return new ServiceDto
+      {
+        Id = service.Id,
+        Name = service.Name,
+        Description = service.Description,
+        DurationMinutes = service.DurationMinutes,
+        IsActive = service.IsActive
+      };
     }
 
   }
