@@ -14,6 +14,7 @@ namespace ShiftManagerApi.Data
     public DbSet<UserAuth> UserAuths { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<UserRole> UserRoles { get; set; } = null!;
+    public DbSet<Service> Service { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
