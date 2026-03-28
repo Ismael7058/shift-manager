@@ -100,5 +100,18 @@ namespace ShiftManagerApi.Services
       };
     }
 
+    public async Task UpdateService(long id, UpdateServiceDto updateServiceDto)
+    {
+      var service = await _context.Service.FirstOrDefaultAsync(p => p.Id == id);
+
+      if (service == null) throw new UnauthorizedAccessException("Servicio no encontrados");
+
+      service.Name = updateServiceDto.Name;
+      service.Description = updateServiceDto.Description;
+      service.DurationMinutes = updateServiceDto.DurationMinutes;
+
+      await _context.SaveChangesAsync();
+    }
+
   }
 }
