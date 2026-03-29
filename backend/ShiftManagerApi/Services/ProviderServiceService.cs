@@ -71,5 +71,28 @@ namespace ShiftManagerApi.Services
         PageSize = filter.PageSize
       };
     }
+
+    public async Task<ProviderServiceDto> GetById(long userId, long serviceId)
+    {
+      var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => 
+        ps.ProviderId == userId 
+        && ps.ServiceId == serviceId
+      );
+
+      if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado");
+
+      var psDto = new ProviderServiceDto
+      {
+        ProviderId = providerService.ProviderId,
+        ServiceId = providerService.ServiceId,
+        Name = providerService.Service.Name,
+        Description = providerService.Service.Description,
+        DurationMinutes = providerService.DurationMinutes,
+        DurationMinutesBase = providerService.Service.DurationMinutes,
+        Price = providerService.Price
+      };
+
+      return psDto;
+    }
   }
 }
