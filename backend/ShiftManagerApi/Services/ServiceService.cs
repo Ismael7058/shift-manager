@@ -60,7 +60,7 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public async Task<ServiceDto> GetByDto(long id)
+    public async Task<ServiceDto> GetById(long id)
     {
       var service = await _context.Service.FirstOrDefaultAsync(s => s.Id == id);
 
