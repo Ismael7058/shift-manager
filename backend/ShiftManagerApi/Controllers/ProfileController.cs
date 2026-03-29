@@ -61,7 +61,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("/email")]
+    [HttpPatch("email")]
     public async Task<ActionResult> EditEmail(EditEmailDto editEmailDto)
     {
       try
@@ -81,7 +81,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("/username")]
+    [HttpPatch("username")]
     public async Task<ActionResult> EditUsername(EditUsernameDto editUsernameDto)
     {
       try
