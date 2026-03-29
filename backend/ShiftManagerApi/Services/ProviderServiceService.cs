@@ -1,0 +1,75 @@
+using Microsoft.EntityFrameworkCore;
+using ShiftManagerApi.Data;
+using ShiftManagerApi.Dtos;
+using ShiftManagerApi.Interfaces;
+
+namespace ShiftManagerApi.Services
+{
+  public class ProviderServiceService : IProviderServiceService
+  {
+    private readonly ShiftManagerContext _context;
+
+    public ProviderServiceService(ShiftManagerContext context)
+    {
+      _context = context;
+    }
+
+    public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long userId, ProviderServiceFilterDto filter)
+    {
+      var query = _context.ProviderService
+        .Include(ms => ms.Service)
+        .Where(ms => ms.ProviderId == userId)
+        .AsNoTracking()
+        .AsQueryable();
+
+      if (!string.IsNullOrWhiteSpace(filter.Name))
+      {
+        query = query.Where(ms => ms.Service.Name.Contains(filter.Name));
+      }
+
+      if (filter.DurationMinutes.HasValue)
+      {
+        query = query.Where(ms => ms.DurationMinutes == filter.DurationMinutes);
+      }
+
+      if (filter.IsActive == 1 || filter.IsActive == 0)
+        query = query.Where(ms => ms.Service.IsActive == (filter.IsActive == 1));
+
+      if (filter.Price.HasValue)
+      {
+        query = query.Where(ms => ms.Price == filter.Price);
+      }
+
+      var totalCount = await query.CountAsync();
+
+      query = filter.SortBy?.ToLower() switch
+      {
+        "name" => filter.IsDescending ? query.OrderByDescending(ms => ms.Service.Name) : query.OrderBy(ms => ms.Service.Name),
+        "price" => filter.IsDescending ? query.OrderByDescending(ms => ms.Price) : query.OrderBy(ms => ms.Price),
+        _ => filter.IsDescending ? query.OrderByDescending(ms => ms.ServiceId) : query.OrderBy(ms => ms.ServiceId)
+      };
+
+      var services = await query
+        .Skip((filter.PageNumber - 1) * filter.PageSize)
+        .Take(filter.PageSize)
+        .Select(ms => new ProviderServiceDto
+        {
+          ProviderId = ms.ProviderId,
+          ServiceId = ms.ServiceId,
+          Name = ms.Service.Name,
+          Description = ms.Service.Description,
+          DurationMinutes = ms.DurationMinutes,
+          DurationMinutesBase = ms.Service.DurationMinutes,
+          Price = ms.Price
+        }).ToListAsync();
+
+      return new PaginatedDto<ProviderServiceDto>
+      {
+        Items = services,
+        TotalCount = totalCount,
+        PageNumber = filter.PageNumber,
+        PageSize = filter.PageSize
+      };
+    }
+  }
+}
