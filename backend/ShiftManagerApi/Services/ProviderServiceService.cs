@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
+using ShiftManagerApi.Entity;
 using ShiftManagerApi.Interfaces;
 
 namespace ShiftManagerApi.Services
@@ -93,6 +94,36 @@ namespace ShiftManagerApi.Services
       };
 
       return psDto;
+    }
+
+    public async Task<ProviderServiceDto> Create(long userId, CreateProviderServiceDto createDto)
+    {
+        var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == createDto.ServiceId);
+
+        if (providerService != null) throw new InvalidOperationException("El proveedor ya tiene registrado este servicio.");
+
+
+        var service = await _context.Service.Where(s => s.Id == createDto.ServiceId).FirstOrDefaultAsync();
+
+        if (service == null) throw new InvalidOperationException("Servicio no disponible.");
+
+        var createPS = new ProviderService
+        {
+          ProviderId = userId,
+          ServiceId = createDto.ServiceId,
+          DurationMinutes = createDto.DurationMinutes,
+          Price = createDto.Price
+        };
+        return new ProviderServiceDto
+        {
+        ProviderId = userId,
+        ServiceId = createPS.ServiceId,
+        Name = service.Name,
+        Description = service.Description,
+        DurationMinutes = createPS.DurationMinutes,
+        DurationMinutesBase = service.DurationMinutes,
+        Price = createPS.Price
+        };
     }
   }
 }
