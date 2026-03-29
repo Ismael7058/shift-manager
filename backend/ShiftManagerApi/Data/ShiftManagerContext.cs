@@ -15,6 +15,7 @@ namespace ShiftManagerApi.Data
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<Service> Service { get; set; } = null!;
+    public DbSet<ProviderService> ProviderService { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,6 +49,20 @@ namespace ShiftManagerApi.Data
         entity.HasOne(ur => ur.Role)
               .WithMany()
               .HasForeignKey(ur => ur.RoleId);
+      });
+
+      modelBuilder.Entity<ProviderService>(entity =>
+      {
+        // Clave primaria compuesta para la tabla ProviderService
+        entity.HasKey(ms => new { ms.ProviderId, ms.ServiceId });
+
+        entity.HasOne(ms => ms.Provider)
+              .WithMany(up => up.ProviderService)
+              .HasForeignKey(ms => ms.ProviderId);
+
+        entity.HasOne(ms => ms.Service)
+              .WithMany(s => s.ProviderService)
+              .HasForeignKey(ms => ms.ServiceId);
       });
     }
   }

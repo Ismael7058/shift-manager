@@ -13,6 +13,7 @@ namespace ShiftManagerApi.Entity
     public DateTime? DeletedAt { get; set; }
 
     public UserAuth UserAuth { get; set; } = null!;
+    public List<ProviderService> ProviderService { get; set; } = new();
   }
 
   public enum GenderType

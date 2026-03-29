@@ -7,5 +7,6 @@ namespace ShiftManagerApi.Entity
     public string? Description { get; set; }
     public int DurationMinutes { get; set; }
     public bool IsActive { get; set; }
+    public List<ProviderService> ProviderService { get; set; } = new();
   }
 }
