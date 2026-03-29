@@ -114,6 +114,10 @@ namespace ShiftManagerApi.Services
           DurationMinutes = createDto.DurationMinutes,
           Price = createDto.Price
         };
+
+        _context.ProviderService.Add(createPS);
+        await _context.SaveChangesAsync();
+
         return new ProviderServiceDto
         {
         ProviderId = userId,
