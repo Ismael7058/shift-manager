@@ -125,5 +125,20 @@ namespace ShiftManagerApi.Services
         Price = createPS.Price
         };
     }
+
+    public async Task Update(long userId, long serviceId, UpdateProviderServiceDto updateDto)
+    {
+      var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
+      if (providerService == null) throw new InvalidOperationException("Servicio del proveedor no encontrado.");
+
+      var service = await _context.Service.Where(s => s.Id == updateDto.ServiceId).FirstOrDefaultAsync();
+      if (service == null) throw new InvalidOperationException("Servicio no disponible.");
+
+      providerService.ServiceId = updateDto.ServiceId;
+      providerService.DurationMinutes = updateDto.DurationMinutes;
+      providerService.Price = updateDto.Price;
+
+      await _context.SaveChangesAsync();
+    }
   }
 }
