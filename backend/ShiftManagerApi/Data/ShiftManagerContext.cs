@@ -16,6 +16,7 @@ namespace ShiftManagerApi.Data
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<Service> Service { get; set; } = null!;
     public DbSet<ProviderService> ProviderService { get; set; } = null!;
+    public DbSet<WorkSchedules> WorkSchedules { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -63,6 +64,14 @@ namespace ShiftManagerApi.Data
         entity.HasOne(ms => ms.Service)
               .WithMany(s => s.ProviderService)
               .HasForeignKey(ms => ms.ServiceId);
+      });
+
+      modelBuilder.Entity<WorkSchedules>(entity =>
+      {
+        // Configura la relación uno a muchos con UserAuth
+        entity.HasOne(d => d.UserAuth)
+              .WithMany(p => p.WorkSchedules)
+              .HasForeignKey(d => d.ProviderId);
       });
     }
   }
