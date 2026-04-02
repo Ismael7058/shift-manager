@@ -25,6 +25,7 @@ builder.Services.AddScoped<ICookieService, CookieService>();
 builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IProviderServiceService, ProviderServiceService>();
 builder.Services.AddScoped<IWorkSchedulesService, WorkSchedulesService>();
+builder.Services.AddScoped<IShiftService, ShiftService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
