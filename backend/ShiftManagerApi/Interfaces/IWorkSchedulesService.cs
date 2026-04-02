@@ -8,6 +8,6 @@ namespace ShiftManagerApi.Interfaces
     Task<WorkSchedulesDto> GetById(long proviederId, long workSchedulesId);
     Task<WorkSchedulesDto> Create(long proviederId, CreateWorkSchedulesDto createDto);
     Task Update(long proviederId, long workSchedulesId, UpdateWorkSchedulesDto updateDto);
-    Task Delete(long proviederId, long workSchedulesId);
+    Task SetIsActive(long proviederId, long workSchedulesId, bool isActive);
   }
 }
