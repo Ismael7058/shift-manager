@@ -60,6 +60,27 @@ namespace ShiftManagerApi.Services
       };
     }
 
+    public async Task<WorkSchedulesDto> GetById(long userId, long workSchedulesId)
+    {
+      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
+        ps.ProviderId == userId
+        && ps.Id == workSchedulesId
+      );
+
+      if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
+
+      var psDto = new WorkSchedulesDto
+      {
+        Id = workSchedules.Id,
+        ProviderId = workSchedules.ProviderId,
+        DayOfWeek = workSchedules.DayOfWeek,
+        StartTime = workSchedules.StartTime,
+        EndTime = workSchedules.EndTime,
+        IsActive = workSchedules.IsActive
+      };
+
+      return psDto;
+    }
 
   }
 }
