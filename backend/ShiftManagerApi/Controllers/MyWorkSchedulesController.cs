@@ -69,11 +69,11 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpPatch("{id}/active")]
-    public async Task<ActionResult> Patch(long id, [FromBody] bool isActive)
+    public async Task<ActionResult> Patch(long id, [FromBody] UpdateStatusDto statusDto)
     {
       try
       {
-        await _workSchedulesService.SetIsActive(GetUserId(), id, isActive);
+        await _workSchedulesService.SetIsActive(GetUserId(), id, statusDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)

@@ -132,7 +132,7 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task SetIsActive(long userId, long workSchedulesId, bool isActive)    {
+    public async Task SetIsActive(long userId, long workSchedulesId, UpdateStatusDto statusDto)    {
       var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
         ps.ProviderId == userId
         && ps.Id == workSchedulesId
@@ -140,7 +140,7 @@ namespace ShiftManagerApi.Services
 
       if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
 
-      workSchedules.IsActive = isActive;
+      workSchedules.IsActive = statusDto.IsActive;
 
       await _context.SaveChangesAsync();
     }
