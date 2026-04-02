@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
+using ShiftManagerApi.Entity;
 using ShiftManagerApi.Interfaces;
 
 namespace ShiftManagerApi.Services
@@ -80,6 +81,39 @@ namespace ShiftManagerApi.Services
       };
 
       return psDto;
+    }
+
+    public async Task<WorkSchedulesDto> Create(long userId, CreateWorkSchedulesDto createDto)
+    {
+      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ws =>
+        ws.ProviderId == userId
+        && ws.DayOfWeek == createDto.DayOfWeek
+        && ws.IsActive == true
+      );
+
+      if (workSchedules != null) throw new InvalidOperationException("El proveedor ya tiene registrado un horario en el mismo dia.");
+
+      var createWK = new WorkSchedules
+      {
+        ProviderId = userId,
+        DayOfWeek = createDto.DayOfWeek,
+        StartTime = createDto.StartTime,
+        EndTime = createDto.EndTime,
+        IsActive = true
+      };
+
+      _context.WorkSchedules.Add(createWK);
+      await _context.SaveChangesAsync();
+
+      return new WorkSchedulesDto
+      {
+        Id = createWK.Id,
+        ProviderId = userId,
+        DayOfWeek = createWK.DayOfWeek,
+        StartTime = createWK.StartTime,
+        EndTime = createWK.EndTime,
+        IsActive = createWK.IsActive
+      };
     }
 
   }
