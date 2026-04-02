@@ -113,13 +113,13 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task IsActive(long id, bool isActive)
+    public async Task IsActive(long id, UpdateStatusDto statusDto)
     {
       var service = await _context.Service.FirstOrDefaultAsync(p => p.Id == id);
 
       if (service == null) throw new UnauthorizedAccessException("Servicio no encontrados");
 
-      service.IsActive = isActive;
+      service.IsActive = statusDto.IsActive;
 
       await _context.SaveChangesAsync();
     }

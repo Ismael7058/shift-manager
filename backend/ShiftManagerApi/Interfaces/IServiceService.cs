@@ -8,7 +8,7 @@ namespace ShiftManagerApi.Interfaces
     Task<ServiceDto> GetById(long id);
     Task<ServiceDto> CreateService(CreateServiceDto createServiceDto);
     Task UpdateService(long id, UpdateServiceDto updateServiceDto);
-    Task IsActive(long id, bool isActive);
+    Task IsActive(long id, UpdateStatusDto statusDto);
 
   }
 }
