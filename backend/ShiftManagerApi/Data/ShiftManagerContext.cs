@@ -17,6 +17,8 @@ namespace ShiftManagerApi.Data
     public DbSet<Service> Service { get; set; } = null!;
     public DbSet<ProviderService> ProviderService { get; set; } = null!;
     public DbSet<WorkSchedules> WorkSchedules { get; set; } = null!;
+    public DbSet<Shift> Shift { get; set; } = null!;
+    public DbSet<ShiftItems> ShiftItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,6 +74,38 @@ namespace ShiftManagerApi.Data
         entity.HasOne(d => d.UserAuth)
               .WithMany(p => p.WorkSchedules)
               .HasForeignKey(d => d.ProviderId);
+      });
+
+      modelBuilder.Entity<Shift>(entity =>
+      {
+        entity.HasOne(s => s.Client) // un Shift pertenece a un UserAuth (Client)
+        .WithMany(c => c.ClientShifts)
+        .HasForeignKey(s => s.ClientId);
+
+        entity.HasOne(s => s.Provider) // un Shift pertenece a un UserAuth (Provider)
+        .WithMany(p => p.ProvidedShifts)
+        .HasForeignKey(s => s.ProviderId);
+
+      });
+
+      modelBuilder.Entity<ShiftItems>(entity =>
+      {
+        entity.Property(si => si.PriceAtMoment)
+              .HasPrecision(12, 2);
+
+        entity.HasOne(si => si.Shift) // un ShiftItems pertenece a un Shift
+        .WithMany(s => s.ShiftItems) // un Shift tiene muchos ShiftItems
+        .HasForeignKey(s => s.ShiftId);
+
+        entity.HasOne(s => s.Service)
+        .WithMany() // Para pensar a futuro, un Service tiene muchos ShiftItems
+        .HasForeignKey(s => s.ServiceId);
+      });
+
+      modelBuilder.Entity<ProviderService>(entity =>
+      {
+        entity.Property(ps => ps.Price)
+              .HasPrecision(12, 2);
       });
     }
   }
