@@ -11,7 +11,7 @@ namespace ShiftManagerApi.Dtos
     public string ClientFullName { get; init; } = string.Empty;
     public DateTime StartAt { get; init; }
     public DateTime EndAt { get; init; }
-    public ShiftStatus Status { get; init; }
+    public string Status { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public List<ShiftItemDto> Items { get; init; } = new();
 
