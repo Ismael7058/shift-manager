@@ -9,10 +9,6 @@ namespace ShiftManagerApi.Dtos
     public long ProviderId { get; init; }
 
     [Required]
-    [Range(1, long.MaxValue, ErrorMessage = "ClientId inválido")]
-    public long ClientId { get; init; }
-
-    [Required]
     public DateTime StartAt { get; init; }
 
     [Required]

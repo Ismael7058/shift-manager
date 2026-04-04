@@ -31,14 +31,14 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task<ShiftDto> Create(CreateShiftDto createDto)
+    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto)
     {
       var strategy = _context.Database.CreateExecutionStrategy();
 
       var shift = await strategy.ExecuteAsync(async () =>
       {
         var cliente = await _context.UserAuths.FirstOrDefaultAsync(us => 
-          us.UserId == createDto.ClientId && 
+          us.UserId == clientId && 
           us.IsActive == true &&
           us.UserRole.Any(u => u.Role.Name == "Cliente")
         );
@@ -90,7 +90,7 @@ namespace ShiftManagerApi.Services
           var newShift = new Shift
           {
             ProviderId = createDto.ProviderId,
-            ClientId = createDto.ClientId,
+            ClientId = clientId,
             StartAt = createDto.StartAt,
             EndAt = endAt,
             Status = ShiftStatus.pending,          
