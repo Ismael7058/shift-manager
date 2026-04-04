@@ -63,10 +63,12 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-  options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
-  options.AddPolicy("Proveedor", policy => policy.RequireRole("Proveedor"));
-  options.AddPolicy("Recepcion", policy => policy.RequireRole("Recepcion"));
-  options.AddPolicy("Cliente", policy => policy.RequireRole("Cliente"));
+  options.AddPolicy("Administrador", policy => policy.RequireClaim("active_role", "Administrador"));
+  options.AddPolicy("Proveedor", policy => policy.RequireClaim("active_role", "Proveedor"));
+  options.AddPolicy("Recepcion", policy => policy.RequireClaim("active_role", "Recepcion"));
+  options.AddPolicy("Cliente", policy => policy.RequireClaim("active_role", "Cliente"));
+  options.AddPolicy("AdminORecepcion", policy => policy.RequireClaim("active_role", "Administrador","Recepcion"));
+  options.AddPolicy("AdminOProveedor", policy => policy.RequireClaim("active_role", "Administrador","Proveedor"));
 });
 
 builder.Services.AddAuthorization();
