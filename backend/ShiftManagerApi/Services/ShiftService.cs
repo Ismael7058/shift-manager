@@ -262,6 +262,9 @@ namespace ShiftManagerApi.Services
       };
     }
 
+    /// <summary>
+    /// Actualiza la información de un turno existente, recalculando horarios y validando disponibilidad
+    /// </summary>
     public async Task Update(long shiftId, UpdateShiftDto updateDto)
     {
       var strategy = _context.Database.CreateExecutionStrategy();
