@@ -125,7 +125,7 @@ namespace ShiftManagerApi.Services
             ClientFullName = $"{clientProfile?.FirstName} {clientProfile?.LastName}",
             StartAt = newShift.StartAt,
             EndAt = newShift.EndAt,
-            Status = newShift.Status,
+            Status = newShift.Status.ToString(),
             CreatedAt = newShift.CreatedAt,
             Items = existServices.Select(es => new ShiftItemDto
             {
@@ -164,7 +164,7 @@ namespace ShiftManagerApi.Services
         ClientFullName = $"{shift.Client.UserProfile.FirstName} {shift.Client.UserProfile.LastName}",
         StartAt = shift.StartAt,
         EndAt = shift.EndAt,
-        Status = shift.Status,
+        Status = shift.Status.ToString(),
         CreatedAt = shift.CreatedAt,
         Items = shift.ShiftItems.Select(si => new ShiftItemDto
         {
@@ -176,14 +176,91 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public Task<PaginatedDto<ShiftDto>> GetClientShifts(long clientId, ShiftFilterDto filter)
+    public async Task<PaginatedDto<ShiftDto>> GetShifts(long? providerId, long? clientId, ShiftFilterDto filter)
     {
-      throw new NotImplementedException();
-    }
+     var query = _context.Shift
+        .Where(s => s.ClientId == providerId)
+        .AsQueryable();
 
-    public Task<PaginatedDto<ShiftDto>> GetProviderShifts(long providerId, ShiftFilterDto filter)
-    {
-      throw new NotImplementedException();
+      if (providerId.HasValue)
+      {
+        query = query.Where(ms => ms.ClientId == providerId);
+      }
+      if (clientId.HasValue)
+      {
+        query = query.Where(ms => ms.ClientId == clientId);
+      }
+      if (filter.ServiceId.HasValue)
+      {
+        query = query.Where(ms => ms.ShiftItems.Any(si => si.ServiceId == filter.ServiceId));
+      }
+      if (filter.DateFrom.HasValue)
+      {
+        query = query.Where(ms => ms.StartAt >= filter.DateFrom);
+      }
+      if (filter.DateTo.HasValue)
+      {
+        query = query.Where(ms => ms.StartAt <= filter.DateTo);
+      }
+      if (filter.MinPrice.HasValue)
+      {
+        query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) >= filter.MinPrice);
+      }
+      if (filter.MaxPrice.HasValue)
+      {
+        query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) <= filter.MaxPrice);
+      }
+      if (filter.Statuses != null && filter.Statuses.Any())
+      {
+        query = query.Where(ms => filter.Statuses.Contains(ms.Status));
+      }
+
+      var totalCount = await query.CountAsync();
+
+      var orderedQuery = filter.SortBy?.ToLower() switch
+      {
+        "start_at" => filter.IsDescending ? query.OrderByDescending(ms => ms.StartAt) : query.OrderBy(ms => ms.StartAt),
+        "end_at" => filter.IsDescending ? query.OrderByDescending(ms => ms.EndAt) : query.OrderBy(ms => ms.EndAt),
+        "price" => filter.IsDescending ? query.OrderByDescending(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment)) : query.OrderBy(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment)),
+        "provider" => filter.IsDescending ? query.OrderByDescending(ms => ms.ProviderId) : query.OrderBy(ms => ms.ProviderId),
+        _ => filter.IsDescending ? query.OrderByDescending(ms => ms.Id) : query.OrderBy(ms => ms.Id)
+      };
+
+      var shifts = await orderedQuery
+        .Skip((filter.PageNumber - 1) * filter.PageSize)
+        .Take(filter.PageSize)
+        .AsNoTracking()
+        .Select(s => new ShiftDto
+        {
+          Id = s.Id,
+          ProviderId = s.ProviderId,
+          ProviderFullName = $"{s.Provider.UserProfile.FirstName} {s.Provider.UserProfile.LastName}",
+          ClientId = s.ClientId,
+          ClientFullName = $"{s.Client.UserProfile.FirstName} {s.Client.UserProfile.LastName}",
+          StartAt = s.StartAt,
+          EndAt = s.EndAt,
+          Status = s.Status.ToString(),
+          CreatedAt = s.CreatedAt,
+          Items = s.ShiftItems.Select(si => new ShiftItemDto
+          {
+            Id = si.Id,
+            ShiftId = si.ShiftId,
+            ServiceId = si.ServiceId,
+            NameService = si.Service.Name,
+            DurationMinutes = si.Service.DurationMinutes,
+            PriceAtMoment = si.PriceAtMoment
+          }).ToList()
+        }
+        ).ToListAsync();
+
+
+      return new PaginatedDto<ShiftDto>
+      {
+        Items = shifts,
+        TotalCount = totalCount,
+        PageNumber = filter.PageNumber,
+        PageSize = filter.PageSize
+      };
     }
 
     public Task Update(long shiftId, UpdateShiftDto updateDto)
