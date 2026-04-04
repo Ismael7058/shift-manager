@@ -262,9 +262,87 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public Task Update(long shiftId, UpdateShiftDto updateDto)
+    public async Task Update(long shiftId, UpdateShiftDto updateDto)
     {
-      throw new NotImplementedException();
+      var strategy = _context.Database.CreateExecutionStrategy();
+
+      await strategy.ExecuteAsync(async () =>
+      {
+        var shift = await _context.Shift.Include(s => s.ShiftItems).FirstOrDefaultAsync(s => s.Id == shiftId);
+        if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
+
+        if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed)
+        {
+          throw new InvalidOperationException("El turno no puede ser modificado porque ya se encuentra en un estado final.");
+        }
+
+        var providerId = updateDto.ProviderId ?? shift.ProviderId;
+
+        var serviceIds = updateDto.Items.Select(i => i.ServiceId).ToList();
+        var existServices = await _context.ProviderService
+          .Include(ps => ps.Service)
+          .Where(ps => ps.ProviderId == providerId && serviceIds.Contains(ps.ServiceId) && ps.Service.IsActive == true)
+          .ToListAsync();
+
+        if (existServices.Count != serviceIds.Count) throw new InvalidOperationException("Uno o más servicios no están disponibles para este proveedor.");
+
+        int totalDuration = existServices.Sum(item => item.DurationMinutes);
+        var endAt = updateDto.StartAt.AddMinutes(totalDuration);
+
+        var horarios = await _context.WorkSchedules.FirstOrDefaultAsync(ws => 
+          ws.ProviderId == providerId 
+          && ws.IsActive == true 
+          && ws.DayOfWeek == (int)updateDto.StartAt.DayOfWeek
+        );
+
+        if (horarios == null) throw new InvalidOperationException("El proveedor no trabaja este día.");
+
+        var startShiftTime = TimeOnly.FromDateTime(updateDto.StartAt);
+        var endShiftTime = TimeOnly.FromDateTime(endAt);
+
+        if (startShiftTime < horarios.StartTime || endShiftTime > horarios.EndTime)
+          throw new InvalidOperationException("El horario solicitado está fuera de la jornada laboral del proveedor.");
+
+        // Validar Solapamiento excluyendo el turno
+        var isOverlapping = await _context.Shift.AnyAsync(s => 
+          s.Id != shiftId &&
+          s.ProviderId == providerId &&
+          s.Status != ShiftStatus.canceled &&
+          s.StartAt < endAt && s.EndAt > updateDto.StartAt
+        );
+
+        if (isOverlapping) throw new InvalidOperationException("El proveedor ya tiene un turno asignado en este horario.");
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+          shift.ProviderId = providerId;
+          shift.StartAt = updateDto.StartAt;
+          shift.EndAt = endAt;
+
+          _context.ShiftItems.RemoveRange(shift.ShiftItems);
+
+          foreach (var item in existServices)
+          {
+            _context.ShiftItems.Add(
+              new ShiftItems
+              {
+                ShiftId = shiftId,
+                ServiceId = item.ServiceId,
+                PriceAtMoment = item.Price
+              }
+            );
+          };
+
+          await _context.SaveChangesAsync();
+          await transaction.CommitAsync();
+        }
+        catch
+        {
+          await transaction.RollbackAsync();
+          throw;
+        }
+      });
     }
   }
 }
