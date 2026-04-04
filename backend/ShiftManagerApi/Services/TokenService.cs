@@ -7,45 +7,43 @@ using ShiftManagerApi.Interfaces;
 
 namespace ShiftManagerApi.Services
 {
-    public class TokenService : ITokenService
+  public class TokenService : ITokenService
+  {
+    private readonly IConfiguration _configuration;
+
+    public TokenService(IConfiguration configuration)
     {
-        private readonly IConfiguration _configuration;
-
-        public TokenService(IConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
-
-        public string GenerateToken(UserAuth userAuth, UserProfile? userProfile, List<string> roles)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, userAuth.Username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, userAuth.UserId.ToString()),
-                new Claim(ClaimTypes.Email, userAuth.Email)
-            };
-
-            if (userProfile != null)
-            {
-                claims.Add(new Claim(ClaimTypes.GivenName, userProfile.FirstName));
-                claims.Add(new Claim(ClaimTypes.Surname, userProfile.LastName));
-            }
-
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+      _configuration = configuration;
     }
+
+    public string GenerateToken(UserAuth userAuth, UserProfile userProfile, List<string> roles, string activeRole)
+    {
+      var claims = new List<Claim>
+      {
+        new(JwtRegisteredClaimNames.Sub, userAuth.UserId.ToString()),
+        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+
+        new(ClaimTypes.NameIdentifier, userAuth.UserId.ToString()),
+        new(ClaimTypes.Name, userAuth.Username),
+        new(ClaimTypes.Email, userAuth.Email),
+        new Claim(ClaimTypes.GivenName, userProfile.FirstName),
+        new Claim(ClaimTypes.Surname, userProfile.LastName),
+
+        new Claim("active_role", activeRole)
+      };
+      claims.AddRange(roles.Distinct().Select(role => new Claim(ClaimTypes.Role, role)));
+
+      var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+      var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+      var token = new JwtSecurityToken(
+          issuer: _configuration["Jwt:Issuer"],
+          audience: _configuration["Jwt:Audience"],
+          claims: claims,
+          expires: DateTime.UtcNow.AddMinutes(15),
+          signingCredentials: creds
+      );
+      return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+  }
 }
