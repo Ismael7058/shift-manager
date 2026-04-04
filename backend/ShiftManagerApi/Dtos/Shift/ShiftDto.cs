@@ -1,5 +1,3 @@
-using ShiftManagerApi.Entity;
-
 namespace ShiftManagerApi.Dtos
 {
   public record ShiftDto

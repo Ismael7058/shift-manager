@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using ShiftManagerApi.Entity;
-
 namespace ShiftManagerApi.Dtos
 {
   public record UserDto
