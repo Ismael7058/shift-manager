@@ -179,7 +179,6 @@ namespace ShiftManagerApi.Services
     public async Task<PaginatedDto<ShiftDto>> GetShifts(long? providerId, long? clientId, ShiftFilterDto filter)
     {
      var query = _context.Shift
-        .Where(s => s.ClientId == providerId)
         .AsQueryable();
 
       if (providerId.HasValue)
