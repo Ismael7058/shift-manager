@@ -6,7 +6,6 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize(Policy = "Administrador")]
   [Route("services")]
   public class ServiceController : ControllerBase
   {
@@ -16,6 +15,7 @@ namespace ShiftManagerApi.Controllers
       _serviceService = serviceService;
     }
 
+    [Authorize(Policy = "AdminOProveedor")]
     [HttpGet]
     public async Task<ActionResult<PaginatedDto<ServiceDto>>> GetAll([FromQuery] ServiceFilterDto serviceFilterDto)
     {
@@ -25,6 +25,7 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
+    [Authorize(Policy = "Administrador")]
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceDto>> GetById(long id)
     {
@@ -38,6 +39,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [Authorize(Policy = "Administrador")]
     [HttpPost]
     public async Task<ActionResult<ServiceDto>> Post(CreateServiceDto createServiceDto)
     {
@@ -52,6 +54,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [Authorize(Policy = "Administrador")]
     [HttpPut("{id}")]
     public async Task<ActionResult> Put(long id, UpdateServiceDto updateServiceDto)
     {
@@ -66,6 +69,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [Authorize(Policy = "Administrador")]
     [HttpPatch("{id}")]
     public async Task<ActionResult> Patch(long id, [FromBody] UpdateStatusDto statusDto)
     {
