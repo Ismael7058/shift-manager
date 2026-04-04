@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShiftManagerApi.Dtos;
@@ -80,18 +79,6 @@ namespace ShiftManagerApi.Controllers
       {
         return Conflict(new { message = ex.Message });
       }
-    }
-
-    private long GetUserId()
-    {
-      var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => 
-          c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
-
-      if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
-      {
-        throw new UnauthorizedAccessException("Usuario no autenticado o ID inválido");
-      }
-      return userId;
     }
   }
 }
