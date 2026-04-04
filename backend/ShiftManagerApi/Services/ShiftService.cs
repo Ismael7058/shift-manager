@@ -145,13 +145,20 @@ namespace ShiftManagerApi.Services
       return shift;
     }
 
-    public async Task<ShiftDto> GetById(long shiftId)
+    public async Task<ShiftDto> GetById(long? providerId, long? clientId, long shiftId)
     {
-      var shift = await _context.Shift
-          .Include(s => s.Client).ThenInclude(c => c.UserProfile)
-          .Include(s => s.Provider).ThenInclude(p => p.UserProfile)
-          .Include(s => s.ShiftItems).ThenInclude(si => si.Service)
-          .FirstOrDefaultAsync(s => s.Id == shiftId);
+     var query = _context.Shift
+        .AsNoTracking()
+        .AsQueryable();
+
+      if (providerId.HasValue) query = query.Where(ms => ms.ProviderId == providerId);
+      if (clientId.HasValue) query = query.Where(ms => ms.ClientId == clientId);
+      
+      var shift = await query
+        .Include(s => s.Client).ThenInclude(c => c.UserProfile)
+        .Include(s => s.Provider).ThenInclude(p => p.UserProfile)
+        .Include(s => s.ShiftItems).ThenInclude(si => si.Service)
+        .FirstOrDefaultAsync(s => s.Id == shiftId);
 
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
 
