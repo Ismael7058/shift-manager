@@ -5,13 +5,6 @@ namespace ShiftManagerApi.Dtos
 {
   public record ShiftFilterDto
   {
-
-    [Range(1, int.MaxValue, ErrorMessage = "ProviderId debe ser mayor a 0")]
-    public long? ProviderId { get; set; }
-
-    [Range(1, int.MaxValue, ErrorMessage = "ClientId debe ser mayor a 0")]
-    public long? ClientId { get; set; }
-
     [Range(1, int.MaxValue, ErrorMessage = "ServiceId debe ser mayor a 0")]
     public long? ServiceId { get; set; }
 
