@@ -171,15 +171,19 @@ namespace ShiftManagerApi.Services
 
     public async Task UpdateUser(long id, UpdateUserDto updateUserDto)
     {
-      var profile = await _context.UserProfiles.FirstOrDefaultAsync(p => p.Id == id);
+      var profile = await _context.UserProfiles
+          .Include(p => p.UserAuth)
+          .FirstOrDefaultAsync(p => p.Id == id);
 
-      if (profile == null) throw new UnauthorizedAccessException("Usuario no encontrados");
+      if (profile == null) throw new KeyNotFoundException("Usuario no encontrado");
 
       profile.FirstName = updateUserDto.FirstName;
       profile.LastName = updateUserDto.LastName;
       profile.DateOfBirth = updateUserDto.DateOfBirth;
       profile.Gender = updateUserDto.Gender;
       profile.PhoneNumber = updateUserDto.PhoneNumber;
+      profile.UserAuth.UpdatedAt = DateTime.UtcNow;
+      
 
       await _context.SaveChangesAsync();
     }
@@ -194,6 +198,7 @@ namespace ShiftManagerApi.Services
 
 
       auth.Email = editEmailDto.Email;
+      auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
     }
 
@@ -207,6 +212,7 @@ namespace ShiftManagerApi.Services
 
 
       auth.Username = editUsernameDto.Username;
+      auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
     }
 
@@ -216,6 +222,7 @@ namespace ShiftManagerApi.Services
       if (auth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
 
       auth.PasswordHash = BC.EnhancedHashPassword(editPasswordDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
+      auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
     }
 
@@ -260,6 +267,7 @@ namespace ShiftManagerApi.Services
         throw new UnauthorizedAccessException("La contraseña anterior es invalida");
 
       auth.PasswordHash = BC.EnhancedHashPassword(editPasswordProfileDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
+      auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
     }
   }
