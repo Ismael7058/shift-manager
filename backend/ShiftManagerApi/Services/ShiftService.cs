@@ -145,9 +145,35 @@ namespace ShiftManagerApi.Services
       return shift;
     }
 
-    public Task<ShiftDto> GetById(long shiftId)
+    public async Task<ShiftDto> GetById(long shiftId)
     {
-      throw new NotImplementedException();
+      var shift = await _context.Shift
+          .Include(s => s.Client).ThenInclude(c => c.UserProfile)
+          .Include(s => s.Provider).ThenInclude(p => p.UserProfile)
+          .Include(s => s.ShiftItems).ThenInclude(si => si.Service)
+          .FirstOrDefaultAsync(s => s.Id == shiftId);
+
+      if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
+
+      return new ShiftDto
+      {
+        Id = shift.Id,
+        ProviderId = shift.ProviderId,
+        ProviderFullName = $"{shift.Provider.UserProfile.FirstName} {shift.Provider.UserProfile.LastName}",
+        ClientId = shift.ClientId,
+        ClientFullName = $"{shift.Client.UserProfile.FirstName} {shift.Client.UserProfile.LastName}",
+        StartAt = shift.StartAt,
+        EndAt = shift.EndAt,
+        Status = shift.Status,
+        CreatedAt = shift.CreatedAt,
+        Items = shift.ShiftItems.Select(si => new ShiftItemDto
+        {
+          ServiceId = si.ServiceId,
+          NameService = si.Service.Name,
+          DurationMinutes = si.Service.DurationMinutes,
+          PriceAtMoment = si.PriceAtMoment
+        }).ToList()
+      };
     }
 
     public Task<PaginatedDto<ShiftDto>> GetClientShifts(long clientId, ShiftFilterDto filter)
