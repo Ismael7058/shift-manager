@@ -3,10 +3,6 @@ using ShiftManagerApi.Interfaces;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Entity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace ShiftManagerApi.Services
 {
@@ -120,34 +116,27 @@ namespace ShiftManagerApi.Services
       if (userAuth == null || !BC.EnhancedVerify(loginDto.Password, userAuth.PasswordHash))
         throw new UnauthorizedAccessException("Credenciales inválidas");
 
-      var userProfile = userAuth.UserProfile;
-      if (userProfile == null){
-        userProfile = await _context.UserProfiles.FindAsync(userAuth.UserId);
-      }
-
       var roles = await _context.UserRoles
           .Where(ur => ur.UserId == userAuth.UserId)
           .Include(ur => ur.Role)
           .Select(ur => ur.Role.Name)
           .ToListAsync();
 
-      var accessToken = _tokenService.GenerateToken(userAuth, userProfile, roles);
+      var activeRole = roles.FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
+
+      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
 
       var userDto = new UserDto
       {
         Username = userAuth.Username,
-        Email = userAuth.Email
+        Email = userAuth.Email,
+        Id = userAuth.UserProfile.Id,
+        FirstName = userAuth.UserProfile.FirstName,
+        LastName = userAuth.UserProfile.LastName,
+        DateOfBirth = userAuth.UserProfile.DateOfBirth,
+        Gender = userAuth.UserProfile.Gender.ToString(),
+        PhoneNumber = userAuth.UserProfile.PhoneNumber
       };
-
-      if (userProfile != null)
-      {
-        userDto.Id = userProfile.Id;
-        userDto.FirstName = userProfile.FirstName;
-        userDto.LastName = userProfile.LastName;
-        userDto.DateOfBirth = userProfile.DateOfBirth;
-        userDto.Gender = userProfile.Gender.ToString();
-        userDto.PhoneNumber = userProfile.PhoneNumber;
-      }
 
       return new AuthTokenDto
       {
@@ -171,7 +160,8 @@ namespace ShiftManagerApi.Services
           .Select(ur => ur.Role.Name)
           .ToListAsync();
 
-      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles);
+      var activeRole = roles.FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
+      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
       _cookieService.SetTokenCookie(accessToken);
     }
 
