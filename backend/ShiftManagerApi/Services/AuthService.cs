@@ -122,7 +122,7 @@ namespace ShiftManagerApi.Services
           .Select(ur => ur.Role.Name)
           .ToListAsync();
 
-      var activeRole = roles.FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
+      var activeRole = roles.OrderBy(r => r).FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
 
       var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
 
@@ -146,7 +146,7 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public async Task GenerateAndSetTokenCookie(long userId)
+    public async Task GenerateAndSetTokenCookie(long userId, RoleDto? role)
     {
       var userAuth = await _context.UserAuths
           .Include(u => u.UserProfile)
@@ -160,10 +160,15 @@ namespace ShiftManagerApi.Services
           .Select(ur => ur.Role.Name)
           .ToListAsync();
 
-      var activeRole = roles.FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
+
+      string activeRole = 
+        (role != null ) ? 
+          roles.FirstOrDefault(r => string.Equals(r, role.Name, StringComparison.OrdinalIgnoreCase)) 
+            ?? throw new InvalidOperationException($"El usuario no tiene el rol {role.Name}.")
+        : roles.OrderBy(r => r).FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
+
       var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
       _cookieService.SetTokenCookie(accessToken);
     }
-
   }
 }

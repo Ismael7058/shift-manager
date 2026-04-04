@@ -47,7 +47,7 @@ namespace ShiftManagerApi.Controllers
       {
         var userId = GetUserId();
         await _userAuthService.UpdateUser(userId, updateUserDto);
-        await _authService.GenerateAndSetTokenCookie(userId);
+        await _authService.GenerateAndSetTokenCookie(userId, null);
 
         return NoContent();
       }
@@ -68,7 +68,7 @@ namespace ShiftManagerApi.Controllers
       {
         var userId = GetUserId();
         await _userAuthService.EditEmail(userId, editEmailDto);
-        await _authService.GenerateAndSetTokenCookie(userId);
+        await _authService.GenerateAndSetTokenCookie(userId, null);
         return NoContent();
       }
       catch (InvalidOperationException ex)
@@ -88,7 +88,7 @@ namespace ShiftManagerApi.Controllers
       {
         var userId = GetUserId();
         await _userAuthService.EditUsername(userId, editUsernameDto);
-        await _authService.GenerateAndSetTokenCookie(userId);
+        await _authService.GenerateAndSetTokenCookie(userId, null);
         
         return NoContent();
       }
@@ -108,6 +108,24 @@ namespace ShiftManagerApi.Controllers
       try
       {
         await _userAuthService.EditPasswordProfile(GetUserId(), editPasswordProfileDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+      catch (UnauthorizedAccessException ex)
+      {
+        return Unauthorized(new { message = ex.Message });
+      }
+    }
+
+    [HttpPatch("role-active")]
+    public async Task<ActionResult> ChangeRoleActive(RoleDto role)
+    {
+      try
+      {
+        await _authService.GenerateAndSetTokenCookie(GetUserId(), role);
         return NoContent();
       }
       catch (InvalidOperationException ex)
