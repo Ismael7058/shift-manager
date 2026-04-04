@@ -15,9 +15,19 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task ChangeStatus(long shiftId, ShiftStatus status)
+    public async Task ChangeStatus(long? providerId, long? clientId, long shiftId, ShiftStatus status)
     {
-      var shift = await _context.Shift.FirstOrDefaultAsync(s => s.Id == shiftId);
+      var query = _context.Shift.AsQueryable();
+
+      if (providerId.HasValue){
+        var availableStates = new[] { ShiftStatus.confirmed, ShiftStatus.completed, ShiftStatus.no_show, ShiftStatus.canceled };
+        if (!availableStates.Contains(status)) throw new InvalidOperationException($"Un proveedor no puede cambiar el estado a {status}.");
+      }
+      if (providerId.HasValue) query = query.Where(s => s.ProviderId == providerId);
+
+      if (clientId.HasValue) query = query.Where(s => s.ClientId == clientId);
+
+      var shift = await query.FirstOrDefaultAsync(s => s.Id == shiftId);
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
 
       if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed)
