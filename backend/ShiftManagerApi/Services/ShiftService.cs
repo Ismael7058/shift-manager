@@ -183,7 +183,7 @@ namespace ShiftManagerApi.Services
 
       if (providerId.HasValue)
       {
-        query = query.Where(ms => ms.ClientId == providerId);
+        query = query.Where(ms => ms.ProviderId == providerId);
       }
       if (clientId.HasValue)
       {
