@@ -4,6 +4,7 @@ import PublicLayout from '../layouts/PublicLayout'
 import ProjectPage from '../pages/ProjectPage';
 import ShiftsPage from '../pages/ShiftsPage';
 import { useAuth } from '../context/AuthContext';
+import { MyShiftsProvider } from '../context/MyShiftsContext';
 
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -25,7 +26,14 @@ const AppRouter = () => {
         <Route path="/" element={<HomePage />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/docs" element={<ProjectPage />} />
-          <Route path="/turnos" element={<ShiftsPage />} />
+          <Route 
+            path="/turnos" 
+            element={
+              <MyShiftsProvider>
+                <ShiftsPage />
+              </MyShiftsProvider>
+            } 
+          />
         </Route>
       </Route>
     </Routes>
