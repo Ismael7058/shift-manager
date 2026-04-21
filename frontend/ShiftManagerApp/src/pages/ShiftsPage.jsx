@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { useMyShifts } from '../context/MyShiftsContext';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useTurnos } from '../context/ShiftsContext';
 import Table from '../components/ui/Table';
 import Modal from '../components/ui/Modal';
-
 import Pagination from '../components/ui/Pagination';
+import FilterShifts from '../components/shifts/FilterShifts';
+
 
 const ShiftsPage = () => {
-  const { shifts, loading, error, pagination, fetchMyShifts } = useMyShifts();
+  const { shifts, loading, error, pagination, fetchShifts, isGlobal } = useTurnos();
+
   const [modalType, setModalType] = useState(null);
   const [modalData, setModalData] = useState(null);
   
@@ -16,7 +18,8 @@ const ShiftsPage = () => {
     isDescending: true,
     pageNumber: 1,
     pageSize: 10,
-    statuses: []
+    statuses: [],
+    serviceId: ''
   });
 
   const closeModal = () => {
@@ -25,8 +28,12 @@ const ShiftsPage = () => {
   };
 
   useEffect(() => {
-    fetchMyShifts(filters);
-  }, [fetchMyShifts, filters]);
+    const handler = setTimeout(() => {
+      fetchShifts(filters);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [fetchShifts, filters]);
 
   const handleFilterChange = (newFilters) => {
     setFilters({ ...newFilters, pageNumber: 1 });
@@ -37,7 +44,7 @@ const ShiftsPage = () => {
   };
 
   // Columnas para la tabla
-  const columns = [
+  const columns = useMemo(() => [
     {
       key: 'startAt',
       label: 'Inicio',
@@ -75,7 +82,7 @@ const ShiftsPage = () => {
           case 'confirmed': statusClass = 'text-green-400'; break;
           case 'pending': statusClass = 'text-yellow-400'; break;
           case 'canceled':
-          case 'noshow': statusClass = 'text-red-400'; break;
+          case 'no_show': statusClass = 'text-red-400'; break;
           case 'completed': statusClass = 'text-blue-400'; break;
           default: statusClass = 'text-white/80';
         }
@@ -100,16 +107,36 @@ const ShiftsPage = () => {
         >
           Ver
         </button>
-    },
-  ];
+    }
+  ], []);
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-extrabold text-white mb-8 tracking-tight">Mis Turnos</h1>
-      {loading && <p className="text-white/70">Cargando turnos...</p>}
+      <h1 className="text-4xl font-extrabold text-white mb-8 tracking-tight">
+        {isGlobal ? 'Gestión de Turnos' : 'Mis Turnos'}
+      </h1>
+      
+      <FilterShifts filters={filters} onFilterChange={handleFilterChange} />
 
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && <Table columns={columns} data={shifts} />}
+      {loading && (
+        <div className="flex items-center gap-3 text-white/50 my-8 italic">
+          <div className="w-4 h-4 border-2 border-white/20 border-t-white/80 rounded-full animate-spin"></div>
+          Cargando turnos...
+        </div>
+      )}
+
+      {!loading && (
+        <Table 
+          columns={columns} 
+          data={shifts} 
+          emptyMessage={
+            error 
+              ? "No se pudo cargar la información de los turnos" 
+              : "No se encontraron elementos con los filtros aplicados"
+          } 
+        />
+      )}
+
       <Pagination 
         totalCount={pagination.totalCount}
         pageNumber={pagination.pageNumber}
