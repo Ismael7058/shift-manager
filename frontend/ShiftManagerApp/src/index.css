@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+/* Ocultar barra de desplazamiento visualmente en la ventana principal */
+html, body {
+  scrollbar-width: none; /* Para Firefox */
+  -ms-overflow-style: none; /* Para Internet Explorer y Edge */
+}
+
+/* Para Chrome, Safari y navegadores basados en Chromium */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
