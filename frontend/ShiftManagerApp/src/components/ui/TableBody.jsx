@@ -1,12 +1,13 @@
 import React from 'react';
 
-
-const TableBody = ({ data, columns }) => {
+const TableBody = ({ data, columns, emptyMessage = "No hay datos disponibles." }) => {
   if (!data || data.length === 0) {
     return (
       <tbody>
         <tr>
-          <td colSpan={columns.length} className="px-6 py-4 text-center text-sm text-white/60">No hay datos disponibles.</td>
+          <td colSpan={columns.length} className="px-6 py-4 text-center text-sm text-white/30 italic">
+            {emptyMessage}
+          </td>
         </tr>
       </tbody>
     );
