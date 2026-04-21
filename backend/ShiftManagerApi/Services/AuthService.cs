@@ -135,14 +135,16 @@ namespace ShiftManagerApi.Services
         LastName = userAuth.UserProfile.LastName,
         DateOfBirth = userAuth.UserProfile.DateOfBirth,
         Gender = userAuth.UserProfile.Gender.ToString(),
-        PhoneNumber = userAuth.UserProfile.PhoneNumber
+        PhoneNumber = userAuth.UserProfile.PhoneNumber,
+        Roles = roles
       };
 
       return new AuthTokenDto
       {
         AccessToken = accessToken,
         Expiration = DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(15)),
-        User = userDto
+        User = userDto,
+        RoleActive = activeRole
       };
     }
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loginRequest, logoutRequest } from '../services/authService'
 
 const AuthContext = createContext();
@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isManualLogout, setIsManualLogout] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
@@ -18,23 +19,37 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (credentials) => {
     const data = await loginRequest(credentials);
     if (data.user) {
-      localStorage.setItem('user', JSON.stringify(data.user));
-      setUser(data.user);
+      setIsManualLogout(false);
+      const sessionData = {
+        ...data.user,
+        roleActive: data.roleActive,
+        expiration: data.expiration
+      };
+      localStorage.setItem('user', JSON.stringify(sessionData));
+      setUser(sessionData);
     }
     return data;
   };
 
-  const logoutUser = async () => {
+  const logoutUser = useCallback(async () => {
     try {
+      setIsManualLogout(true);
       await logoutRequest();
     } finally {
       localStorage.removeItem('user');
       setUser(null);
     }
-  };
+  }, []);
+
+  // Cerrar sesion por expiracion
+  const expireSession = useCallback(() => {
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsManualLogout(false);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser }}>
+    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, expireSession, isManualLogout }}>
       {children}
     </AuthContext.Provider>
   );

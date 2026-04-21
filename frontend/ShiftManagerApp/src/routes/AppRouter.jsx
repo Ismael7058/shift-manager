@@ -1,42 +1,53 @@
+import { useRef } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import HomePage from '../pages/HomePage'
 import PublicLayout from '../layouts/PublicLayout'
 import ProjectPage from '../pages/ProjectPage';
-import ShiftsPage from '../pages/ShiftsPage';
 import { useAuth } from '../context/AuthContext';
-import { MyShiftsProvider } from '../context/MyShiftsContext';
+import { Notification } from '../context/NotificationContext';
+import { Services } from '../context/ServicesContext';
+import ShiftsContent from '../context/ShiftsContext';
+
 
 const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isManualLogout } = useAuth();
+  const wasAuthenticated = useRef(!!user);
 
-  // Si está verificando la sesión, mostramos un estado de carga 
-  // para evitar la redirección prematura al "/"
+  // Mientras se verifica la session mostrar el Cargando...
   if (loading) {
     return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">Cargando...</div>;
   }
 
-  return user ? <Outlet /> : <Navigate to="/" replace />;
+  // Redireccionar si se cirra la sesion o no hay un usuario autenticado
+  if (isManualLogout || (!user && !wasAuthenticated.current)) {
+    return <Navigate to="/" replace />;
+  }
+
+
+  return <Outlet />;
 };
 
 
 const AppRouter = () => {
   return (
-    <Routes>
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route element={<ProtectedRoute />}>
-          <Route path="/docs" element={<ProjectPage />} />
-          <Route 
-            path="/turnos" 
-            element={
-              <MyShiftsProvider>
-                <ShiftsPage />
-              </MyShiftsProvider>
-            } 
-          />
+    <Notification>
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/docs" element={<ProjectPage />} />
+            <Route 
+              path="/turnos" 
+              element={
+                <Services>
+                  <ShiftsContent />
+                </Services>
+              } 
+            />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </Notification>
   );
 };
 
