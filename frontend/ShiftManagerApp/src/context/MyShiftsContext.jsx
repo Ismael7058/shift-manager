@@ -1,12 +1,17 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { useNotification } from './NotificationContext';
 import { myShiftsRequest } from '../services/myShiftService';
+import { handleApiError } from '../utils/apiErrorHandler';
 
-const MyShiftsContext = createContext();
+export const MyShiftsContext = createContext();
 
 export const MyShiftsProvider = ({ children }) => {
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { expireSession  } = useAuth();
+  const { addNotification } = useNotification();
   const [pagination, setPagination] = useState({
     totalCount: 0,
     totalPages: 0,
@@ -18,7 +23,13 @@ export const MyShiftsProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await myShiftsRequest(filters);
+      const formattedFilters = {
+        ...filters,
+        dateFrom: filters.dateFrom ? `${filters.dateFrom}T00:00:00Z` : undefined,
+        dateTo: filters.dateTo ? `${filters.dateTo}T23:59:59Z` : undefined,
+      };
+
+      const data = await myShiftsRequest(formattedFilters);
       setShifts(data.items);
       setPagination({
         totalCount: data.totalCount,
@@ -27,14 +38,23 @@ export const MyShiftsProvider = ({ children }) => {
         pageSize: data.pageSize
       });
     } catch (err) {
-      setError(err.message);
+      const errorMsg = handleApiError(err, expireSession );
+      setError(errorMsg);
+      addNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [expireSession , addNotification]);
 
   return (
-    <MyShiftsContext.Provider value={{ shifts, loading, error, pagination, fetchMyShifts }}>
+    <MyShiftsContext.Provider value={{ 
+      shifts, 
+      loading, 
+      error, 
+      pagination, 
+      fetchShifts: fetchMyShifts, 
+      isGlobal: false 
+    }}>
       {children}
     </MyShiftsContext.Provider>
   );
