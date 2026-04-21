@@ -18,7 +18,7 @@
  * @property {string} clientFullName
  * @property {string} startAt
  * @property {string} endAt
- * @property {'pending' | 'confirmed' | 'completed' | 'canceled' | 'noshow'} status
+ * @property {'pending' | 'confirmed' | 'completed' | 'canceled' | 'no_show'} status
  * @property {string} createdAt
  * @property {ShiftItemDto[]} items
  * @property {number} totalAmount
@@ -40,5 +40,27 @@ export const ShiftStatuses = {
   CONFIRMED: 'Confirmed',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
-  NO_SHOW: 'NoShow'
+  NO_SHOW: 'No Show'
 };
+
+
+/**
+ * @typedef {Object} ServiceFilterDto
+ * @property {string} name
+ * @property {boolean} isActive
+ * @property {string} sortBy
+ * @property {number} isDescending
+ * @property {number} pageNumber
+ * @property {number} pageSize
+ */
+
+/**
+ * @typedef {Object} ServiceDto
+ * @property {number} id
+ * @property {string} name
+ * @property {string} description
+ * @property {string} durationMinutes
+ * @property {boolean} isActive
+
+ */
+
