@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
-import { myShiftsRequest } from '../services/myShiftService';
+import { myShiftsRequest, getMeShiftByIdRequest, createShiftRequest, changeStatusRequest } from '../services/myShiftService';
 import { handleApiError } from '../utils/apiErrorHandler';
 
 export const MyShiftsContext = createContext();
@@ -46,6 +46,63 @@ export const MyShiftsProvider = ({ children }) => {
     }
   }, [expireSession , addNotification]);
 
+  const fetchMyShiftById = useCallback(async (id) =>{
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getMeShiftByIdRequest(id);
+      return data;
+    } catch (err) {
+      const errorMsg = handleApiError(err, expireSession );
+      setError(errorMsg);
+      addNotification(errorMsg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [expireSession , addNotification]);
+
+  const fetchCreateShift = useCallback(async (shiftCreate) =>{
+    setLoading(true);
+    setError(null);
+    try {
+      if (shiftCreate?.startAt) {
+        shiftCreate.startAt = `${shiftCreate.startAt}T00:00:00Z`
+      }
+      
+      const data = await createShiftRequest(shiftCreate);
+      addNotification("Turno creado con éxito", 'success');
+      await fetchMyShifts();
+    } catch (err) {
+      const errorMsg = handleApiError(err, expireSession );
+      setError(errorMsg);
+      addNotification(errorMsg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [expireSession , addNotification]);
+
+    const fetchChangeStatusShift = useCallback(async (id, status) =>{
+    setLoading(true);
+    setError(null);
+    try {
+      const validStatuses = ['pending', 'confirmed', 'completed', 'canceled'];
+      if (!validStatuses.includes(status.toLowerCase())){
+        addNotification("Error el estado ingresado es invalido", 'error');
+        return;
+      }
+      
+      await changeStatusRequest(id, status);
+      addNotification("Estado actualizado", 'success');
+      await fetchMyShifts();
+    } catch (err) {
+      const errorMsg = handleApiError(err, expireSession );
+      setError(errorMsg);
+      addNotification(errorMsg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [expireSession , addNotification]);
+
   return (
     <MyShiftsContext.Provider value={{ 
       shifts, 
@@ -53,6 +110,9 @@ export const MyShiftsProvider = ({ children }) => {
       error, 
       pagination, 
       fetchShifts: fetchMyShifts, 
+      fetchShiftById: fetchMyShiftById,
+      createShift: fetchCreateShift,
+      changeStatus: fetchChangeStatusShift,
       isGlobal: false 
     }}>
       {children}
