@@ -19,7 +19,7 @@ export const MyShiftsProvider = ({ children }) => {
     pageSize: 10
   });
 
-  const fetchMyShifts = useCallback(async (filters) => {
+  const fetchMyShifts = useCallback(async (filters = {}) => {
     setLoading(true);
     setError(null);
     try {
@@ -65,10 +65,6 @@ export const MyShiftsProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      if (shiftCreate?.startAt) {
-        shiftCreate.startAt = `${shiftCreate.startAt}T00:00:00Z`
-      }
-      
       const data = await createShiftRequest(shiftCreate);
       addNotification("Turno creado con éxito", 'success');
       await fetchMyShifts();
