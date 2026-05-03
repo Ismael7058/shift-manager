@@ -4,7 +4,6 @@ import HomePage from '../pages/HomePage'
 import PublicLayout from '../layouts/PublicLayout'
 import ProjectPage from '../pages/ProjectPage';
 import { useAuth } from '../context/AuthContext';
-import { Notification } from '../context/NotificationContext';
 import { Services } from '../context/ServicesContext';
 import { MyShiftsProvider } from '../context/MyShiftsContext';
 import { ProviderProvider } from '../context/ProviderContext'
@@ -44,28 +43,26 @@ const ShiftsWrapper = () => {
 
 const AppRouter = () => {
   return (
-    <Notification>
-      <Routes>
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/docs" element={<ProjectPage />} />
-            <Route path="/turnos" element={
-              <Services>
-                <ProviderProvider>
-                  <ShiftsWrapper />
-                </ProviderProvider>
-              </Services>
-            } 
-            >
-              <Route index element={<ShiftsPage />} />
-              
-              <Route path="crear" element={<CreateShiftPage/>}/>
-            </Route>
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<HomePage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/docs" element={<ProjectPage />} />
+          <Route path="/turnos" element={
+            <Services>
+              <ProviderProvider>
+                <ShiftsWrapper />
+              </ProviderProvider>
+            </Services>
+          } 
+          >
+            <Route index element={<ShiftsPage />} />
+            
+            <Route path="crear" element={<CreateShiftPage/>}/>
           </Route>
         </Route>
-      </Routes>
-    </Notification>
+      </Route>
+    </Routes>
   );
 };
 

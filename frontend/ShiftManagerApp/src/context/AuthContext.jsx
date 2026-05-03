@@ -1,13 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loginRequest, logoutRequest } from '../services/authService'
-
+import { handleApiError } from '../utils/apiErrorHandler';
+import { useNotification } from './NotificationContext';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isManualLogout, setIsManualLogout] = useState(false);
-
+  const { addNotification } = useNotification();
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -17,18 +19,29 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loginUser = async (credentials) => {
-    const data = await loginRequest(credentials);
-    if (data.user) {
-      setIsManualLogout(false);
-      const sessionData = {
-        ...data.user,
-        roleActive: data.roleActive,
-        expiration: data.expiration
-      };
-      localStorage.setItem('user', JSON.stringify(sessionData));
-      setUser(sessionData);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await loginRequest(credentials);
+      if (data.user) {
+        setIsManualLogout(false);
+        const sessionData = {
+          ...data.user,
+          roleActive: data.roleActive,
+          expiration: data.expiration
+        };
+        localStorage.setItem('user', JSON.stringify(sessionData));
+        setUser(sessionData);
+      }
+    } catch (err) {
+      const errorMsg = handleApiError(err);
+      setError(errorMsg);
+      addNotification(errorMsg, 'error');
+      throw err;
+    } finally {
+      setLoading(false);
     }
-    return data;
   };
 
   const logoutUser = useCallback(async () => {
@@ -49,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginUser, logoutUser, expireSession, isManualLogout }}>
+    <AuthContext.Provider value={{ user, loading, error, loginUser, logoutUser, expireSession, isManualLogout }}>
       {children}
     </AuthContext.Provider>
   );

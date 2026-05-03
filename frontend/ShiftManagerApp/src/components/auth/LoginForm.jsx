@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../ui/Modal'
 import { useAuth } from '../../context/AuthContext'
+import { useNotification } from '../../context/NotificationContext'
 
-const LoginForm = ({ isOpen, onClose, onSwitch, onLoginSuccess }) => {
+const LoginForm = ({ isOpen, onClose, onSwitch }) => {
   const [credentials, setCredentials] = useState({ identifier: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
   const navigate = useNavigate();
-  const { loginUser } = useAuth();
+  const { user, loginUser } = useAuth();
+
+  const { addNotification } = useNotification();
 
   const handleChange = (e) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -16,9 +19,10 @@ const LoginForm = ({ isOpen, onClose, onSwitch, onLoginSuccess }) => {
 
   const validate = () => {
     if (!credentials.identifier || !credentials.password) {
-      return 'Todos los campos son obligatorios';
+      addNotification('Todos los campos son obligatorios', 'error');
+      return true;
     }
-    return null;
+    return false;
   };
 
   const handleSubmit = async (e) => {
@@ -26,20 +30,17 @@ const LoginForm = ({ isOpen, onClose, onSwitch, onLoginSuccess }) => {
 
     const validationError = validate();
     if (validationError) {
-      setError(validationError);
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     try {
       await loginUser(credentials);
-      onLoginSuccess();
       onClose();
-      navigate('/docs');
+      navigate('/');
     } catch (err) {
-      setError(err.message);
+      console.log("Fallo en el inicio de sesión");
     } finally {
       setLoading(false);
     }
@@ -56,8 +57,6 @@ const LoginForm = ({ isOpen, onClose, onSwitch, onLoginSuccess }) => {
           Inicie sesión en su cuenta de
           <span className='font-semibold'> ShiftManager</span>
         </p>
-
-        {error && <p style={{ color: 'red' }}>{error}</p>}
 
         <div>
           <label className="block text-sm font-medium text-white/70 mb-1.5">Username o Email</label>
@@ -77,7 +76,6 @@ const LoginForm = ({ isOpen, onClose, onSwitch, onLoginSuccess }) => {
             onChange={handleChange}
             className="w-full bg-neutral-800/50 border border-white/10 p-2.5 rounded-lg text-white placeholder:text-white/20 focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all outline-none" />
         </div>
-        {error && <p className="text-red-400 text-xs">{error}</p>}
         <button
           type="submit"
           disabled={loading}

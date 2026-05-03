@@ -12,10 +12,6 @@ const Header = ({ element }) => {
 
   const closeModal = () => setModalType(null)
 
-  const handleLoginSuccess = () => {
-    setModalType(null);
-  }
-
   const handleLogout = async () => {
     try {
       await logoutUser();
@@ -28,7 +24,7 @@ const Header = ({ element }) => {
   return (
     <header className="w-full">
       <nav className="bg-neutral-950/50 backdrop-blur-md border-b border-white/10 px-4 lg:px-7 py-2.5">
-        <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
+        <div className="flex flex-wrap justify-between items-center mx-auto max-w-7xl">
           <div className="flex items-center">
             {element}
             <a href="/" className="flex items-center text-2xl text-white font-bold tracking-tighter transition-all">
@@ -73,8 +69,8 @@ const Header = ({ element }) => {
 
 
 
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 text-sm text-white/60 rounded-lg lg:hidden hover:bg-white/5 focus:outline-none transition-all"
               data-collapse-toggle="mobile-menu-2" aria-controls="mobile-menu-2" aria-expanded="false"
@@ -100,16 +96,10 @@ const Header = ({ element }) => {
                 <a href="/docs" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Docs</a>
               </li>
               <li>
-                <a href="#" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Mercado</a>
+                <a href="/turnos" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Turnos</a>
               </li>
               <li>
-                <a href="#" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Funciones</a>
-              </li>
-              <li>
-                <a href="#" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Equipo</a>
-              </li>
-              <li>
-                <a href="#" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Contacto</a>
+                <a href="/turnos/crear" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Agendar</a>
               </li>
             </ul>
           </div>
@@ -117,19 +107,21 @@ const Header = ({ element }) => {
       </nav>
 
       {/* Modal de Inicio de Sesion */}
-      <LoginForm 
-        isOpen={modalType === 'login'} 
-        onClose={closeModal} 
-        onLoginSuccess={handleLoginSuccess}
-        onSwitch={() => setModalType('register')} 
+      <LoginForm
+        isOpen={modalType === 'login'}
+        onClose={closeModal}
+        onSwitch={() => setModalType('register')}
       />
 
       {/* Modal de Registro */}
-      <RegisterForm 
-        isOpen={modalType === 'register'} 
-        onClose={closeModal} 
-        onSwitch={() => setModalType('login')} 
+      <RegisterForm
+        isOpen={modalType === 'register'}
+        onClose={closeModal}
+        onSwitch={() => setModalType('login')}
       />
+
+
+
     </header>
   )
 }
