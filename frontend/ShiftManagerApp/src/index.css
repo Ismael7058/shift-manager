@@ -1,13 +1,46 @@
 @import "tailwindcss";
 
 /* Ocultar barra de desplazamiento visualmente en la ventana principal */
-html, body {
-  scrollbar-width: none; /* Para Firefox */
-  -ms-overflow-style: none; /* Para Internet Explorer y Edge */
+html,
+body {
+  scrollbar-width: none;
+  /* Para Firefox */
+  -ms-overflow-style: none;
+  /* Para Internet Explorer y Edge */
 }
 
 /* Para Chrome, Safari y navegadores basados en Chromium */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Estilo para la barra de desplazamiento personalizada */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #262626 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #262626;
+  border-radius: 20px;
+  border: 1px solid transparent; /* Crea un pequeño margen visual */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #404040;
 }

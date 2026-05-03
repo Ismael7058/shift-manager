@@ -19,7 +19,7 @@ const FilterShifts = ({ filters, onFilterChange }) => {
 
   return (
     <Filter filters={filters} onFilterChange={onFilterChange}>
-      <div className="flex flex-col gap-2 min-w-[250px] w-full md:w-4/12 mt-4 md:mt-0">
+      <div className="flex flex-col gap-2 w-full md:w-4/12 mt-4 md:mt-0">
         <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">Servicios</label>
         <Select2 
           items={services}
