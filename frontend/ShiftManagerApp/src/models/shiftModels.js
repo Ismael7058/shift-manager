@@ -90,3 +90,53 @@ export const ShiftStatuses = {
  * @property {number} durationMinutes
  * @property {boolean} isActive
  */
+
+/**
+ * @typedef {Object} ProviderFilterDto
+ * @property {string} [Name]
+ * @property {string} [SortBy]
+ * @property {boolean} [IsDescending]
+ * @property {boolean} [IncludeServices]
+ * @property {number} [PageNumber]
+ * @property {number} [PageSize]
+ */
+
+
+/**
+ * @typedef {Object} ProviderDto
+ * @property {number} id
+  * @property {string} firstName
+ * @property {string} lastName
+ * @property {ProviderServiceDto[]} items
+ * @property {ProviderServiceDto[]} works
+ * @property {DateRangeDto[]} restrictedDates
+ */
+
+/**
+ * @typedef {Object} ProviderServiceDto
+ * @property {number} id
+ * @property {number} providerId
+ * @property {number} serviceId
+ * @property {string} name
+ * @property {string} description
+ * @property {number} durationMinutes
+ * @property {number} durationMinutesBase
+ * @property {number} price
+ * @property {boolean} isActive
+ */
+
+/**
+ * @typedef {Object} WorkSchedulesDto
+ * @property {number} id
+ * @property {number} providerId
+ * @property {number} dayOfWeek
+ * @property {string} startTime
+ * @property {string} endTime
+ * @property {boolean} isActive
+ */
+
+/**
+ * @typedef {Object} DateRangeDto
+ * @property {string} startTime
+ * @property {string} endTime
+ */
