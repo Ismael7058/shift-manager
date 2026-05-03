@@ -6,8 +6,12 @@ import ProjectPage from '../pages/ProjectPage';
 import { useAuth } from '../context/AuthContext';
 import { Notification } from '../context/NotificationContext';
 import { Services } from '../context/ServicesContext';
-import ShiftsContent from '../context/ShiftsContext';
+import { MyShiftsProvider } from '../context/MyShiftsContext';
+import { ProviderProvider } from '../context/ProviderContext'
+import { ShiftsProvider } from '../context/ShiftsContext';
 
+import ShiftsPage from '../pages/ShiftsPage';
+import CreateShiftPage from '../pages/CreateShiftPage';
 
 const ProtectedRoute = () => {
   const { user, loading, isManualLogout } = useAuth();
@@ -27,6 +31,16 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+const ShiftsWrapper = () => {
+  const { user } = useAuth();
+  const isPersonalRole = user && ["Cliente", "Proveedor"].includes(user.roleActive);
+
+  return isPersonalRole ? (
+    <MyShiftsProvider><Outlet /></MyShiftsProvider>
+  ) : (
+    <ShiftsProvider><Outlet /></ShiftsProvider>
+  );
+};
 
 const AppRouter = () => {
   return (
@@ -36,14 +50,18 @@ const AppRouter = () => {
           <Route path="/" element={<HomePage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/docs" element={<ProjectPage />} />
-            <Route 
-              path="/turnos" 
-              element={
-                <Services>
-                  <ShiftsContent />
-                </Services>
-              } 
-            />
+            <Route path="/turnos" element={
+              <Services>
+                <ProviderProvider>
+                  <ShiftsWrapper />
+                </ProviderProvider>
+              </Services>
+            } 
+            >
+              <Route index element={<ShiftsPage />} />
+              
+              <Route path="crear" element={<CreateShiftPage/>}/>
+            </Route>
           </Route>
         </Route>
       </Routes>
