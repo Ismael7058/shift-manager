@@ -6,5 +6,6 @@ namespace ShiftManagerApi.Dtos
         public string RefreshToken { get; set; } = string.Empty;
         public DateOnly Expiration { get; set; }
         public UserDto User { get; set; } = new UserDto();
+        public string RoleActive { get; set; } = string.Empty;
     }
 }

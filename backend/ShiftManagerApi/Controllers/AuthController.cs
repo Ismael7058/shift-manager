@@ -39,13 +39,19 @@ namespace ShiftManagerApi.Controllers
         var tokenResponse = await _authService.Login(loginDto);
         _cookieService.SetTokenCookie(tokenResponse.AccessToken);
 
-        return Ok(tokenResponse.User);
+        return Ok(new
+        {
+          tokenResponse.User,
+          tokenResponse.Expiration,
+          tokenResponse.RoleActive
+        });
       }
       catch (UnauthorizedAccessException ex)
       {
         return Unauthorized(new { message = ex.Message });
       }
     }
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
