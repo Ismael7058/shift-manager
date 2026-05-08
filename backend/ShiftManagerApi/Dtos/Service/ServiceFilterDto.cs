@@ -4,7 +4,7 @@ namespace ShiftManagerApi.Dtos
 {
   public record ServiceFilterDto
   {
-    [RegularExpression(@"^[\p{L}\s]+$", ErrorMessage = "Name solo puede contener letras y espacios")]
+    [RegularExpression(@"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?:[ '\-][A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$", ErrorMessage = "Name solo puede contener letras y espacios")]
     public string? Name { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "DurationMinutes debe ser mayor a 0")]
     public int? DurationMinutes { get; set; }

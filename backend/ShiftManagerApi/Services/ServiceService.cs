@@ -24,7 +24,7 @@ namespace ShiftManagerApi.Services
         query = query.Where(u => u.Name.Contains(filter.Name));
       }
 
-      if (!string.IsNullOrWhiteSpace(filter.Name))
+      if (filter.DurationMinutes.HasValue)
       {
         query = query.Where(u => u.DurationMinutes == filter.DurationMinutes);
       }

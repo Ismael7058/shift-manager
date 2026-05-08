@@ -107,7 +107,7 @@ namespace ShiftManagerApi.Services
 
         if (service == null) throw new InvalidOperationException("Servicio no disponible.");
 
-        var createPS = new ProviderService
+        var createPS = new Entity.ProviderService
         {
           ProviderId = userId,
           ServiceId = createDto.ServiceId,
