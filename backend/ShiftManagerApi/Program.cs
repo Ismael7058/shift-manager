@@ -26,6 +26,7 @@ builder.Services.AddScoped<IServiceService, ServiceService>();
 builder.Services.AddScoped<IProviderServiceService, ProviderServiceService>();
 builder.Services.AddScoped<IWorkSchedulesService, WorkSchedulesService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
+builder.Services.AddScoped<IProviderService, ProviderService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -75,7 +76,20 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
+
+app.UseCors("AllowFrontend");
 
 using (var scope = app.Services.CreateScope())
 {

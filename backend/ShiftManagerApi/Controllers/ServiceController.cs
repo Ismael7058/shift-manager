@@ -15,7 +15,7 @@ namespace ShiftManagerApi.Controllers
       _serviceService = serviceService;
     }
 
-    [Authorize(Policy = "AdminOProveedor")]
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<PaginatedDto<ServiceDto>>> GetAll([FromQuery] ServiceFilterDto serviceFilterDto)
     {

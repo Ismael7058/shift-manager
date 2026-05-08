@@ -77,7 +77,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("{id}")]
+    [HttpPatch("{id}/status")]
     public async Task<ActionResult> ChangeStatus(long id, ShiftStatus status)
     {
       try
