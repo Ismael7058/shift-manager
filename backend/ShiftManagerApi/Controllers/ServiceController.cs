@@ -1,0 +1,87 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ShiftManagerApi.Dtos;
+using ShiftManagerApi.Interfaces;
+
+namespace ShiftManagerApi.Controllers
+{
+  [ApiController]
+  [Route("services")]
+  public class ServiceController : ControllerBase
+  {
+    private IServiceService _serviceService;
+    public ServiceController(IServiceService serviceService)
+    {
+      _serviceService = serviceService;
+    }
+
+    [Authorize]
+    [HttpGet]
+    public async Task<ActionResult<PaginatedDto<ServiceDto>>> GetAll([FromQuery] ServiceFilterDto serviceFilterDto)
+    {
+      serviceFilterDto ??= new ServiceFilterDto();
+      
+      var response = await _serviceService.GetAll(serviceFilterDto);
+      return Ok(response);
+    }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ServiceDto>> GetById(long id)
+    {
+      try
+      {
+        return Ok( await _serviceService.GetById(id));
+      }
+      catch (KeyNotFoundException ex)
+      {
+        return NotFound(new { message = ex.Message });
+      }
+    }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpPost]
+    public async Task<ActionResult<ServiceDto>> Post(CreateServiceDto createServiceDto)
+    {
+      try
+      {
+        var service = await _serviceService.CreateService(createServiceDto);
+        return Ok(service);
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Put(long id, UpdateServiceDto updateServiceDto)
+    {
+      try
+      {
+        await _serviceService.UpdateService(id, updateServiceDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpPatch("{id}")]
+    public async Task<ActionResult> Patch(long id, [FromBody] UpdateStatusDto statusDto)
+    {
+      try
+      {
+        await _serviceService.IsActive(id, statusDto);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+  }
+}
