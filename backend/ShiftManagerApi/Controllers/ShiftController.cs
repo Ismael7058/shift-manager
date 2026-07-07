@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShiftManagerApi.Dtos;
@@ -7,7 +8,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize(Policy = "AdminORecepcion")]
+  [Authorize(Policy = "AnyAuthenticatedRole")]
   [Route("shifts")]
   public class ShiftController : ControllerBase
   {
@@ -23,7 +24,7 @@ namespace ShiftManagerApi.Controllers
     public async Task<ActionResult<PaginatedDto<ShiftDto>>> GetShifts([FromQuery] long? providerId, [FromQuery] long? clientId, [FromQuery] ShiftFilterDto filter)
     {
       filter ??= new ShiftFilterDto();
-      var response = await _shiftService.GetShifts(providerId, clientId,  filter);
+      var response = await _shiftService.GetShifts(providerId, clientId, filter);
       return Ok(response);
     }
 
@@ -32,7 +33,16 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        return Ok(await _shiftService.GetById(null, null, id));
+        var activeRole = GetActiveRole();
+
+        var response = activeRole switch
+        {
+          "Proveedor" => await _shiftService.GetById(GetUserId(), null, id),
+          "Cliente" => await _shiftService.GetById(null, GetUserId(), id),
+          _ => await _shiftService.GetById(null, null, id)
+        };
+
+        return Ok(response);
       }
       catch (KeyNotFoundException ex)
       {
@@ -54,14 +64,14 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
-  
+
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(long id, UpdateShiftDto updateDto)
     {
       try
       {
-      await _shiftService.Update(id, updateDto);
-      return NoContent();
+        await _shiftService.Update(id, updateDto);
+        return NoContent();
       }
       catch (KeyNotFoundException ex)
       {
@@ -74,13 +84,36 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-      await _shiftService.ChangeStatus(null, null, id, status);
-      return NoContent();
+        await _shiftService.ChangeStatus(null, null, id, status);
+        return NoContent();
       }
       catch (KeyNotFoundException ex)
       {
         return NotFound(new { message = ex.Message });
       }
+    }
+
+    private long GetUserId()
+    {
+      var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c =>
+          c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
+
+      if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o ID inválido");
+      }
+      return userId;
+    }
+
+    private string GetActiveRole()
+    {
+      var activeRole = User.FindFirst("active_role")?.Value;
+
+      if (string.IsNullOrEmpty(activeRole))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o rol activo inválido.");
+      }
+      return activeRole;
     }
   }
 }
