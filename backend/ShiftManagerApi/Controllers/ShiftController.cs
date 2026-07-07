@@ -80,6 +80,7 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [Authorize(Policy = "AdminORecepcion")]
     [HttpPut("{id}")]
     public async Task<ActionResult> Update(long id, UpdateShiftDto updateDto)
     {
