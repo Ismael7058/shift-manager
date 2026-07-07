@@ -95,12 +95,28 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("{id}")]
+    [Authorize(Policy = "AnyAuthenticatedRole")]
+    [HttpPatch("{id}/status")]
     public async Task<ActionResult> ChangeStatus(long id, ShiftStatus status)
     {
       try
       {
-        await _shiftService.ChangeStatus(null, null, id, status);
+        var activeRole = GetActiveRole();
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _shiftService.ChangeStatus(GetUserId(), null, id, status);
+            break;
+
+          case "Cliente":
+            await _shiftService.ChangeStatus(null, GetUserId(), id, status);
+            break;
+
+          default:
+            await _shiftService.ChangeStatus(null, null, id, status);
+            break;
+        }
+
         return NoContent();
       }
       catch (KeyNotFoundException ex)
