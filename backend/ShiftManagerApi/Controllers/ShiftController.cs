@@ -8,7 +8,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize(Policy = "AnyAuthenticatedRole")]
+  [Authorize]
   [Route("shifts")]
   public class ShiftController : ControllerBase
   {
@@ -20,6 +20,7 @@ namespace ShiftManagerApi.Controllers
       _shiftService = shiftIShiftService;
     }
 
+    [Authorize(Policy = "AnyAuthenticatedRole")]
     [HttpGet]
     public async Task<ActionResult<PaginatedDto<ShiftDto>>> GetShifts([FromQuery] long? providerId, [FromQuery] long? clientId, [FromQuery] ShiftFilterDto filter)
     {
@@ -34,6 +35,7 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
+    [Authorize(Policy = "AnyAuthenticatedRole")]
     [HttpGet("{id}")]
     public async Task<ActionResult<ShiftDto>> GetById(long id)
     {
@@ -57,12 +59,19 @@ namespace ShiftManagerApi.Controllers
     }
 
 
+    [Authorize(Policy = "NonProvider")]
     [HttpPost]
     public async Task<ActionResult<ShiftDto>> Post(long clientId, CreateShiftDto createDto)
     {
       try
       {
-        var response = await _shiftService.Create(clientId, createDto);
+        var activeRole = GetActiveRole();
+        var response = activeRole switch
+        {
+          "Cliente" => await _shiftService.Create(GetUserId(), createDto),
+          _ => await _shiftService.Create(clientId, createDto)
+        };
+
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
       }
       catch (InvalidOperationException ex)
