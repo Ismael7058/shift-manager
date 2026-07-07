@@ -24,7 +24,13 @@ namespace ShiftManagerApi.Controllers
     public async Task<ActionResult<PaginatedDto<ShiftDto>>> GetShifts([FromQuery] long? providerId, [FromQuery] long? clientId, [FromQuery] ShiftFilterDto filter)
     {
       filter ??= new ShiftFilterDto();
-      var response = await _shiftService.GetShifts(providerId, clientId, filter);
+      var activeRole = GetActiveRole();
+      var response = activeRole switch
+      {
+        "Proveedor" => await _shiftService.GetShifts(GetUserId(), clientId, filter),
+        "Cliente" => await _shiftService.GetShifts(providerId, GetUserId(), filter),
+        _ => await _shiftService.GetShifts(providerId, clientId, filter)
+      };
       return Ok(response);
     }
 
