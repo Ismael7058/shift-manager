@@ -15,21 +15,18 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task<PaginatedDto<WorkSchedulesDto>> GetAll(long userId, WorkSchedulesFilterDto filter)
+    public async Task<PaginatedDto<WorkSchedulesDto>> GetAll(long? userId, WorkSchedulesFilterDto filter)
     {
-      var query = _context.WorkSchedules
-        .Where(ms => ms.ProviderId == userId)
-        .AsNoTracking()
-        .AsQueryable();
+      var query = _context.WorkSchedules.AsQueryable();
 
+      if (userId.HasValue) 
+        query = query.Where(ws => ws.ProviderId == userId);
+      
       if (filter.DayOfWeek.HasValue)
-      {
         query = query.Where(ms => ms.DayOfWeek == filter.DayOfWeek);
-      }
 
       if (filter.IsActive == 1 || filter.IsActive == 0)
         query = query.Where(ms => ms.IsActive == (filter.IsActive == 1));
-
 
       var totalCount = await query.CountAsync();
 
