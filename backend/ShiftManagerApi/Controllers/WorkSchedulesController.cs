@@ -62,7 +62,7 @@ namespace ShiftManagerApi.Controllers
         var response = activeRole switch
         {
           "Proveedor" => await _workSchedulesService.Create(GetUserId(), createDto),
-          _ => 
+          _ =>
           await _workSchedulesService.Create(providerId, createDto)
         };
 
@@ -74,12 +74,24 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPut("{providerId}/work-schedules/{id}")]
-    public async Task<ActionResult> Put(long providerId, long id, UpdateWorkSchedulesDto updateDto)
+    [Authorize(Policy = "AdminOProveedor")]
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Put(long id, UpdateWorkSchedulesDto updateDto)
     {
       try
       {
-        await _workSchedulesService.Update(providerId, id, updateDto);
+        var activeRole = GetActiveRole();
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _workSchedulesService.Update(GetUserId(), id, updateDto);
+            break;
+
+          default:
+            await _workSchedulesService.Update(null, id, updateDto);
+            break;
+        };
+
         return NoContent();
       }
       catch (InvalidOperationException ex)
