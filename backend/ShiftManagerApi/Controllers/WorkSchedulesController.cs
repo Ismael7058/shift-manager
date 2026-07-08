@@ -7,7 +7,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize]
+  [Authorize(Policy = "AdminOProveedor")]
   [Route("work-schedules")]
   public class WorkSchedulesController : ControllerBase
   {
@@ -18,7 +18,6 @@ namespace ShiftManagerApi.Controllers
       _workSchedulesService = workSchedulesService;
     }
 
-    [Authorize(Policy = "AdminOProveedor")]
     [HttpGet]
     public async Task<ActionResult<PaginatedDto<WorkSchedulesDto>>> GetAll([FromQuery] long? providerId, [FromQuery] WorkSchedulesFilterDto filterDto)
     {
@@ -32,7 +31,6 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
-    [Authorize(Policy = "AdminOProveedor")]
     [HttpGet("{id}")]
     public async Task<ActionResult<WorkSchedulesDto>> GetById(long id, [FromQuery] long? providerId)
     {
@@ -52,7 +50,6 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [Authorize(Policy = "AdminOProveedor")]
     [HttpPost]
     public async Task<ActionResult<WorkSchedulesDto>> Post(long providerId, CreateWorkSchedulesDto createDto)
     {
@@ -74,7 +71,6 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [Authorize(Policy = "AdminOProveedor")]
     [HttpPut("{id}")]
     public async Task<ActionResult> Put(long id, UpdateWorkSchedulesDto updateDto)
     {
