@@ -18,6 +18,7 @@ namespace ShiftManagerApi.Controllers
       _workSchedulesService = workSchedulesService;
     }
 
+    [Authorize(Policy = "AdminOProveedor")]
     [HttpGet]
     public async Task<ActionResult<PaginatedDto<WorkSchedulesDto>>> GetAll([FromQuery] long? providerId, [FromQuery] WorkSchedulesFilterDto filterDto)
     {
@@ -31,12 +32,19 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
-    [HttpGet("{providerId}/work-schedules/{id}")]
-    public async Task<ActionResult<WorkSchedulesDto>> GetById(long providerId, long id)
+    [Authorize(Policy = "AdminOProveedor")]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<WorkSchedulesDto>> GetById(long id, [FromQuery] long? providerId)
     {
       try
       {
-        return Ok(await _workSchedulesService.GetById(providerId, id));
+        var activeRole = GetActiveRole();
+        var response = activeRole switch
+        {
+          "Proveedor" => await _workSchedulesService.GetById(GetUserId(), id),
+          _ => await _workSchedulesService.GetById(providerId, id)
+        };
+        return Ok(response);
       }
       catch (KeyNotFoundException ex)
       {
