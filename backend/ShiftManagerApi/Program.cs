@@ -70,6 +70,9 @@ builder.Services.AddAuthorization(options =>
   options.AddPolicy("Cliente", policy => policy.RequireClaim("active_role", "Cliente"));
   options.AddPolicy("AdminORecepcion", policy => policy.RequireClaim("active_role", "Administrador","Recepcion"));
   options.AddPolicy("AdminOProveedor", policy => policy.RequireClaim("active_role", "Administrador","Proveedor"));
+  options.AddPolicy("AnyAuthenticatedRole", policy => policy.RequireClaim("active_role", "Administrador","Proveedor", "Recepcion", "Cliente"));
+  options.AddPolicy("NonProvider", policy => policy.RequireClaim("active_role", "Administrador", "Recepcion", "Cliente"));
+
 });
 
 builder.Services.AddAuthorization();
