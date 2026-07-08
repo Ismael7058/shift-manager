@@ -100,12 +100,23 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("{providerId}/work-schedules/{id}/active")]
-    public async Task<ActionResult> Patch(long providerId, long id, [FromBody] UpdateStatusDto statusDto)
+    [HttpPatch("{id}/active")]
+    public async Task<ActionResult> Patch(long id, [FromBody] UpdateStatusDto statusDto)
     {
       try
       {
-        await _workSchedulesService.SetIsActive(providerId, id, statusDto);
+        var activeRole = GetActiveRole();
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _workSchedulesService.SetIsActive(GetUserId(), id, statusDto);
+            break;
+
+          default:
+            await _workSchedulesService.SetIsActive(null, id, statusDto);
+            break;
+        };
+
         return NoContent();
       }
       catch (InvalidOperationException ex)

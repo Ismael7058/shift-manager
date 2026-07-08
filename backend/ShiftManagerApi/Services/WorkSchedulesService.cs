@@ -138,16 +138,32 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task SetIsActive(long userId, long workSchedulesId, UpdateStatusDto statusDto)    {
-      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
-        ps.ProviderId == userId
-        && ps.Id == workSchedulesId
+    public async Task SetIsActive(long? userId, long workSchedulesId, UpdateStatusDto statusDto)
+    {
+      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ws =>
+        ws.Id == workSchedulesId
+        && (!userId.HasValue || ws.ProviderId == userId)
       );
 
-      if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
+      if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado.");
+
+      if (workSchedules.IsActive == statusDto.IsActive)
+          return;
+
+      if (statusDto.IsActive)
+      {
+        var overlap = await _context.WorkSchedules.AnyAsync(ws =>
+          ws.Id != workSchedules.Id
+          && ws.ProviderId == workSchedules.ProviderId
+          && ws.DayOfWeek == workSchedules.DayOfWeek
+          && ws.IsActive == true
+        );
+
+        if (overlap)
+          throw new InvalidOperationException("El horario se superpone con una jornada ya existente para este día.");
+      }
 
       workSchedules.IsActive = statusDto.IsActive;
-
       await _context.SaveChangesAsync();
     }
 
