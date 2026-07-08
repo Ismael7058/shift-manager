@@ -15,21 +15,18 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task<PaginatedDto<WorkSchedulesDto>> GetAll(long userId, WorkSchedulesFilterDto filter)
+    public async Task<PaginatedDto<WorkSchedulesDto>> GetAll(long? userId, WorkSchedulesFilterDto filter)
     {
-      var query = _context.WorkSchedules
-        .Where(ms => ms.ProviderId == userId)
-        .AsNoTracking()
-        .AsQueryable();
+      var query = _context.WorkSchedules.AsQueryable();
 
+      if (userId.HasValue) 
+        query = query.Where(ws => ws.ProviderId == userId);
+      
       if (filter.DayOfWeek.HasValue)
-      {
         query = query.Where(ms => ms.DayOfWeek == filter.DayOfWeek);
-      }
 
       if (filter.IsActive == 1 || filter.IsActive == 0)
         query = query.Where(ms => ms.IsActive == (filter.IsActive == 1));
-
 
       var totalCount = await query.CountAsync();
 
@@ -61,12 +58,15 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public async Task<WorkSchedulesDto> GetById(long userId, long workSchedulesId)
+    public async Task<WorkSchedulesDto> GetById(long? userId, long workSchedulesId)
     {
-      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
-        ps.ProviderId == userId
-        && ps.Id == workSchedulesId
-      );
+      var query = _context.WorkSchedules.AsNoTracking().AsQueryable();
+
+      if (userId.HasValue)
+        query = query.Where(ws => ws.ProviderId == userId);
+
+      var workSchedules = await query
+        .FirstOrDefaultAsync(ws => ws.Id == workSchedulesId);
 
       if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
 
@@ -83,8 +83,11 @@ namespace ShiftManagerApi.Services
       return psDto;
     }
 
-    public async Task<WorkSchedulesDto> Create(long userId, CreateWorkSchedulesDto createDto)
+    public async Task<WorkSchedulesDto> Create(long? userId, CreateWorkSchedulesDto createDto)
     {
+      if (!userId.HasValue) 
+        throw new InvalidOperationException("El proveedor es obligatorio.");
+
       var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ws =>
         ws.ProviderId == userId
         && ws.DayOfWeek == createDto.DayOfWeek
@@ -95,7 +98,7 @@ namespace ShiftManagerApi.Services
 
       var createWK = new WorkSchedules
       {
-        ProviderId = userId,
+        ProviderId = userId.Value,
         DayOfWeek = createDto.DayOfWeek,
         StartTime = createDto.StartTime,
         EndTime = createDto.EndTime,
@@ -108,7 +111,7 @@ namespace ShiftManagerApi.Services
       return new WorkSchedulesDto
       {
         Id = createWK.Id,
-        ProviderId = userId,
+        ProviderId = userId.Value,
         DayOfWeek = createWK.DayOfWeek,
         StartTime = createWK.StartTime,
         EndTime = createWK.EndTime,
@@ -116,11 +119,14 @@ namespace ShiftManagerApi.Services
       };
     }
 
-    public async Task Update(long userId, long workSchedulesId, UpdateWorkSchedulesDto updateDto)
+    public async Task Update(long? userId, long workSchedulesId, UpdateWorkSchedulesDto updateDto)
     {
-      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
-        ps.ProviderId == userId
-        && ps.Id == workSchedulesId
+      var query = _context.WorkSchedules.AsNoTracking().AsQueryable();
+      if(userId.HasValue)
+        query = query.Where(ws => ws.ProviderId == userId);
+
+      var workSchedules = await query.FirstOrDefaultAsync(ws =>
+       ws.Id == workSchedulesId
       );
 
       if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
@@ -132,16 +138,32 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task SetIsActive(long userId, long workSchedulesId, UpdateStatusDto statusDto)    {
-      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ps =>
-        ps.ProviderId == userId
-        && ps.Id == workSchedulesId
+    public async Task SetIsActive(long? userId, long workSchedulesId, UpdateStatusDto statusDto)
+    {
+      var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ws =>
+        ws.Id == workSchedulesId
+        && (!userId.HasValue || ws.ProviderId == userId)
       );
 
-      if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado");
+      if (workSchedules == null) throw new KeyNotFoundException("Horario de trabajo no encontrado.");
+
+      if (workSchedules.IsActive == statusDto.IsActive)
+          return;
+
+      if (statusDto.IsActive)
+      {
+        var overlap = await _context.WorkSchedules.AnyAsync(ws =>
+          ws.Id != workSchedules.Id
+          && ws.ProviderId == workSchedules.ProviderId
+          && ws.DayOfWeek == workSchedules.DayOfWeek
+          && ws.IsActive == true
+        );
+
+        if (overlap)
+          throw new InvalidOperationException("El horario se superpone con una jornada ya existente para este día.");
+      }
 
       workSchedules.IsActive = statusDto.IsActive;
-
       await _context.SaveChangesAsync();
     }
 
