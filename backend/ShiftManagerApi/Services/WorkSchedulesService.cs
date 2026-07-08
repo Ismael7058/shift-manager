@@ -83,8 +83,11 @@ namespace ShiftManagerApi.Services
       return psDto;
     }
 
-    public async Task<WorkSchedulesDto> Create(long userId, CreateWorkSchedulesDto createDto)
+    public async Task<WorkSchedulesDto> Create(long? userId, CreateWorkSchedulesDto createDto)
     {
+      if (!userId.HasValue) 
+        throw new InvalidOperationException("El proveedor es obligatorio.");
+
       var workSchedules = await _context.WorkSchedules.FirstOrDefaultAsync(ws =>
         ws.ProviderId == userId
         && ws.DayOfWeek == createDto.DayOfWeek
@@ -95,7 +98,7 @@ namespace ShiftManagerApi.Services
 
       var createWK = new WorkSchedules
       {
-        ProviderId = userId,
+        ProviderId = userId.Value,
         DayOfWeek = createDto.DayOfWeek,
         StartTime = createDto.StartTime,
         EndTime = createDto.EndTime,
@@ -108,7 +111,7 @@ namespace ShiftManagerApi.Services
       return new WorkSchedulesDto
       {
         Id = createWK.Id,
-        ProviderId = userId,
+        ProviderId = userId.Value,
         DayOfWeek = createWK.DayOfWeek,
         StartTime = createWK.StartTime,
         EndTime = createWK.EndTime,

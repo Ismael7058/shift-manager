@@ -52,12 +52,20 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPost("{providerId}/work-schedules")]
+    [Authorize(Policy = "AdminOProveedor")]
+    [HttpPost]
     public async Task<ActionResult<WorkSchedulesDto>> Post(long providerId, CreateWorkSchedulesDto createDto)
     {
       try
       {
-        var response = await _workSchedulesService.Create(providerId, createDto);
+        var activeRole = GetActiveRole();
+        var response = activeRole switch
+        {
+          "Proveedor" => await _workSchedulesService.Create(GetUserId(), createDto),
+          _ => 
+          await _workSchedulesService.Create(providerId, createDto)
+        };
+
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
       }
       catch (InvalidOperationException ex)
