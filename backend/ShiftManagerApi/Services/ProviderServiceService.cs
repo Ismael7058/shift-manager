@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql.Internal;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Entity;
@@ -15,53 +16,63 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long userId, ProviderServiceFilterDto filter)
+    public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long? userId, long? serviceId, ProviderServiceFilterDto filter)
     {
-      var query = _context.ProviderService
-        .Include(ms => ms.Service)
-        .Where(ms => ms.ProviderId == userId)
-        .AsNoTracking()
-        .AsQueryable();
+      var query = _context.ProviderService.Include(ps => ps.Service).AsNoTracking().AsQueryable();
+
+      if(userId.HasValue)
+        query = query.Where(ps => ps.ProviderId == userId);
+
+      if(serviceId.HasValue)
+        query = query.Where(ps => ps.ServiceId == serviceId);
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
-      {
-        query = query.Where(ms => ms.Service.Name.Contains(filter.Name));
-      }
+        query = query.Where(ps => ps.Service.Name.Contains(filter.Name));
 
-      if (filter.DurationMinutes.HasValue)
-      {
-        query = query.Where(ms => ms.DurationMinutes == filter.DurationMinutes);
-      }
+      if (filter.MinPrice.HasValue)
+        query = query.Where(ms => ms.Price >= filter.MinPrice);
 
-      if (filter.IsActive == 1 || filter.IsActive == 0)
-        query = query.Where(ms => ms.Service.IsActive == (filter.IsActive == 1));
+      if (filter.MaxPrice.HasValue)
+        query = query.Where(ms => ms.Price <= filter.MaxPrice);
 
-      if (filter.Price.HasValue)
+      if (filter.MinDurationMinutes.HasValue)
+        query = query.Where(ms => ms.DurationMinutes >= filter.MinDurationMinutes);
+
+      if (filter.MaxDurationMinutes.HasValue)
+        query = query.Where(ms => ms.DurationMinutes <= filter.MaxDurationMinutes);
+
+      if (filter.IsActive == 1)
       {
-        query = query.Where(ms => ms.Price == filter.Price);
-      }
+        query = query.Where(ps => ps.DeletedAt == null && ps.Service.IsActive == true);
+      }else if (filter.IsActive == 0)
+      {
+        query = query.Where(ps => ps.DeletedAt != null || ps.Service.IsActive == false);
+      }      
 
       var totalCount = await query.CountAsync();
 
       query = filter.SortBy?.ToLower() switch
       {
-        "name" => filter.IsDescending ? query.OrderByDescending(ms => ms.Service.Name) : query.OrderBy(ms => ms.Service.Name),
-        "price" => filter.IsDescending ? query.OrderByDescending(ms => ms.Price) : query.OrderBy(ms => ms.Price),
-        _ => filter.IsDescending ? query.OrderByDescending(ms => ms.ServiceId) : query.OrderBy(ms => ms.ServiceId)
+        "name" => filter.IsDescending ? query.OrderByDescending(ps => ps.Service.Name) : query.OrderBy(ps => ps.Service.Name),
+        "price" => filter.IsDescending ? query.OrderByDescending(ps => ps.Price) : query.OrderBy(ps => ps.Price),
+        _ => filter.IsDescending ? query.OrderByDescending(ps => ps.ServiceId) : query.OrderBy(ps => ps.ServiceId)
       };
 
       var services = await query
         .Skip((filter.PageNumber - 1) * filter.PageSize)
         .Take(filter.PageSize)
-        .Select(ms => new ProviderServiceDto
+        .Select(ps => new ProviderServiceDto
         {
-          ProviderId = ms.ProviderId,
-          ServiceId = ms.ServiceId,
-          Name = ms.Service.Name,
-          Description = ms.Service.Description,
-          DurationMinutes = ms.DurationMinutes,
-          DurationMinutesBase = ms.Service.DurationMinutes,
-          Price = ms.Price
+          ProviderId = ps.ProviderId,
+          ServiceId = ps.ServiceId,
+          Name = ps.Service.Name,
+          Description = ps.Service.Description,
+          DurationMinutes = ps.DurationMinutes,
+          DurationMinutesBase = ps.Service.DurationMinutes,
+          Price = ps.Price,
+          Status = ps.Service.IsActive == false 
+            ? 2
+            : (ps.DeletedAt != null ? 0 : 1)
         }).ToListAsync();
 
       return new PaginatedDto<ProviderServiceDto>
