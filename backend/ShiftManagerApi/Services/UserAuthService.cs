@@ -10,11 +10,14 @@ namespace ShiftManagerApi.Services
   {
     private readonly ShiftManagerContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IFileService _fileService;
+    private const string FOLDER_PATH = "Uploads/Profile";
 
-    public UserAuthService(ShiftManagerContext context, IConfiguration configuration)
+    public UserAuthService(ShiftManagerContext context, IFileService fileService, IConfiguration configuration)
     {
       _context = context;
       _configuration = configuration;
+      _fileService = fileService;
     }
 
     public async Task<PaginatedDto<UserDto>> GetAll(UserFilterDto filter)
@@ -66,6 +69,7 @@ namespace ShiftManagerApi.Services
           PhoneNumber = u.UserProfile.PhoneNumber,
           Username = u.Username,
           Email = u.Email,
+          PictureURL = u.UserProfile.PictureURL,
           Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList()
         }
         )
@@ -250,7 +254,8 @@ namespace ShiftManagerApi.Services
         Gender = user.UserProfile.Gender.ToString(),
         PhoneNumber = user.UserProfile.PhoneNumber,
         Username = user.Username,
-        Email = user.Email
+        Email = user.Email,
+        PictureURL = user.UserProfile.PictureURL
       };
 
       if (includeRol) userDto.Roles = user.UserRole.Select(ur => ur.Role.Name).ToList();
@@ -269,6 +274,54 @@ namespace ShiftManagerApi.Services
       auth.PasswordHash = BC.EnhancedHashPassword(editPasswordProfileDto.NewPassword, _configuration.GetValue<int>("BCrypt:WorkFactor", 13));
       auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
+    }
+
+    public async Task<string?> UpadetePictureProfile(long id, IFormFile? file)
+    {
+      var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
+
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+
+      if (!user.UserAuth.IsActive)
+        throw new InvalidOperationException("Usuario no disponible");
+
+      var priviousPicture = user.PictureURL;
+
+      var pictureURL = (file != null && file.Length > 0) ?
+        $"/{FOLDER_PATH}/{await _fileService.SaveFile(file, FOLDER_PATH)}"
+        : null;
+
+      user.PictureURL = pictureURL ;
+      await _context.SaveChangesAsync();
+
+      if (!string.IsNullOrEmpty(priviousPicture))
+        await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
+        // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
+
+      return user.PictureURL;
+    }
+
+    public async Task DeletePictureProfile(long id)
+    {
+      var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
+
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+
+      if (!user.UserAuth.IsActive)
+        throw new InvalidOperationException("Usuario no disponible");
+
+      if (string.IsNullOrWhiteSpace(user.PictureURL))
+        return;
+
+      var priviousPicture = user.PictureURL;
+
+      user.PictureURL = null ;
+      await _context.SaveChangesAsync();
+
+      await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
+      // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
     }
   }
 }

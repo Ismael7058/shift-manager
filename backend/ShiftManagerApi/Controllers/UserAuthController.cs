@@ -109,5 +109,42 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
+
+    [HttpPost("{id}/picture")]
+    public async Task<ActionResult> UpdatePicture(long id, IFormFile? file)
+    {
+      try
+      {
+        var PictureURL = _userAuthService.UpadetePictureProfile(id, file);
+
+        return Ok(PictureURL);
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    [HttpDelete("{id}/picture")]
+    public async Task<ActionResult> DeletePicture(long id)
+    {
+      try
+      {
+        var PictureURL = _userAuthService.DeletePictureProfile(id);
+
+        return Ok(PictureURL);
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+      catch(Exception )
+      {
+        return StatusCode(500, new 
+        { 
+            message = "Ocurrió un error inesperado al eliminar la imagen de perfil." 
+        });
+      }
+    }
   }
 }

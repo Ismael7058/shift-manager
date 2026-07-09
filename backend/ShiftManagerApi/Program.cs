@@ -27,6 +27,7 @@ builder.Services.AddScoped<IProviderServiceService, ProviderServiceService>();
 builder.Services.AddScoped<IWorkSchedulesService, WorkSchedulesService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IProviderService, ProviderService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -72,7 +73,7 @@ builder.Services.AddAuthorization(options =>
   options.AddPolicy("AdminOProveedor", policy => policy.RequireClaim("active_role", "Administrador","Proveedor"));
   options.AddPolicy("AnyAuthenticatedRole", policy => policy.RequireClaim("active_role", "Administrador","Proveedor", "Recepcion", "Cliente"));
   options.AddPolicy("NonProvider", policy => policy.RequireClaim("active_role", "Administrador", "Recepcion", "Cliente"));
-
+  options.AddPolicy("NonReception", policy => policy.RequireClaim("active_role", "Administrador", "Recepcion", "Cliente"));
 });
 
 builder.Services.AddAuthorization();
