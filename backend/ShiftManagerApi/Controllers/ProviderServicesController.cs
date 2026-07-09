@@ -11,11 +11,11 @@ namespace ShiftManagerApi.Controllers
   [Route("provider-services")]
   public class ProviderServiceController : ControllerBase
   {
-    private IProviderServiceService _privderService;
+    private IProviderServiceService _providerService;
 
     public ProviderServiceController(IProviderServiceService providerService)
     {
-      _privderService = providerService;
+      _providerService = providerService;
     }
 
     [HttpGet]
@@ -26,19 +26,30 @@ namespace ShiftManagerApi.Controllers
       var activeRole = GetActiveRole();
       var response = activeRole switch
       {
-        "Proveedor" => await _privderService.GetAll(GetUserId(), serviceId, filterDto),
-        _ => await _privderService.GetAll(providerId, serviceId, filterDto)
+        "Proveedor" => await _providerService.GetAll(GetUserId(), serviceId, filterDto),
+        _ => await _providerService.GetAll(providerId, serviceId, filterDto)
       };
 
       return Ok(response);
     }
 
-    [HttpGet("{providerId}/services/{id}")]
-    public async Task<ActionResult<ProviderServiceDto>> GetById(long providerId, long id)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProviderServiceDto>> GetById(long id, [FromQuery] long providerId)
     {
       try
       {
-        return Ok(await _privderService.GetById(providerId, id));
+        var activeRole = GetActiveRole();
+
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _providerService.GetById(GetUserId(), id);
+            break;
+          default:
+            await _providerService.GetById(providerId, id);
+            break;
+        }
+        return Ok();
       }
       catch (KeyNotFoundException ex)
       {
@@ -51,7 +62,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var ps = await _privderService.Create(providerId, createDto);
+        var ps = await _providerService.Create(providerId, createDto);
         return Ok(ps);
       }
       catch (InvalidOperationException ex)
@@ -65,7 +76,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        await _privderService.Update(providerId, id, updateDto);
+        await _providerService.Update(providerId, id, updateDto);
         return NoContent();
       }
       catch (InvalidOperationException ex)
@@ -79,7 +90,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        await _privderService.Delete(providerId, id);
+        await _providerService.Delete(providerId, id);
         return NoContent();
       }
       catch (InvalidOperationException ex)
