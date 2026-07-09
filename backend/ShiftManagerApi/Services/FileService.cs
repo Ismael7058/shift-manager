@@ -5,6 +5,7 @@ namespace ShiftManagerApi.Services
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _env;
+        private const long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
         public FileService(IWebHostEnvironment env)
         {
@@ -19,6 +20,12 @@ namespace ShiftManagerApi.Services
             if (!allowedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Extension de archivo no permitida.");
+            }
+
+
+            if (file.Length > MAX_FILE_SIZE)
+            {
+                throw new InvalidOperationException("El archivo no puede superar los 10 MB.");
             }
 
             var directoryPath = Path.Combine(_env.WebRootPath, folderPath);
