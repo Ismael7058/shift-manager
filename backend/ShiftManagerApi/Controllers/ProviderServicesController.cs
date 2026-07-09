@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShiftManagerApi.Dtos;
@@ -6,8 +7,8 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize(Policy = "Administrador")]
-  [Route("providers")]
+  [Authorize(Policy = "AdminOProveedor")]
+  [Route("provider-services")]
   public class ProviderServiceController : ControllerBase
   {
     private IProviderServiceService _privderService;
@@ -17,12 +18,18 @@ namespace ShiftManagerApi.Controllers
       _privderService = providerService;
     }
 
-    [HttpGet("{providerId}/services")]
-    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetAll([FromQuery] ProviderServiceFilterDto filterDto, long providerId)
+    [HttpGet]
+    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetAll([FromQuery] long? providerId, [FromQuery] long? serviceId, [FromQuery] ProviderServiceFilterDto filterDto)
     {
       filterDto ??= new ProviderServiceFilterDto();
 
-      var response = await _privderService.GetAll(providerId, filterDto);
+      var activeRole = GetActiveRole();
+      var response = activeRole switch
+      {
+        "Proveedor" => await _privderService.GetAll(GetUserId(), serviceId, filterDto),
+        _ => await _privderService.GetAll(providerId, serviceId, filterDto)
+      };
+
       return Ok(response);
     }
 
@@ -79,6 +86,30 @@ namespace ShiftManagerApi.Controllers
       {
         return Conflict(new { message = ex.Message });
       }
+    }
+
+
+    private long GetUserId()
+    {
+      var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c =>
+          c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
+
+      if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o ID inválido");
+      }
+      return userId;
+    }
+
+    private string GetActiveRole()
+    {
+      var activeRole = User.FindFirst("active_role")?.Value;
+
+      if (string.IsNullOrEmpty(activeRole))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o rol activo inválido.");
+      }
+      return activeRole;
     }
 
   }
