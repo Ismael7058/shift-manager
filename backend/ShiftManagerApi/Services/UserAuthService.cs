@@ -69,6 +69,7 @@ namespace ShiftManagerApi.Services
           PhoneNumber = u.UserProfile.PhoneNumber,
           Username = u.Username,
           Email = u.Email,
+          PictureURL = u.UserProfile.PictureURL,
           Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList()
         }
         )
@@ -253,7 +254,8 @@ namespace ShiftManagerApi.Services
         Gender = user.UserProfile.Gender.ToString(),
         PhoneNumber = user.UserProfile.PhoneNumber,
         Username = user.Username,
-        Email = user.Email
+        Email = user.Email,
+        PictureURL = user.UserProfile.PictureURL
       };
 
       if (includeRol) userDto.Roles = user.UserRole.Select(ur => ur.Role.Name).ToList();
