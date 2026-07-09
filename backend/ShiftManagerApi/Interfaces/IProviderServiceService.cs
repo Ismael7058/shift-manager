@@ -8,6 +8,6 @@ namespace ShiftManagerApi.Interfaces
     Task<ProviderServiceDto> GetById(long userId, long serviceId);
     Task<ProviderServiceDto> Create(long userId, CreateProviderServiceDto createDto);
     Task Update(long userId, long serviceId, UpdateProviderServiceDto updateDto);
-    Task Delete(long userId, long serviceId);
+    Task SoftDelete(long userId, long serviceId);
   }
 }

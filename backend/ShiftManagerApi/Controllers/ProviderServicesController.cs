@@ -102,12 +102,22 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpDelete("{providerId}/services/{id}")]
-    public async Task<ActionResult> Delete(long providerId, long id)
+    [HttpPatch("{id}")]
+    public async Task<ActionResult> Patch(long id, long providerId)
     {
       try
       {
-        await _providerService.Delete(providerId, id);
+
+        var activeRole = GetActiveRole();
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _providerService.SoftDelete(GetUserId(), id);
+            break;
+          default:
+            await _providerService.SoftDelete(providerId, id);
+            break;
+        }; 
         return NoContent();
       }
       catch (InvalidOperationException ex)

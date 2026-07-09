@@ -156,13 +156,15 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task Delete(long userId, long serviceId)
+    public async Task SoftDelete(long userId, long serviceId)
     {
       var providerService = await _context.ProviderService.FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
       if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado.");
 
-      _context.ProviderService.Remove(providerService);
+      if (providerService.DeletedAt != null)
+        return;
 
+      providerService.DeletedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync(); 
     }
   }
