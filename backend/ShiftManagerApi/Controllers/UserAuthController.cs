@@ -111,7 +111,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpPost("{id}/picture")]
-    public async Task<ActionResult> UpdatePicture(long id, IFormFile file)
+    public async Task<ActionResult> UpdatePicture(long id, IFormFile? file)
     {
       try
       {

@@ -276,7 +276,7 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task<string?> UpadetePictureProfile(long id, IFormFile file)
+    public async Task<string?> UpadetePictureProfile(long id, IFormFile? file)
     {
       var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
 
@@ -288,7 +288,7 @@ namespace ShiftManagerApi.Services
 
       var priviousPicture = user.PictureURL;
 
-      var pictureURL = (file.Length > 0) ?
+      var pictureURL = (file != null && file.Length > 0) ?
         $"/{FOLDER_PATH}/{await _fileService.SaveFile(file, FOLDER_PATH)}"
         : null;
 
