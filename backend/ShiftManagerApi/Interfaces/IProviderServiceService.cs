@@ -9,5 +9,6 @@ namespace ShiftManagerApi.Interfaces
     Task<ProviderServiceDto> Create(long userId, CreateProviderServiceDto createDto);
     Task Update(long userId, long serviceId, UpdateProviderServiceDto updateDto);
     Task SoftDelete(long userId, long serviceId);
+    Task Active(long userId, long serviceId);
   }
 }

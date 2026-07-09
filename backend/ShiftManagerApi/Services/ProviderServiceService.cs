@@ -167,5 +167,17 @@ namespace ShiftManagerApi.Services
       providerService.DeletedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync(); 
     }
+
+    public async Task Active(long userId, long serviceId)
+    {
+      var providerService = await _context.ProviderService.FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
+      if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado.");
+
+      if (providerService.DeletedAt == null)
+        return;
+
+      providerService.DeletedAt = null;
+      await _context.SaveChangesAsync(); 
+    }
   }
 }

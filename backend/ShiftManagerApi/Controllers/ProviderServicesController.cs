@@ -126,6 +126,29 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
+    [HttpPatch("{id}/active")]
+    public async Task<ActionResult> Active(long id, long providerId)
+    {
+      try
+      {
+        var activeRole = GetActiveRole();
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _providerService.Active(GetUserId(), id);
+            break;
+          default:
+            await _providerService.Active(providerId, id);
+            break;
+        }; 
+        
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
 
     private long GetUserId()
     {
