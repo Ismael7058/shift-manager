@@ -11,22 +11,30 @@ namespace ShiftManagerApi.Services
             _env = env;
         }
 
-        public async Task<string> SaveFile(IFormFile archivo, string folderPath)
+        public async Task<string> SaveFile(IFormFile file, string folderPath)
         {
-            var destinatationFolder = Path.Combine(_env.WebRootPath, folderPath);
+            var ext = Path.GetExtension(file.FileName);
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
 
-            if (!Directory.Exists(destinatationFolder))
+            if (!allowedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
             {
-                Directory.CreateDirectory(destinatationFolder);
+                throw new InvalidOperationException("Extension de archivo no permitida.");
             }
 
-            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(archivo.FileName)}";
+            var directoryPath = Path.Combine(_env.WebRootPath, folderPath);
 
-            var path = Path.Combine(destinatationFolder, fileName);
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            var fileName = $"{Guid.NewGuid()}{ext}";
+
+            var path = Path.Combine(directoryPath, fileName);
 
             using (var stream = new FileStream(path, FileMode.Create))
             {
-                await archivo.CopyToAsync(stream);
+                await file.CopyToAsync(stream);
             }
 
             return fileName;
