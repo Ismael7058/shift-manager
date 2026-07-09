@@ -114,7 +114,7 @@ namespace ShiftManagerApi.Services
         if (providerService != null) throw new InvalidOperationException("El proveedor ya tiene registrado este servicio.");
 
 
-        var service = await _context.Service.Where(s => s.Id == createDto.ServiceId).FirstOrDefaultAsync();
+        var service = await _context.Service.Where(s => s.Id == createDto.ServiceId || s.IsActive == false).FirstOrDefaultAsync();
 
         if (service == null) throw new InvalidOperationException("Servicio no disponible.");
 
