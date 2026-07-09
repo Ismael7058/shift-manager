@@ -276,7 +276,7 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task UpadetePictureProfile(long id, IFormFile file)
+    public async Task<string?> UpadetePictureProfile(long id, IFormFile file)
     {
       var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
 
@@ -298,6 +298,8 @@ namespace ShiftManagerApi.Services
       if (!string.IsNullOrEmpty(priviousPicture))
         await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
         // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
+
+      return user.PictureURL;
     }
 
     public async Task DeletePictureProfile(long id)
