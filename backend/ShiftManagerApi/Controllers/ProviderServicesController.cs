@@ -40,16 +40,12 @@ namespace ShiftManagerApi.Controllers
       {
         var activeRole = GetActiveRole();
 
-        switch (activeRole)
+        var response = activeRole switch
         {
-          case "Proveedor":
-            await _providerService.GetById(GetUserId(), id);
-            break;
-          default:
-            await _providerService.GetById(providerId, id);
-            break;
-        }
-        return Ok();
+          "Proveedor" => await _providerService.GetById(GetUserId(), id),
+          _ => await _providerService.GetById(providerId, id)
+        };
+        return Ok(response);
       }
       catch (KeyNotFoundException ex)
       {
