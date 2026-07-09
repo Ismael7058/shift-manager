@@ -124,7 +124,7 @@ namespace ShiftManagerApi.Services
 
       var activeRole = roles.OrderBy(r => r).FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
 
-      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
+      var accessToken = _tokenService.GenerateToken(userAuth, roles, activeRole);
 
       var userDto = new UserDto
       {
@@ -142,7 +142,7 @@ namespace ShiftManagerApi.Services
       return new AuthTokenDto
       {
         AccessToken = accessToken,
-        Expiration = DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(15)),
+        Expiration = DateOnly.FromDateTime(DateTime.UtcNow.AddMinutes(25)),
         User = userDto,
         RoleActive = activeRole
       };
@@ -151,7 +151,6 @@ namespace ShiftManagerApi.Services
     public async Task GenerateAndSetTokenCookie(long userId, RoleDto? role)
     {
       var userAuth = await _context.UserAuths
-          .Include(u => u.UserProfile)
           .FirstOrDefaultAsync(u => u.UserId == userId);
 
       if (userAuth == null) throw new UnauthorizedAccessException("Usuario no encontrado");
@@ -169,7 +168,7 @@ namespace ShiftManagerApi.Services
             ?? throw new InvalidOperationException($"El usuario no tiene el rol {role.Name}.")
         : roles.OrderBy(r => r).FirstOrDefault() ?? throw new InvalidOperationException("El usuario no tiene roles asignados.");
 
-      var accessToken = _tokenService.GenerateToken(userAuth, userAuth.UserProfile, roles, activeRole);
+      var accessToken = _tokenService.GenerateToken(userAuth, roles, activeRole);
       _cookieService.SetTokenCookie(accessToken);
     }
   }

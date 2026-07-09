@@ -4,6 +4,6 @@ namespace ShiftManagerApi.Interfaces
 {
     public interface ITokenService
     {
-        string GenerateToken(UserAuth userAuth, UserProfile userProfile, List<string> roles, string activeRole);
+        string GenerateToken(UserAuth userAuth, List<string> roles, string activeRole);
     }
 }
