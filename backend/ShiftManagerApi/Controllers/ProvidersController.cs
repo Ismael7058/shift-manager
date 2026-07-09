@@ -28,7 +28,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpGet("{id}/services")]
-    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetServices(long id, ProviderServiceFilterDto filter)
+    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetServices(long id, [FromQuery] ProviderServiceFilterDto filter)
     {
       filter ??= new ProviderServiceFilterDto();
       filter.IsActive = 1;
