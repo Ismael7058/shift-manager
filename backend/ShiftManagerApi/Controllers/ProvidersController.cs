@@ -11,10 +11,12 @@ namespace ShiftManagerApi.Controllers
   public class ProvidersController : ControllerBase
   {
     private readonly IProviderService _providerService;
+    private readonly IProviderServiceService _providerServiceService;
 
-    public ProvidersController(IProviderService providerService)
+    public ProvidersController(IProviderService providerService, IProviderServiceService providerServiceService)
     {
       _providerService = providerService;
+      _providerServiceService = providerServiceService;
     }
 
     [HttpGet]
@@ -22,6 +24,15 @@ namespace ShiftManagerApi.Controllers
     {
       filter ??= new ProviderFilterDto();
       var response = await _providerService.GetAll(filter); 
+      return Ok(response);
+    }
+
+    [HttpGet("{id}/services")]
+    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetServices(long id, ProviderServiceFilterDto filter)
+    {
+      filter ??= new ProviderServiceFilterDto();
+      filter.IsActive = 1;
+      var response = await _providerServiceService.GetAll(id, null, filter);
       return Ok(response);
     }
 
