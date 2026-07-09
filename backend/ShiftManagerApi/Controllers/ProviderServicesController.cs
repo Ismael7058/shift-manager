@@ -78,12 +78,22 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPut("{providerId}/services/{id}")]
-    public async Task<ActionResult> Put(long providerId, long id, UpdateProviderServiceDto updateDto)
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Put(long id, long providerId, UpdateProviderServiceDto updateDto)
     {
       try
       {
-        await _providerService.Update(providerId, id, updateDto);
+        var activeRole = GetActiveRole();
+
+        switch (activeRole)
+        {
+          case "Proveedor":
+            await _providerService.Update(GetUserId(), id, updateDto);
+            break;
+          default:
+            await _providerService.Update(providerId, id, updateDto);
+            break;
+        };
         return NoContent();
       }
       catch (InvalidOperationException ex)
