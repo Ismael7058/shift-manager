@@ -198,38 +198,43 @@ namespace ShiftManagerApi.Services
      var query = _context.Shift
         .AsQueryable();
 
+      //Filtrar por proveedor
       if (providerId.HasValue)
-      {
         query = query.Where(ms => ms.ProviderId == providerId);
-      }
+      if (!string.IsNullOrWhiteSpace(filter.ProviderName) && !providerId.HasValue)
+        query = query.Where(u => 
+          u.Provider.UserProfile.FirstName.ToLower().Contains(filter.ProviderName.ToLower())
+          || u.Provider.UserProfile.LastName.ToLower().Contains(filter.ProviderName.ToLower())
+        );
+
+      //Filtrar por cliente
       if (clientId.HasValue)
-      {
         query = query.Where(ms => ms.ClientId == clientId);
+      if (!string.IsNullOrWhiteSpace(filter.ClientName) && !clientId.HasValue)
+      {
+        query = query.Where(u => 
+          u.Client.UserProfile.FirstName.ToLower().Contains(filter.ClientName.ToLower())
+          || u.Client.UserProfile.LastName.ToLower().Contains(filter.ClientName.ToLower())
+        );
       }
+
       if (filter.ServiceId.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Any(si => si.ServiceId == filter.ServiceId));
-      }
+
+      // Filtrar por rango de fechas
       if (filter.DateFrom.HasValue)
-      {
         query = query.Where(ms => ms.StartAt >= filter.DateFrom);
-      }
       if (filter.DateTo.HasValue)
-      {
         query = query.Where(ms => ms.StartAt <= filter.DateTo);
-      }
+
+      // Filtrar por rango de precios
       if (filter.MinPrice.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) >= filter.MinPrice);
-      }
       if (filter.MaxPrice.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) <= filter.MaxPrice);
-      }
+      
       if (filter.Statuses != null && filter.Statuses.Any())
-      {
         query = query.Where(ms => filter.Statuses.Contains(ms.Status));
-      }
 
       var totalCount = await query.CountAsync();
 
