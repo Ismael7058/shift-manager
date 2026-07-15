@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
+
 namespace ShiftManagerApi.Entity
 {
   public class UserProfile
@@ -13,6 +16,7 @@ namespace ShiftManagerApi.Entity
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
 
+    [NotMapped]
     public IFormFile? Picture { get; set; } 
     public UserAuth UserAuth { get; set; } = null!;
     public List<ProviderService> ProviderService { get; set; } = new();
