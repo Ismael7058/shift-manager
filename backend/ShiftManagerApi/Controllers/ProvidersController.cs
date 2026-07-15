@@ -20,7 +20,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpGet]
-    public async Task<ActionResult<PaginatedDto<UserDto>>> GetProviders([FromQuery] ProviderFilterDto filter)
+    public async Task<ActionResult<PaginatedDto<ProviderDto>>> GetProviders([FromQuery] ProviderFilterDto filter)
     {
       filter ??= new ProviderFilterDto();
       var response = await _providerService.GetAll(filter); 
