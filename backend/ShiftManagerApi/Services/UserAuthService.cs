@@ -28,12 +28,15 @@ namespace ShiftManagerApi.Services
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
         query = query.Where(u =>
-            u.UserProfile.FirstName.Contains(filter.Name)
-            || u.UserProfile.LastName.Contains(filter.Name)
+            u.UserProfile.FirstName.ToLower().Contains(filter.Name.ToLower())
+            || u.UserProfile.LastName.ToLower().Contains(filter.Name.ToLower())
         );
 
       if (!string.IsNullOrWhiteSpace(filter.Email))
-        query = query.Where(u => u.Email.Contains(filter.Email));
+        query = query.Where(u => u.Email.ToLower().Contains(filter.Email.ToLower()));
+
+      if (!string.IsNullOrWhiteSpace(filter.Username))
+        query = query.Where(u => u.Username.ToLower().Contains(filter.Username.ToLower()));
 
       if (filter.Role != null)
         query = query.Where(u => u.UserRole.Any(r => r.RoleId == filter.Role));
