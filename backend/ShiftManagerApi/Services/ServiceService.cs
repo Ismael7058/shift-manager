@@ -20,14 +20,13 @@ namespace ShiftManagerApi.Services
       var query = _context.Service.AsNoTracking().AsQueryable();
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
-      {
-        query = query.Where(u => u.Name.Contains(filter.Name));
-      }
+        query = query.Where(u => u.Name.ToLower().Contains(filter.Name.ToLower()));
 
-      if (filter.DurationMinutes.HasValue)
-      {
-        query = query.Where(u => u.DurationMinutes == filter.DurationMinutes);
-      }
+      // Filtrar por duracion
+      if (filter.MinDurationMinutes.HasValue)
+        query = query.Where(u => u.DurationMinutes >= filter.MinDurationMinutes);
+      if (filter.MaxDurationMinutes.HasValue)
+        query = query.Where(u => u.DurationMinutes <= filter.MaxDurationMinutes);
 
       if (filter.IsActive == 1 || filter.IsActive == 0)
         query = query.Where(u => u.IsActive == (filter.IsActive == 0 ? false : true));
