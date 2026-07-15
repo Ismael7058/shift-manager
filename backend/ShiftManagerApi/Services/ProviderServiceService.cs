@@ -23,21 +23,21 @@ namespace ShiftManagerApi.Services
       if(userId.HasValue)
         query = query.Where(ps => ps.ProviderId == userId);
 
+      // Filtrar por servicio
       if(serviceId.HasValue)
         query = query.Where(ps => ps.ServiceId == serviceId);
-
       if (!string.IsNullOrWhiteSpace(filter.Name))
-        query = query.Where(ps => ps.Service.Name.Contains(filter.Name));
+        query = query.Where(ps => ps.Service.Name.ToLower().Contains(filter.Name.ToLower()));
 
+      // Filtrar por precio
       if (filter.MinPrice.HasValue)
         query = query.Where(ms => ms.Price >= filter.MinPrice);
-
       if (filter.MaxPrice.HasValue)
         query = query.Where(ms => ms.Price <= filter.MaxPrice);
 
+      // Filtrar por duracion
       if (filter.MinDurationMinutes.HasValue)
         query = query.Where(ms => ms.DurationMinutes >= filter.MinDurationMinutes);
-
       if (filter.MaxDurationMinutes.HasValue)
         query = query.Where(ms => ms.DurationMinutes <= filter.MaxDurationMinutes);
 
