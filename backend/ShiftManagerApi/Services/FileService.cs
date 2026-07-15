@@ -28,7 +28,8 @@ namespace ShiftManagerApi.Services
                 throw new InvalidOperationException("El archivo no puede superar los 10 MB.");
             }
 
-            var directoryPath = Path.Combine(_env.WebRootPath, folderPath);
+            var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var directoryPath = Path.Combine(rootPath, folderPath);
 
             if (!Directory.Exists(directoryPath))
             {
@@ -54,12 +55,15 @@ namespace ShiftManagerApi.Services
                 return;
             }
 
-            var path = Path.Combine(_env.WebRootPath, folderPath, fileName);
+            var rootPath = _env.WebRootPath ?? Path.Combine(_env.ContentRootPath, "wwwroot");
+            var path = Path.Combine(rootPath, folderPath, fileName);
 
             if (File.Exists(path))
             {
                 File.Delete(path);
             }
+
+            await Task.CompletedTask;
         }
     }
 }
