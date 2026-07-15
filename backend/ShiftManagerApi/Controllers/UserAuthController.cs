@@ -115,7 +115,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var PictureURL = _userAuthService.UpadetePictureProfile(id, file);
+        var PictureURL = await _userAuthService.UpadetePictureProfile(id, file);
 
         return Ok(PictureURL);
       }
@@ -130,9 +130,9 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        var PictureURL = _userAuthService.DeletePictureProfile(id);
+        await _userAuthService.DeletePictureProfile(id);
 
-        return Ok(PictureURL);
+        return Ok();
       }
       catch (InvalidOperationException ex)
       {
