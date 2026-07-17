@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { loginRequest, logoutRequest } from '../services/authService'
+import { AuthService } from '../services/authService'
 import { handleApiError } from '../utils/apiErrorHandler';
 import { useNotification } from './NotificationContext';
 const AuthContext = createContext();
@@ -7,62 +7,65 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isManualLogout, setIsManualLogout] = useState(false);
+
   const { addNotification } = useNotification();
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
     }
     setLoading(false);
   }, []);
 
-  const loginUser = async (credentials) => {
-    setLoading(true);
-    setError(null);
-
+  const login = async (email, password) => {
     try {
-      const data = await loginRequest(credentials);
-      if (data.user) {
-        setIsManualLogout(false);
-        const sessionData = {
-          ...data.user,
-          roleActive: data.roleActive,
-          expiration: data.expiration
-        };
-        localStorage.setItem('user', JSON.stringify(sessionData));
-        setUser(sessionData);
+      const response = await AuthService.login({email, password});
+
+      if (response && response.user){
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        addNotification(`¡Bienvenido, ${response.user.firstName} ${response.user.lastName}!`, 'success');
       }
-    } catch (err) {
-      const errorMsg = handleApiError(err);
-      setError(errorMsg);
-      addNotification(errorMsg, 'error');
-      throw err;
-    } finally {
-      setLoading(false);
+      return response;
+    } catch (error) {
+      addNotification(error.message || 'Credenciales invalidas', 'error');
+      throw error
     }
   };
 
-  const logoutUser = useCallback(async () => {
+  const logout = async () => {
     try {
-      setIsManualLogout(true);
-      await logoutRequest();
-    } finally {
-      localStorage.removeItem('user');
-      setUser(null);
+      await AuthService.logout();
+    } catch (error) {
+      console.warn("Error al cerrar sesion", error);
     }
-  }, []);
-
-  // Cerrar sesion por expiracion
-  const expireSession = useCallback(() => {
-    localStorage.removeItem('user');
     setUser(null);
-    setIsManualLogout(false);
-  }, []);
+    localStorage.removeItem('user');
+  };
+
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  const register = async (userData) => {
+    try {
+      const response = await AuthService.register(userData);
+      if (response && response.user){
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        addNotification(`¡Bienvenido, ${response.user.firstName} ${response.user.lastName}!`, 'success');
+      }
+      return response;
+    } catch (error) {
+      addNotification(error.message || 'Error al registrar', 'error');
+      throw error;
+    }
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, loginUser, logoutUser, expireSession, isManualLogout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
