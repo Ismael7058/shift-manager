@@ -1,40 +1,43 @@
-const API_URL = "http://localhost:5256";
+import { apiFetch } from "./api";
 
-export const loginRequest = async (credentials) => {
-  const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-    credentials: 'include',
-  });
+export const AuthService = {
+  /**
+   * Inicia sesión y almacena el usuario autenticado.
+   * @param {LoginDto} credentials 
+   * @returns {Promise<{user: UserDto, expiration: string, roleActive: string}>}
+   */
+  login: (credentials) =>
+    apiFetch(
+      '/login',
+      {
+        method: 'POST',
+        body: JSON.stringify(credentials)
+      }
+    ),
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Error al iniciar sesión');
-  }
+    /**
+     * Registrarse como Cliente
+     * @param {RegisterDto} register 
+     * @returns {Promise<{user: UserDto, expiration: string, roleActive: string}>}
+     */
+    register: (register) => 
+      apiFetch(
+        '/register',
+        {
+          method: 'POST',
+          body: JSON.stringify(register)
+        }
+      ),
 
-  return response.json();
-};
-
-export const logoutRequest = async () => {
-  const response = await fetch(`${API_URL}/logout`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  });
-
-  if (!response.ok) {
-    let message = 'Error al cerrar sesión.';
-    try {
-      const errorData = await response.json();
-      message = errorData.message || message;
-    } catch {}
-    throw new Error(message);
-  }
-
-  return true;
+    /**
+     * Cerrar sesion
+     * @returns {Promise<any>}
+     */
+    logout: () =>
+      apiFetch(
+        '/logout',
+        {
+          method: 'POST'
+        }
+      )
 };
