@@ -44,7 +44,7 @@ export const ProfileService = {
      */
     editUsername: (editUsername) =>
       apiFetch(
-        '/me/email',
+        '/me/username',
         {
           method: 'PATCH',
           body: JSON.stringify(editUsername)
@@ -53,12 +53,12 @@ export const ProfileService = {
 
     /**
      * Actualiza el username personal
-     * @param {EditPasswordDto} editPassword 
+     * @param {EditPasswordProfileDto} editPassword 
      * @returns {Promise<any>}
      */
     editPassword: (editPassword) =>
       apiFetch(
-        '/me/email',
+        '/me/password',
         {
           method: 'PATCH',
           body: JSON.stringify(editPassword)
@@ -84,24 +84,27 @@ export const ProfileService = {
      * @param {File} file 
     * @returns {Promise<any>}
      */
-    upadetPicture: (file) =>
-      apiFetch(
+    updatePicture: (file) =>{
+      const formData = new FormData();
+      formData.append('file', file);
+      return apiFetch(
         '/me/picture',
         {
           method: 'POST',
-          body: file
+          body: formData
+        }
+      );
+    },
+
+    /**
+     * Elimina la imagen de perfil
+     * @returns {Promise<any>}
+     */
+    deletePicture: () =>
+      apiFetch(
+        `/me/picture`,
+        {
+          method: 'DELETE'
         }
       ),
-
-  /**
-   * Elimina la imagen de perfil
-   * @returns {Promise<any>}
-   */
-  deletePicture: () =>
-    apiFetch(
-      `/me/picture`,
-      {
-        method: 'DELETE'
-      }
-    ),
 };
