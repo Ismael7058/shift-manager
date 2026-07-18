@@ -8,7 +8,7 @@ export const ProviderService = {
    * @returns {Promise<PaginatedDto<ProviderDto>>}
    */
   getProviders: (filter) =>
-    apiFetch(`/providers?Name=${filter.name}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
+    apiFetch(`/providers?Name=${filter.name}&IncludeWorkSchedules=${filter.includeWorkSchedules}&IncludeServices=${filter.includeServices}&IncludeRestrictedDates=${filter.includeRestrictedDates}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
 
   /**
    * Obtiene una lista de los servicios de un proveedor disponibles

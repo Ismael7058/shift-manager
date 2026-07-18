@@ -1,17 +1,14 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-import { useAuth } from './AuthContext';
 import { useNotification } from './NotificationContext';
-import { providersRequest } from '../services/providerService';
-import { handleApiError } from '../utils/apiErrorHandler';
+import { ProviderService } from '../services/providerService';
 
 export const ProviderContext = createContext();
 
 export const ProviderProvider = ({ children }) => {
-  const [providers, setProviders] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const { expireSession  } = useAuth();
   const { addNotification } = useNotification();
+  const [providers, setProviders] = useState([]);
+  const [providerServices, setProviderServices] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     totalCount: 0,
     totalPages: 0,
@@ -19,44 +16,53 @@ export const ProviderProvider = ({ children }) => {
     pageSize: 10
   });
 
-  const fetchProviders = useCallback(async (filters) => {
+  const getProviders = async (name, sortBy, isDescending, includeServices, includeWorkSchedules, includeRestrictedDates, pageNumber = 1, pageSize = 20) => {
     setLoading(true);
-    setError(null);
     try {
-      const data = await providersRequest(filters);
-      setProviders(data.items);
+      const response = await ProviderService.getProviders({ name, sortBy, isDescending, includeServices, includeWorkSchedules, includeRestrictedDates, pageNumber, pageSize });
+
+      setProviders(response.items || []);
       setPagination({
-        totalCount: data.totalCount,
-        totalPages: data.totalPages,
-        pageNumber: data.pageNumber,
-        pageSize: data.pageSize
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        pageNumber: response.pageNumber,
+        pageSize: response.pageSize
       });
-    } catch (err) {
-      const errorMsg = handleApiError(err, expireSession );
-      setError(errorMsg);
-      addNotification(errorMsg, 'error');
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al obtener los proveedores", 'error');
     } finally {
       setLoading(false);
-    }
-  }, [expireSession , addNotification]);
+    };
+  };
+
+  const getServicesOfProvider = async (providerId, name, minDurationMinutes, maxDurationMinutes, minPrice, maxPrice, isActive, sortBy, isDescending, pageNumber = 1, pageSize = 20) => {
+    setLoading(true);
+    try {
+      const response = await ProviderService.getServicesOfProvider(providerId, { name, minDurationMinutes, maxDurationMinutes, minPrice, maxPrice, isActive, sortBy, isDescending, pageNumber, pageSize });
+
+      setProviderServices(response.items || []);
+      setPagination({
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        pageNumber: response.pageNumber,
+        pageSize: response.pageSize
+      });
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al obtener los servicios del proveedor", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
 
   return (
-    <ProviderContext.Provider value={{ 
-      providers,
-      loading,
-      error,
-      pagination,
-      fetchProviders
-    }}>
+    <ProviderContext.Provider value={{ providers, providerServices, loading, pagination, getProviders, getServicesOfProvider }}>
       {children}
     </ProviderContext.Provider>
   );
 };
 
-export const useProvider = () => {
-  const context = useContext(ProviderContext);
-  if (!context) {
-    throw new Error('useProvider debe usarse dentro de un ProviderProvider');
-  }
-  return context;
-};
+export const useProvider = () => useContext(ProviderContext); 
