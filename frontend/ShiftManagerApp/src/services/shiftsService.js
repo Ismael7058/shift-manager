@@ -37,15 +37,15 @@ export const ShiftService = {
   /**
    * Actualizar un turno
    * @param {number} shiftId 
-   * @param {UpdateShiftDto} create 
+   * @param {UpdateShiftDto} upadate 
    * @returns {Promise<any>}
    */
-  updateShift: (shiftId, create) =>
+  updateShift: (shiftId, upadate) =>
     apiFetch(
       `/shifts/${shiftId}`,
       {
         method: 'PUT',
-        body: JSON.stringify(create)
+        body: JSON.stringify(upadate)
       }
     ),
 

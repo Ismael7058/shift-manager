@@ -1,78 +1,105 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { MyShiftsProvider, MyShiftsContext } from '../context/MyShiftsContext';
-import ShiftsPage from '../pages/ShiftsPage';
+import React, { createContext, useContext, useState } from 'react';
+import { ShiftService } from '../services/shiftsService'
 import { useNotification } from './NotificationContext';
-import { handleApiError } from '../utils/apiErrorHandler';
 
-export const ShiftsContext = createContext();
+const ShiftsContext = createContext();
 
-// 1. Definimos el ShiftsProvider (Vista General para Admin/Recepción)
 export const ShiftsProvider = ({ children }) => {
-  const [shifts, setShifts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const { expireSession } = useAuth();
   const { addNotification } = useNotification();
-
-  const fetchAllShifts = useCallback(async (filters) => {
-    setLoading(true);
-    try {
-      const formattedFilters = {
-        ...filters,
-        dateFrom: filters.dateFrom ? `${filters.dateFrom}T00:00:00Z` : undefined,
-        dateTo: filters.dateTo ? `${filters.dateTo}T23:59:59Z` : undefined,
-      };
-
-    } catch (err) {
-      const errorMsg = handleApiError(err, expireSession);
-      addNotification(errorMsg, 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [expireSession, addNotification]);
-
-  const [pagination] = useState({
+  const [shifts, setShifts] = useState(null);
+  const [shift, setShift] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
     totalCount: 0,
     totalPages: 0,
     pageNumber: 1,
-    pageSize: 10
+    pageSize: 20
   });
 
+  const getShifts = async (providerId, clientId, serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDecending, pageNumber = 1, pageSize = 20) => {
+    setLoading(true);
+    try {
+      const response = await ShiftService.getShifts(providerId, clientId, { serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDecending, pageNumber, pageSize });
+
+      setShifts(response.items || []);
+      setPagination({
+        totalCount: response.totalCount,
+        totalPages: response.totalPages,
+        pageNumber: response.pageNumber,
+        pageSize: response.pageSize
+      });
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al obtener los turnos", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
+  const getShift = async (shiftId) => {
+    setLoading(true);
+    try {
+      const response = await ShiftService.getShift(shiftId);
+      setShift(response.items || null);
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al obtener el turno", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
+  const createShift = async (clientId, providerId, startAt, items = []) => {
+    setLoading(true);
+    try {
+      const response = await ShiftService.createShift(clientId, { providerId, startAt, items });
+      setShift(response.items || null);
+      addNotification(response.message || "Turno creado con éxito", 'success');
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al crear el turno", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
+  const updateShift = async (shiftId, providerId, startAt, items = []) => {
+    setLoading(true);
+    try {
+      const response = await ShiftService.updateShift(shiftId, { providerId, startAt, items });
+      addNotification(response.message || "Turno actualizado con éxito", 'success');
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al actualizar el turno", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
+  const changeStatusShift = async (shiftId, status) => {
+    setLoading(true);
+    try {
+      const response = await ShiftService.updateShift(shiftId, status);
+      setShift(response.items || null);
+      addNotification(response.message || "El turno ha cambiado de estado", 'success');
+
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al cambiar el estado del turno", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
   return (
-    <ShiftsContext.Provider value={{ 
-      shifts, 
-      loading, 
-      error: null, 
-      pagination, 
-      fetchShifts: fetchAllShifts, 
-      isGlobal: true 
-    }}>
+    <ShiftsContext.Provider value={{ shifts, shift, loading, pagination, getShifts, getShift, createShift, updateShift, changeStatusShift }}>
       {children}
     </ShiftsContext.Provider>
-  );
+  )
 };
 
-export const useTurnos = () => {
-  const personal = useContext(MyShiftsContext);
-  const global = useContext(ShiftsContext);
-  return personal || global;
-};
-
-export const useShifts = () => useContext(ShiftsContext);
-
-const ShiftsContent = () => {
-  const { user } = useAuth();
-  const isPersonalRole = user && ["Cliente", "Proveedor"].includes(user.roleActive);
-
-  return isPersonalRole ? (
-    <MyShiftsProvider>
-      <ShiftsPage />
-    </MyShiftsProvider>
-  ) : (
-    <ShiftsProvider>
-      <ShiftsPage />
-    </ShiftsProvider>
-  );
-};
-
-export default ShiftsContent;
+export const useShift = () => useContext(ShiftsContext);
