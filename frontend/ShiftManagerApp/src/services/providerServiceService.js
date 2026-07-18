@@ -58,7 +58,7 @@ export const ProviderServiceService = {
    * @param {number} providerId
    * @returns {Promise<any>}
    */
-  softDeletServiceOfProvider: (serviceId, providerId) =>
+  softDeleteServiceOfProvider: (serviceId, providerId) =>
     apiFetch(
       `/provider-service/${serviceId}?providerId=${providerId}`,
       {
