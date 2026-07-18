@@ -1,10 +1,10 @@
 import { apiFetch } from "./api";
 
-export const ClientService = {
+export const RoleService = {
   /**
    * Obtiene una lista de todos los roles
    * @returns {Promise<Array<string>>}
    */
-  getClients: () =>
+  getRoles: () =>
     apiFetch('role')
 };
