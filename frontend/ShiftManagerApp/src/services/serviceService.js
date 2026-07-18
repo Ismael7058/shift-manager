@@ -18,12 +18,26 @@ export const ServiceService = {
     apiFetch(`/services/${serviceId}`),
 
   /**
+   * Crea un servicio
+   * @param {CreateServiceDto} create 
+   * @returns 
+   */
+  createService: (create) =>
+    apiFetch(
+      '/services',
+      {
+        method: 'POST',
+        body: JSON.stringify(create)
+      }
+    ),
+
+  /**
    * Actualiza un servicio
    * @param {number} serviceId 
    * @param {UpdateServiceDto} update
    * @returns {Promise<ServiceDto>}
    */
-  upadateService: (serviceId, update) =>
+  updateService: (serviceId, update) =>
     apiFetch(
       `/services/${serviceId}`,
       {
@@ -38,7 +52,7 @@ export const ServiceService = {
    * @param {UpdateStatusDto} status
    * @returns {Promise<any>}
    */
-  chageStatusService: (serviceId, status) =>
+  chagenStatusService: (serviceId, status) =>
     apiFetch(
       `/services/${serviceId}`,
       {
