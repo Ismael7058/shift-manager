@@ -1,17 +1,41 @@
 import AppRouter from './routes/AppRouter'
-import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from './context/AuthContext'
 import { Notification } from './context/NotificationContext'
+import { AuthProvider } from './context/AuthContext'
+import { ProfileProvider } from './context/ProfileContext'
+import { ClientProvider } from './context/ClientContext'
+import { ProviderProvider } from './context/ProviderContext'
+import { ProviderServiceProvider } from './context/ProviderServiceContext'
+import { RoleProvider } from './context/RoleContext'
+import { ServicesProvider } from './context/ServicesContext'
+import { ShiftsProvider } from './context/ShiftsContext'
+import { UserProvider } from './context/UserContext'
+import { WorkSchedulesProvider } from './context/WorkSchedulesContext'
 
 function App() {
   return (
-    <BrowserRouter>
-      <Notification>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
-      </Notification>
-    </BrowserRouter>
+    <Notification>
+      <AuthProvider>
+        <ProfileProvider>
+          <RoleProvider>
+            <UserProvider>
+              <ServicesProvider>
+                <ProviderProvider>
+                  <WorkSchedulesProvider>
+                    <ProviderServiceProvider>
+                      <ClientProvider>
+                        <ShiftsProvider>
+                          <AppRouter />
+                        </ShiftsProvider>
+                      </ClientProvider>
+                    </ProviderServiceProvider>
+                  </WorkSchedulesProvider>
+                </ProviderProvider>
+              </ServicesProvider>
+            </UserProvider>
+          </RoleProvider>
+        </ProfileProvider>
+      </AuthProvider>
+    </Notification>
   )
 }
 

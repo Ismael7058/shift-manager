@@ -1,68 +1,50 @@
-import { useRef } from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import HomePage from '../pages/HomePage'
+import { Routes, Route, BrowserRouter } from 'react-router-dom'
+import ProtectedRoute from './ProtectedRoute';
 import PublicLayout from '../layouts/PublicLayout'
-import ProjectPage from '../pages/ProjectPage';
-import { useAuth } from '../context/AuthContext';
-import { Services } from '../context/ServicesContext';
-import { MyShiftsProvider } from '../context/MyShiftsContext';
-import { ProviderProvider } from '../context/ProviderContext'
-import { ShiftsProvider } from '../context/ShiftsContext';
-
+import HomePage from '../pages/HomePage'
+import ProvidersPage from '../pages/ProvidersPage';
+import ProviderServicesPage from '../pages/ProviderServicesPage';
+import ProviderSchedulesPage from '../pages/ProviderSchedulesPage';
+import ServicesPage from '../pages/ServicesPage';
 import ShiftsPage from '../pages/ShiftsPage';
-import CreateShiftPage from '../pages/CreateShiftPage';
-
-const ProtectedRoute = () => {
-  const { user, loading, isManualLogout } = useAuth();
-  const wasAuthenticated = useRef(!!user);
-
-  // Mientras se verifica la session mostrar el Cargando...
-  if (loading) {
-    return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">Cargando...</div>;
-  }
-
-  // Redireccionar si se cirra la sesion o no hay un usuario autenticado
-  if (isManualLogout || (!user && !wasAuthenticated.current)) {
-    return <Navigate to="/" replace />;
-  }
-
-
-  return <Outlet />;
-};
-
-const ShiftsWrapper = () => {
-  const { user } = useAuth();
-  const isPersonalRole = user && ["Cliente", "Proveedor"].includes(user.roleActive);
-
-  return isPersonalRole ? (
-    <MyShiftsProvider><Outlet /></MyShiftsProvider>
-  ) : (
-    <ShiftsProvider><Outlet /></ShiftsProvider>
-  );
-};
+import ShiftDetailPage from '../pages/ShiftDetailPage';
+import ShiftCreatePage from '../pages/ShiftCreatePage';
+import UsersDetailPage from '../pages/UsersDetailPage';
+import UserCreatePage from '../pages/UserCreatePage';
+import NotFoundPage from '../pages/NotFoundPage';
 
 const AppRouter = () => {
   return (
-    <Routes>
-      <Route element={<PublicLayout />}>
+    <BrowserRouter>
+      <Routes>
+        {/* Ruta publica */}
         <Route path="/" element={<HomePage />} />
+
         <Route element={<ProtectedRoute />}>
-          <Route path="/docs" element={<ProjectPage />} />
-          <Route path="/turnos" element={
-            <Services>
-              <ProviderProvider>
-                <ShiftsWrapper />
-              </ProviderProvider>
-            </Services>
-          } 
-          >
-            <Route index element={<ShiftsPage />} />
-            
-            <Route path="crear" element={<CreateShiftPage/>}/>
+          <Route element={<PublicLayout />}>
+            <Route path="proveedores">
+              <Route index element={<ProvidersPage />} />
+              <Route path=":id/servicios" element={<ProviderServicesPage />} />
+              <Route path=":id/horarios" element={<ProviderSchedulesPage />} />
+            </Route>
+
+            <Route path="servicios" element={<ServicesPage />} />
+
+            <Route path="turnos">
+              <Route index element={<ShiftsPage />} />
+              <Route path=":id" element={<ShiftDetailPage />} />
+              <Route path="nuevo" element={<ShiftCreatePage />} />
+            </Route>
+
+            <Route path="usuarios">
+              <Route index element={<UsersDetailPage />} />
+              <Route path="nuevo" element={<UserCreatePage />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
