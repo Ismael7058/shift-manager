@@ -15,7 +15,7 @@ export const WorkSchedulesService = {
    * @param {number} workId 
    * @returns {Promise<WorkSchedulesDto>}
    */
-  getWorkSchedules: (workId) =>
+  getWorkSchedule: (workId) =>
     apiFetch(`/work-schedules/${workId}`),
 
   /**
@@ -24,9 +24,9 @@ export const WorkSchedulesService = {
    * @param {CreateWorkSchedulesDto} create 
    * @returns {Promise<WorkSchedulesDto>}
    */
-  creatWorkSchedules: (providerId, create) =>
+  createWorkSchedule: (providerId, create) =>
     apiFetch(
-      `/work-schedules?providerId${providerId}`,
+      `/work-schedules?providerId=${providerId}`,
       {
         method: 'POST',
         body: JSON.stringify(create)
@@ -39,7 +39,7 @@ export const WorkSchedulesService = {
    * @param {UpdateWorkSchedulesDto} update 
    * @returns 
    */
-  upadeteWorkSchedules: (workId, update) =>
+  updateWorkSchedule: (workId, update) =>
     apiFetch(
       `/work-schedules/${workId}`,
       {
@@ -54,7 +54,7 @@ export const WorkSchedulesService = {
    * @param {UpdateStatusDto} status 
    * @returns 
    */
-  changeStatusWorkSchedules: (workId, status) =>
+  changeStatusWorkSchedule: (workId, status) =>
     apiFetch(
       `/work-schedules/${workId}`,
       {
