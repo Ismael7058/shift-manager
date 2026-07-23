@@ -18,10 +18,10 @@ const AppRouter = () => {
     <BrowserRouter>
       <Routes>
         {/* Ruta publica */}
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<PublicLayout />}>
+          <Route index element={<HomePage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<PublicLayout />}>
+          <Route element={<ProtectedRoute />}>
             <Route path="proveedores">
               <Route index element={<ProvidersPage />} />
               <Route path=":id/servicios" element={<ProviderServicesPage />} />
