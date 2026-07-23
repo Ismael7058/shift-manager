@@ -18,14 +18,27 @@ export const ProfileProvider = ({ children }) => {
       const response = await ProfileService.getMe();
       setProfile(response);
       if (updateUser) {
-        updateUser(response);
+        const updatedUser = {
+          ...user,
+          id: response.id,
+          firstName: response.firstName,
+          lastName: response.lastName,
+          dateOfBirth: response.dateOfBirth,
+          gender: response.gender,
+          phoneNumber: response.phoneNumber,
+          username: response.username,
+          email: response.email,
+          pictureURL: response.pictureURL
+        };
+
+        updateUser(updatedUser);
       };
-      
+
       return response;
     } catch (error) {
       addNotification(error.message || "Error al cargar perfil", 'error');
     }
-    finally{
+    finally {
       setLoading(false);
     };
   };
@@ -34,11 +47,15 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProfileService.updateMe({ firstName, lastName, dateOfBirth, gender, phoneNumber });
-      setProfile(response.usuario);
-      if (updateUser) {
-        updateUser(response.usuario);
+      if (user) {
+        const updatedUser = { ...user, firstName, lastName, dateOfBirth, gender, phoneNumber };
+        updateUser(updatedUser);
       }
-      addNotification(response.message || "Perfil actualizado con éxito", 'success');
+      if (profile) {
+        const updatedProfile = { ...profile, firstName, lastName, dateOfBirth, gender, phoneNumber };
+        setProfile(updatedProfile);
+      }
+      addNotification("Perfil actualizado con éxito", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al actualizar perfil", 'error');
@@ -51,12 +68,16 @@ export const ProfileProvider = ({ children }) => {
   const editEmail = async (email) => {
     setLoading(true);
     try {
-      const response = await ProfileService.editEmail({email});
-      if(user){
-        const updatedUser = { ...user, Email: email };
+      const response = await ProfileService.editEmail({ email });
+      if (user) {
+        const updatedUser = { ...user, email: email };
         updateUser(updatedUser);
       }
-      addNotification(response.message || "Email cambiado con éxito", 'success');
+      if (profile) {
+        const updatedProfile = { ...profile, email: email };
+        setProfile(updatedProfile);
+      }
+      addNotification("Email cambiado con éxito", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al cambiar el email", 'error');
@@ -69,13 +90,16 @@ export const ProfileProvider = ({ children }) => {
   const editUsername = async (username) => {
     setLoading(true);
     try {
-      const response = await ProfileService.editUsername({username});
-      if(user){
-        const updatedUser = { ...user, Username: username };
+      const response = await ProfileService.editUsername({ username });
+      if (user) {
+        const updatedUser = { ...user, username: username };
         updateUser(updatedUser);
       }
-
-      addNotification(response.message || "Username cambiado con éxito", 'success');
+      if (profile) {
+        const updatedProfile = { ...profile, username: username };
+        setProfile(updatedProfile);
+      }
+      addNotification("Username cambiado con éxito", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al cambiar el username", 'error');
@@ -89,7 +113,7 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProfileService.editPassword({ oldPassword, newPassword, confirmPassword });
-      addNotification(response.message || "Contraseña cambiada con éxito", 'success');
+      addNotification("Contraseña cambiada con éxito", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al cambiar contraseña", 'error');
@@ -103,11 +127,15 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProfileService.updatePicture(file);
-      if(user){
-        const updatedUser = { ...user, PictureURL: response };
+      if (user) {
+        const updatedUser = { ...user, pictureURL: response.pictureURL };
         updateUser(updatedUser);
       }
-      addNotification(response.message || "Imagen de perfil actualizada", 'success');
+      if (profile) {
+        const updatedProfile = { ...profile, pictureURL: response.pictureURL };
+        setProfile(updatedProfile);
+      }
+      addNotification("Imagen de perfil actualizada", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al cambiar la imagen de perfil", 'error');
@@ -121,12 +149,17 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProfileService.deletePicture();
-      if(user){
-        const updatedUser = { ...user, PictureURL: null };
+      if (user) {
+        const updatedUser = { ...user, pictureURL: null };
         updateUser(updatedUser);
       }
 
-      addNotification(response.message || "Imagen de perfil eliminada", 'success');
+      if (profile) {
+        const updatedProfile = { ...profile, pictureURL: null };
+        setProfile(updatedProfile);
+      }
+
+      addNotification("Imagen de perfil eliminada", 'success');
       return response;
     } catch (error) {
       addNotification(error.message || "Error al eliminar la imagen de perfil", 'error');
@@ -151,7 +184,7 @@ export const ProfileProvider = ({ children }) => {
   };
 
   return (
-    <ProfileContext.Provider value={profile, loading, getProfile, updateProfile, editEmail, editUsername, editPassword, updatePicture, deletePicture, changeRoleActive}>
+    <ProfileContext.Provider value={{ profile, loading, getProfile, updateProfile, editEmail, editUsername, editPassword, updatePicture, deletePicture, changeRoleActive }}>
       {children}
     </ProfileContext.Provider>
   );
