@@ -17,13 +17,13 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (identifier, password) => {
     try {
-      const response = await AuthService.login({email, password});
+      const response = await AuthService.login(identifier, password);
 
-      if (response && response.user){
-        setUser(response.user);
-        localStorage.setItem('user', JSON.stringify(response.user));
+      if (response && response.user) {
+        setUser({ ...response.user, roleActive: response.roleActive });
+        localStorage.setItem('user', JSON.stringify({ ...response.user, roleActive: response.roleActive }));
         addNotification(`¡Bienvenido, ${response.user.firstName} ${response.user.lastName}!`, 'success');
       }
       return response;
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await AuthService.register(userData);
-      if (response && response.user){
+      if (response && response.user) {
         setUser(response.user);
         localStorage.setItem('user', JSON.stringify(response.user));
         addNotification(`¡Bienvenido, ${response.user.firstName} ${response.user.lastName}!`, 'success');

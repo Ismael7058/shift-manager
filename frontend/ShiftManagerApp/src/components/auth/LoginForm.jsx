@@ -7,9 +7,8 @@ import { useNotification } from '../../context/NotificationContext'
 const LoginForm = ({ isOpen, onClose, onSwitch }) => {
   const [credentials, setCredentials] = useState({ identifier: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
   const navigate = useNavigate();
-  const { user, loginUser } = useAuth();
+  const { login } = useAuth();
 
   const { addNotification } = useNotification();
 
@@ -36,7 +35,7 @@ const LoginForm = ({ isOpen, onClose, onSwitch }) => {
     setLoading(true);
 
     try {
-      await loginUser(credentials);
+      await login(credentials);
       onClose();
       navigate('/');
     } catch (err) {
