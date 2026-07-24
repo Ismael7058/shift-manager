@@ -136,10 +136,10 @@ export const UserProvider = ({ children }) => {
     };
   };
 
-  const upadatePictureUser = async (userId, file) => {
+  const updatePictureUser = async (userId, file) => {
     setLoading(true);
     try {
-      const response = await UserService.upadatePictureUser(userId, file);
+      const response = await UserService.updatePictureUser(userId, file);
       if (userAuth && userAuth.id == userId) {
         const updatedUser = { ...userAuth, pictureURL: response };
         updatedUserAuth(updatedUser);
@@ -174,7 +174,7 @@ export const UserProvider = ({ children }) => {
   };
 
   return (
-    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, upadetPictureUser, deletePictureUser }}>
+    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, updatePictureUser, deletePictureUser }}>
       {children}
     </UserContext.Provider>
   );

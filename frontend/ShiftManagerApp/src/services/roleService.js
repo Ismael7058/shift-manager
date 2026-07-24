@@ -6,5 +6,5 @@ export const RoleService = {
    * @returns {Promise<Array<string>>}
    */
   getRoles: () =>
-    apiFetch('role')
+    apiFetch('/role')
 };

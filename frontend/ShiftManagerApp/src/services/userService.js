@@ -98,7 +98,7 @@ export const UserService = {
    * @param {File} file 
    * @returns {Promise<any>}
   */
-  upadatePictureUser: (userId,file) =>
+  updatePictureUser: (userId,file) =>
     apiFetch(
       `/users/${userId}/picture`,
       {
