@@ -27,7 +27,11 @@ export const ServiceService = {
       '/services',
       {
         method: 'POST',
-        body: JSON.stringify(create)
+        body: JSON.stringify({
+          Name: create.name,
+          Description: create.description,
+          DurationMinutes: create.durationMinutes
+        })
       }
     ),
 

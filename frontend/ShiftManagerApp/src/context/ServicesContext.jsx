@@ -53,9 +53,10 @@ export const ServicesProvider = ({ children }) => {
   const createService = async (name, description, durationMinutes) => {
     setLoading(true)
     try {
+      console.log({ name, description, durationMinutes });
       const response = await ServiceService.createService({ name, description, durationMinutes });
       setService(response || null);
-      addNotification(response.message || "Servicio creado con éxito", 'success');
+      addNotification("Servicio creado con éxito", 'success');
 
       return response;
     } catch (error) {
@@ -69,7 +70,7 @@ export const ServicesProvider = ({ children }) => {
     setLoading(true)
     try {
       const response = await ServiceService.updateService(serviceId, { name, description, durationMinutes });
-      addNotification(response.message || "Servicio actualizado con éxito", 'success');
+      addNotification("Servicio actualizado con éxito", 'success');
 
       return response;
     } catch (error) {
@@ -82,8 +83,8 @@ export const ServicesProvider = ({ children }) => {
   const changeStatusService = async (serviceId, status) => {
     setLoading(true)
     try {
-      const response = await ServiceService.chagenStatusService(serviceId, { status });
-      addNotification(response.message || "El servicio ha cambiado de estado", 'success');
+      const response = await ServiceService.chagenStatusService(serviceId, { isActive: status });
+      addNotification("El servicio ha cambiado de estado", 'success');
 
       return response;
     } catch (error) {
