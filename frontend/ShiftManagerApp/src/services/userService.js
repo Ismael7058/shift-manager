@@ -20,10 +20,21 @@ export const UserService = {
       '/users',
       {
         method: 'POST',
-        body: JSON.stringify(create)
+        body: JSON.stringify({
+          FirstName: create.firstName,
+          LastName: create.lastName,
+          DateOfBirth: create.dateOfBirth,
+          Gender: create.gender,
+          PhoneNumber: create.phoneNumber,
+          Username: create.username,
+          Email: create.email,
+          Password: create.password,
+          ConfirmPassword: create.confirmPassword,
+          RolesId: create.rolesId
+        })
       }
     ),
-  
+
   /**
    * Obtener un usuario por id
    * @param {number} userId 
@@ -43,7 +54,15 @@ export const UserService = {
       `/users/${userId}`,
       {
         method: 'PUT',
-        body: JSON.stringify(update)
+        body: JSON.stringify(
+          {
+            FirstName: update.firstName,
+            LastName: update.lastName,
+            DateOfBirth: update.dateOfBirth,
+            Gender: update.gender,
+            PhoneNumber: update.phoneNumber,
+          }
+        )
       }
     ),
 
@@ -88,7 +107,7 @@ export const UserService = {
       `/users/${userId}/password`,
       {
         method: 'PATCH',
-        body: JSON.stringify(password)
+        body: JSON.stringify({ newPassword: password.newPassword, confirmPassword: password.confirmPassword })
       }
     ),
 
@@ -96,16 +115,19 @@ export const UserService = {
    * Actualizar o eliminar la foto de perfil
    * @param {number} userId
    * @param {File} file 
-   * @returns {Promise<any>}
+   * @returns {Promise<string>}
   */
-  updatePictureUser: (userId,file) =>
-    apiFetch(
+  updatePictureUser: (userId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiFetch(
       `/users/${userId}/picture`,
       {
         method: 'POST',
-        body: file
+        body: formData
       }
-    ),
+    );
+  },
 
   /**
    * Elimina la imagen de un usuario
@@ -117,6 +139,21 @@ export const UserService = {
       `/users/${userId}/picture`,
       {
         method: 'DELETE'
+      }
+    ),
+
+  /**
+   * Cambia los roles de un usuario
+   * @param {number} userId 
+   * @param {number[]} roles 
+   * @returns {Promise<any>}
+   */
+  editRoleUser: (userId, roles) =>
+    apiFetch(
+      `/users/${userId}/role`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(roles)
       }
     ),
 };
