@@ -214,8 +214,22 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+  const changeStatusUser = async (userId, status) => {
+    setLoading(true)
+    try {
+      const response = await UserService.changeStatusUser(userId, { isActive: status });
+      addNotification("Estado del usuario actualizado", 'success');
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al actualizar el estado del usuario", 'error');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, updatePictureUser, deletePictureUser, editRoleUser }}>
+    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, updatePictureUser, deletePictureUser, editRoleUser, changeStatusUser }}>
       {children}
     </UserContext.Provider>
   );

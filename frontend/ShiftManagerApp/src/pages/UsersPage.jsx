@@ -94,7 +94,7 @@ const UsersPage = () => {
     { key: 'email', label: 'Email' },
     { key: 'username', label: 'Usuario' },
     { key: 'role', label: 'Roles', render: (user) => user.roles.join(', ') },
-    { key: 'isActive', label: 'Estado', render: (user) => user.isActive ? 'Inactivo' : 'Activo' },
+    { key: 'isActive', label: 'Estado', render: (user) => user.isActive ? 'Activo' : 'Inactivo' },
     {
       key: 'actions', label: 'Acciones', render: (user) => (
         <div className="flex items-center gap-2">

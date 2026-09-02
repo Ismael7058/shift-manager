@@ -156,4 +156,19 @@ export const UserService = {
         body: JSON.stringify(roles)
       }
     ),
+
+  /**
+   * Cambia el estado logico de un usuario
+   * @param {number} userId 
+   * @param {UpdateStatusDto} status
+   * @returns {Promise<any>}
+   */
+  changeStatusUser: (userId, status) =>
+    apiFetch(
+      `/users/${userId}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(status)
+      }
+    ),
 };
