@@ -73,7 +73,8 @@ namespace ShiftManagerApi.Services
           Username = u.Username,
           Email = u.Email,
           PictureURL = u.UserProfile.PictureURL,
-          Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList()
+          Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList(),
+          IsActive = u.IsActive
         }
         )
         .ToListAsync();
@@ -101,7 +102,7 @@ namespace ShiftManagerApi.Services
         }
 
         var roles = await _context.Roles.Where(r => createUserDto.RolesId.Contains(r.Id)).Select(r => r.Name).ToListAsync();
-        if ( createUserDto.RolesId.LongCount() != roles.LongCount() )
+        if (createUserDto.RolesId.LongCount() != roles.LongCount())
         {
           throw new InvalidOperationException("Uno de los roles no fue encontrado");
         }
@@ -190,7 +191,7 @@ namespace ShiftManagerApi.Services
       profile.Gender = updateUserDto.Gender;
       profile.PhoneNumber = updateUserDto.PhoneNumber;
       profile.UserAuth.UpdatedAt = DateTime.UtcNow;
-      
+
 
       await _context.SaveChangesAsync();
     }
@@ -258,7 +259,8 @@ namespace ShiftManagerApi.Services
         PhoneNumber = user.UserProfile.PhoneNumber,
         Username = user.Username,
         Email = user.Email,
-        PictureURL = user.UserProfile.PictureURL
+        PictureURL = user.UserProfile.PictureURL,
+        IsActive = user.IsActive
       };
 
       if (includeRol) userDto.Roles = user.UserRole.Select(ur => ur.Role.Name).ToList();
@@ -295,12 +297,12 @@ namespace ShiftManagerApi.Services
         $"/{FOLDER_PATH}/{await _fileService.SaveFile(file, FOLDER_PATH)}"
         : null;
 
-      user.PictureURL = pictureURL ;
+      user.PictureURL = pictureURL;
       await _context.SaveChangesAsync();
 
       if (!string.IsNullOrEmpty(priviousPicture))
         await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
-        // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
+      // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
 
       return user.PictureURL;
     }
@@ -320,11 +322,78 @@ namespace ShiftManagerApi.Services
 
       var priviousPicture = user.PictureURL;
 
-      user.PictureURL = null ;
+      user.PictureURL = null;
       await _context.SaveChangesAsync();
 
       await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
       // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
     }
+
+    public async Task<List<RoleResponseDto>> EditRoles(long id, List<long> roles)
+    {
+      await using var transaction = await _context.Database.BeginTransactionAsync();
+      try
+      {
+        var user = await _context.UserAuths
+          .Include(ua => ua.UserRole)
+          .FirstOrDefaultAsync(up => up.UserId == id);
+
+        if (user == null)
+          throw new InvalidOperationException("Usuario no encontrado");
+
+        var distinctRoles = roles.Distinct().ToList();
+
+        var existingRoles = await _context.Roles
+          .Where(r => distinctRoles.Contains(r.Id))
+          .Select(r => new RoleResponseDto
+          {
+            Id = r.Id,
+            Name = r.Name
+          })
+          .ToListAsync();
+
+        if (existingRoles.Count != distinctRoles.Count)
+        {
+          throw new InvalidOperationException("Uno de los roles no fue encontrado");
+        }
+
+        // Eliminar los roles previos asignados al usuario
+        if (user.UserRole != null && user.UserRole.Any())
+        {
+          _context.UserRoles.RemoveRange(user.UserRole);
+        }
+
+        var newUserRoles = distinctRoles.Select(roleId => new UserRole
+        {
+          UserId = id,
+          RoleId = roleId,
+          AssignedAt = DateTime.UtcNow
+        });
+
+        await _context.UserRoles.AddRangeAsync(newUserRoles);
+        await _context.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+
+        return existingRoles;
+      }
+      catch
+      {
+        await transaction.RollbackAsync();
+        throw;
+      }
+    }
+
+    public async Task ChangeStatus(long id, UpdateStatusDto status)
+    {
+      var user = await _context.UserAuths.FirstOrDefaultAsync(up => up.UserId == id);
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+      
+      user.IsActive = status.IsActive;
+
+      await _context.SaveChangesAsync();
+    }
+
   }
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ShiftManagerApi.Dtos;
@@ -117,7 +118,7 @@ namespace ShiftManagerApi.Controllers
       {
         var PictureURL = await _userAuthService.UpadetePictureProfile(id, file);
 
-        return Ok(PictureURL);
+        return Ok(new { pictureURL = PictureURL });
       }
       catch (InvalidOperationException ex)
       {
@@ -145,6 +146,51 @@ namespace ShiftManagerApi.Controllers
             message = "Ocurrió un error inesperado al eliminar la imagen de perfil." 
         });
       }
+    }
+
+    [HttpPatch("{id}/role")]
+    public async Task<ActionResult> EditRole(long id, List<long> roles)
+    {
+      try
+      {
+        if(GetUserId() == id && !roles.Contains(1))
+          throw new InvalidOperationException("No puedes quitarte tu rol de administracion.");
+        
+        await _userAuthService.EditRoles(id, roles);
+        return Ok(new { message = "Los roles han sido actualizado con exito"});
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult> ChangeStatus(long id, UpdateStatusDto status)
+    {
+      try
+      {
+        if(GetUserId() == id )
+          throw new InvalidOperationException("No puedes inhabilitar tu propia cuenta.");
+        await _userAuthService.ChangeStatus(id, status);
+        return NoContent();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    private long GetUserId()
+    {
+      var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => 
+          c.Type == ClaimTypes.NameIdentifier && long.TryParse(c.Value, out _));
+
+      if (userIdClaim == null || !long.TryParse(userIdClaim.Value, out long userId))
+      {
+        throw new UnauthorizedAccessException("Usuario no autenticado o ID inválido");
+      }
+      return userId;
     }
   }
 }

@@ -14,5 +14,7 @@ namespace ShiftManagerApi.Interfaces
     Task EditPasswordProfile(long Id, EditPasswordProfileDto editPasswordProfileDto);
     Task<string?> UpadetePictureProfile(long id, IFormFile? file);
     Task DeletePictureProfile(long Id);
+    Task<List<RoleResponseDto>>  EditRoles(long Id, List<long> roles);
+    Task ChangeStatus(long Id, UpdateStatusDto status);
   }
 }
