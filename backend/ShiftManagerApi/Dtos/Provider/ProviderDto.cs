@@ -5,7 +5,7 @@ namespace ShiftManagerApi.Dtos
     public long Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-
+    public string? PictureURL { get; set; }
     public List<ProviderServiceDto> Items { get; set; } = null!;
     public List<WorkSchedulesDto> Works { get; set; } = null!;
     public List<DateRangeDto> RestrictedDates { get; set; } = null!;

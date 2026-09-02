@@ -28,8 +28,8 @@ namespace ShiftManagerApi.Services
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
         query = query.Where(u =>
-            u.UserProfile.FirstName.Contains(filter.Name)
-            || u.UserProfile.LastName.Contains(filter.Name)
+            u.UserProfile.FirstName.ToLower().Contains(filter.Name.ToLower())
+            || u.UserProfile.LastName.ToLower().Contains(filter.Name.ToLower())
         );
 
       var totalCount = await query.CountAsync();
@@ -54,6 +54,7 @@ namespace ShiftManagerApi.Services
           Id = u.UserId,
           FirstName = u.UserProfile.FirstName,
           LastName = u.UserProfile.LastName,
+          PictureURL = u.UserProfile.PictureURL,
           Items = filter.IncludeServices
             ? u.UserProfile.ProviderService
                 .Where(ps => ps.Service.IsActive)
