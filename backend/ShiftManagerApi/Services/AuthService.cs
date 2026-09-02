@@ -136,6 +136,7 @@ namespace ShiftManagerApi.Services
         DateOfBirth = userAuth.UserProfile.DateOfBirth,
         Gender = userAuth.UserProfile.Gender.ToString(),
         PhoneNumber = userAuth.UserProfile.PhoneNumber,
+        PictureURL = userAuth.UserProfile.PictureURL,
         Roles = roles
       };
 
