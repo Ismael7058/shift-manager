@@ -26,7 +26,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        return Ok(await _userAuthService.GetById(GetUserId(), false));
+        return Ok(await _userAuthService.GetById(GetUserId(), true));
       }
       catch (KeyNotFoundException ex)
       {
@@ -143,7 +143,7 @@ namespace ShiftManagerApi.Controllers
       {
         var PictureURL = await _userAuthService.UpadetePictureProfile(GetUserId(), file);
 
-        return Ok(PictureURL);
+        return Ok( new { pictureURL= PictureURL } );
       }
       catch (InvalidOperationException ex)
       {

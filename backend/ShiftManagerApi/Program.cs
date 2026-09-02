@@ -28,7 +28,8 @@ builder.Services.AddScoped<IWorkSchedulesService, WorkSchedulesService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IProviderService, ProviderService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IClientService, IClientService>();
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

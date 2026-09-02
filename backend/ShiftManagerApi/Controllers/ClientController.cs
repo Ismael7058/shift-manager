@@ -6,7 +6,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Route("providers")]
+  [Route("clients")]
   [Authorize]
   public class ClientController : ControllerBase
   {
@@ -19,7 +19,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpGet]
-    public async Task<ActionResult<PaginatedDto<ClientDto>>> GetProviders([FromQuery] ClientFilterDto filter)
+    public async Task<ActionResult<PaginatedDto<ClientDto>>> GetClients([FromQuery] ClientFilterDto filter)
     {
       filter ??= new ClientFilterDto();
       var response = await _clientService.GetAll(filter); 

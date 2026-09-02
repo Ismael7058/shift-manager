@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Interfaces;
 
 namespace ShiftManagerApi.Controllers
@@ -17,7 +18,7 @@ namespace ShiftManagerApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<string>>> GetAll()
+        public async Task<ActionResult<List<RoleResponseDto>>> GetAll()
         {
             try
             {
