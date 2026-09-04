@@ -1,20 +1,23 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProvider } from '../context/ProviderContext';
+import { useWorkSchedules } from '../context/WorkSchedulesContext';
 import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
+import ProviderDetailModal from '../components/provider/DetailProviderModal';
 
 const BASE_URL = 'http://localhost:5256';
 
 const ProviderPage = () => {
   const { providers, loading, pagination, getProviders } = useProvider();
+  const { workSchedules, getAllWorkSchedules } = useWorkSchedules();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState(null);
+
   const [filters, setFilters] = useState({
     name: '',
     sortBy: '',
     isDescending: false,
-    includeServices: false,
-    includeWorkSchedules: false,
-    includeRestrictedDates: false,
     pageNumber: 1,
     pageSize: 10
   });
@@ -24,9 +27,6 @@ const ProviderPage = () => {
       filters.name,
       filters.sortBy,
       filters.isDescending,
-      filters.includeServices,
-      filters.includeWorkSchedules,
-      filters.includeRestrictedDates,
       filters.pageNumber,
       filters.pageSize
     );
@@ -52,6 +52,13 @@ const ProviderPage = () => {
 
   const handlePageChange = (newPage) => {
     setFilters(prev => ({ ...prev, pageNumber: newPage }));
+  };
+
+  const handleOpenProviderModal = (provider) => {
+    setSelectedProvider(provider);
+    setIsModalOpen(true);
+
+    getAllWorkSchedules(provider.id, '', 1, 'day_of_week', false, 1, 20);
   };
 
   // Columnas de la tabla de Proveedores
@@ -85,12 +92,12 @@ const ProviderPage = () => {
     {
       key: 'actions', label: 'Acciones', render: (provider) => (
         <div className="flex items-center gap-2">
-          <Link
-            to={`/proveedores/${provider.id}`}
+          <button
             className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            onClick={() => handleOpenProviderModal(provider)}
           >
             Ver
-          </Link>
+          </button>
         </div>
       )
     }
@@ -158,7 +165,8 @@ const ProviderPage = () => {
       ) : (
         <Table columns={columns} data={providers} />
       )}
-      {!loading && pagination && (
+
+      {pagination && (
         <div className="mt-4">
           <Pagination
             totalCount={pagination.totalCount}
@@ -169,6 +177,14 @@ const ProviderPage = () => {
           />
         </div>
       )}
+
+      <ProviderDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        provider={selectedProvider}
+        schedules={workSchedules}
+        loadingSchedules={loading}
+      />
     </div>
   );
 };

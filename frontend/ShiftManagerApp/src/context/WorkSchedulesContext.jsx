@@ -16,10 +16,10 @@ export const WorkSchedulesProvider = ({ children }) => {
     pageSize: 10
   });
 
-  const getAllWorkSchedules = async (dayOfWeek, isActive, sortBy, isDescending, pageNumber = 1, pageSize = 20) => {
+  const getAllWorkSchedules = async (providerId, dayOfWeek, isActive, sortBy, isDescending, pageNumber = 1, pageSize = 20) => {
     setLoading(true)
     try {
-      const response = await WorkSchedulesService.getAllWorkSchedules({ dayOfWeek, isActive, sortBy, isDescending, pageNumber, pageSize });
+      const response = await WorkSchedulesService.getAllWorkSchedules({ providerId, dayOfWeek, isActive, sortBy, isDescending, pageNumber, pageSize });
       setWorkSchedules(response.items || []);
       setPagination({
         totalCount: response.totalCount,
@@ -50,7 +50,7 @@ export const WorkSchedulesProvider = ({ children }) => {
     }
   };
 
-  const createWorkSchedule= async (providerId, dayOfWeek, startTime, endTime) => {
+  const createWorkSchedule = async (providerId, dayOfWeek, startTime, endTime) => {
     setLoading(true)
     try {
       const response = await WorkSchedulesService.createWorkSchedule(providerId, { dayOfWeek, startTime, endTime });
@@ -82,7 +82,7 @@ export const WorkSchedulesProvider = ({ children }) => {
   const changeStatusWorkSchedule = async (workId, status) => {
     setLoading(true)
     try {
-      const response = await WorkSchedulesService.changeStatusWorkSchedule(workId, { status });
+      const response = await WorkSchedulesService.changeStatusWorkSchedule(workId, { isActive: status });
       addNotification(response.message || "El estado del horario de trabajo ha cambiado", 'success');
 
       return response;
@@ -93,11 +93,11 @@ export const WorkSchedulesProvider = ({ children }) => {
     }
   };
 
- return (
-  <WorkSchedulesContext.Provider value={{workSchedules, workSchedule, loading, pagination, getAllWorkSchedules, getWorkSchedule, createWorkSchedule, updateWorkSchedule, changeStatusWorkSchedule}}>
-    {children}
-  </WorkSchedulesContext.Provider>
- )
+  return (
+    <WorkSchedulesContext.Provider value={{ workSchedules, workSchedule, loading, pagination, getAllWorkSchedules, getWorkSchedule, createWorkSchedule, updateWorkSchedule, changeStatusWorkSchedule }}>
+      {children}
+    </WorkSchedulesContext.Provider>
+  )
 };
 
 export const useWorkSchedules = () => useContext(WorkSchedulesContext);
