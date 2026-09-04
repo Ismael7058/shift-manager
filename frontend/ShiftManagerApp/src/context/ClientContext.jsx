@@ -15,10 +15,10 @@ export const ClientProvider = ({ children }) => {
     pageSize: 10
   });
 
-  const getClients = async (name, sortBy, isDescending, pageNumber=1, pageSize=20) => {
+  const getClients = async (name, sortBy, isDescending, pageNumber = 1, pageSize = 20) => {
     setLoading(true);
     try {
-      const response = await ClientService.getClients({name, sortBy,isDescending, pageNumber, pageSize})
+      const response = await ClientService.getClients({ name, sortBy, isDescending, pageNumber, pageSize })
 
       setClients(response.items || []);
       setPagination({
@@ -29,16 +29,16 @@ export const ClientProvider = ({ children }) => {
       });
     } catch (error) {
       addNotification(error.message || "Error al obtener los clientes", 'error');
-    } finally{
+    } finally {
       setLoading(false);
     };
   };
 
   return (
-    <ClientContext.Provider value={clients, loading, pagination, getClients}>
+    <ClientContext.Provider value={{ clients, loading, pagination, getClients }}>
       {children}
     </ClientContext.Provider>
   );
 };
 
-export const useClients = () => useContext(ClientContext);
+export const useClient = () => useContext(ClientContext);

@@ -16,10 +16,10 @@ export const ShiftsProvider = ({ children }) => {
     pageSize: 20
   });
 
-  const getShifts = async (providerId, clientId, serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDecending, pageNumber = 1, pageSize = 20) => {
+  const getShifts = async (providerId, clientId, serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDescending, pageNumber = 1, pageSize = 20) => {
     setLoading(true);
     try {
-      const response = await ShiftService.getShifts(providerId, clientId, { serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDecending, pageNumber, pageSize });
+      const response = await ShiftService.getShifts(providerId, clientId, { serviceId, dateFrom, dateTo, minPrice, maxPrice, statuses, providerName, clientName, sortBy, isDescending, pageNumber, pageSize });
 
       setShifts(response.items || []);
       setPagination({

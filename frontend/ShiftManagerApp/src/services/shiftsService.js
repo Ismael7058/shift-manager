@@ -6,10 +6,10 @@ export const ShiftService = {
    * @param {number} providerId
    * @param {number} clientId
    * @param {ShiftFilterDto} filter 
-   * @returns {Promise<PaginatedDto<ClientDto>>}
+   * @returns {Promise<PaginatedDto<ShiftDto>>}
    */
   getShifts: (providerId, clientId, filter) =>
-    apiFetch(`/shifts?providerId=${providerId}&clientId=${clientId}&ServiceId=${filter.serviceId}&DateFrom=${filter.dateFrom}&DateTo=${filter.dateTo}&MinPrice=${filter.minPrice}&MaxPRice=${filter.maxPrice}&Statuses=${filter.statuses}&ProviderName=${filter.providerName}&ClientName=${filter.clientName}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
+    apiFetch(`/shifts?providerId=${providerId}&clientId=${clientId}&ServiceId=${filter.serviceId}&DateFrom=${filter.dateFrom}&DateTo=${filter.dateTo}&MinPrice=${filter.minPrice}&MaxPRice=${filter.maxPrice}${filter.statuses && filter.statuses.length > 0 ? `&Statuses=${filter.statuses}` : ''}&ProviderName=${filter.providerName}&ClientName=${filter.clientName}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
 
   /**
    * Obtiene un turno por id
