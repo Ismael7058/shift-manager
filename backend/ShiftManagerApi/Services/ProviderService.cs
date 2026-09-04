@@ -55,42 +55,6 @@ namespace ShiftManagerApi.Services
           FirstName = u.UserProfile.FirstName,
           LastName = u.UserProfile.LastName,
           PictureURL = u.UserProfile.PictureURL,
-          Items = filter.IncludeServices
-            ? u.UserProfile.ProviderService
-                .Where(ps => ps.Service.IsActive)
-                .Select(ps => new ProviderServiceDto
-                {
-                  ProviderId = ps.ProviderId,
-                  ServiceId = ps.ServiceId,
-                  Name = ps.Service.Name,
-                  Description = ps.Service.Description,
-                  DurationMinutes = ps.DurationMinutes,
-                  DurationMinutesBase = ps.Service.DurationMinutes,
-                  Price = ps.Price
-                }).ToList()
-            : new List<ProviderServiceDto>(),
-          Works = filter.IncludeWorkSchedules
-             ? u.WorkSchedules
-              .Where(ws => ws.IsActive)
-              .Select(ws => new WorkSchedulesDto
-              {
-                Id = ws.Id,
-                ProviderId = ws.ProviderId,
-                DayOfWeek = ws.DayOfWeek,
-                StartTime = ws.StartTime,
-                EndTime = ws.EndTime,
-                IsActive = ws.IsActive
-              }).ToList()
-            : new List<WorkSchedulesDto>(),
-          RestrictedDates = filter.IncludeRestrictedDates
-            ? u.ProvidedShifts
-              .Where(ps => (ps.Status == ShiftStatus.pending || ps.Status == ShiftStatus.confirmed) && ps.EndAt > now)
-              .Select(ps => new DateRangeDto
-              {
-                StartAt = ps.StartAt,
-                EndAt = ps.EndAt
-              }).ToList()
-            : new List<DateRangeDto>()
         }
 
         )
@@ -103,6 +67,25 @@ namespace ShiftManagerApi.Services
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };
+    }
+
+    public async Task<ProviderDto> GetById(long id)
+    {
+      var user = await _context.UserAuths
+        .Include(u => u.UserProfile)
+        .FirstOrDefaultAsync(u => u.UserId == id);
+
+      if (user == null) throw new KeyNotFoundException("Usuario no encontrado");
+
+      var userDto = new ProviderDto
+      {
+        Id = user.UserId,
+        FirstName = user.UserProfile.FirstName,
+        LastName = user.UserProfile.LastName,
+        PictureURL = user.UserProfile.PictureURL
+      };
+
+      return userDto;
     }
   }
 

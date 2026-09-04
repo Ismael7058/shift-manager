@@ -27,6 +27,13 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetById(long id)
+    {
+      var response = await _providerService.GetById(id);
+      return Ok(response);
+    }    
+
     [HttpGet("{id}/services")]
     public async Task<ActionResult<PaginatedDto<ProviderServiceDto>>> GetServices(long id, [FromQuery] ProviderServiceFilterDto filter)
     {
