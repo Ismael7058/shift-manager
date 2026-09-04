@@ -8,13 +8,25 @@ namespace ShiftManagerApi.Dtos
     [Range(1, int.MaxValue, ErrorMessage = "ServiceId debe ser mayor a 0")]
     public long? ServiceId { get; set; }
 
-    public DateTime? DateFrom { get; set; }
-    public DateTime? DateTo { get; set; }
+    private DateTime? _dateFrom;
+    public DateTime? DateFrom
+    {
+        get => _dateFrom;
+        set => _dateFrom = value.HasValue ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : null;
+    }
+
+    private DateTime? _dateTo;
+    public DateTime? DateTo
+    {
+        get => _dateTo;
+        set => _dateTo = value.HasValue ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : null;
+    }
+
 
     public decimal? MinPrice { get; set; }
     public decimal? MaxPrice { get; set; }
 
-    public List<ShiftStatus>? Statuses { get; set; }
+    public string? Statuses { get; set; }
 
     public string? ProviderName { get; set; }
     public string? ClientName { get; set; }

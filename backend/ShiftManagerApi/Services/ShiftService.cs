@@ -233,8 +233,19 @@ namespace ShiftManagerApi.Services
       if (filter.MaxPrice.HasValue)
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) <= filter.MaxPrice);
       
-      if (filter.Statuses != null && filter.Statuses.Any())
-        query = query.Where(ms => filter.Statuses.Contains(ms.Status));
+      if (!string.IsNullOrWhiteSpace(filter.Statuses))
+      {
+          var statusList = filter.Statuses
+              .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+              .Select(s => Enum.TryParse<ShiftStatus>(s, ignoreCase: true, out var parsed) ? parsed : (ShiftStatus?)null)
+              .Where(s => s.HasValue)
+              .Select(s => s!.Value)
+              .ToList();
+          if (statusList.Any())
+          {
+              query = query.Where(ms => statusList.Contains(ms.Status));
+          }
+      }
 
       var totalCount = await query.CountAsync();
 
