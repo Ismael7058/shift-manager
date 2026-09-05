@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
@@ -9,10 +10,13 @@ namespace ShiftManagerApi.Services
   public class ServiceService : IServiceService
   {
     private readonly ShiftManagerContext _context;
+    private readonly IFileService _fileService;
+    private const string FOLDER_PATH = "Uploads/Services";
 
-    public ServiceService(ShiftManagerContext context)
+    public ServiceService(ShiftManagerContext context, IFileService fileService)
     {
       _context = context;
+      _fileService = fileService;
     }
 
     public async Task<PaginatedDto<ServiceDto>> GetAll(ServiceFilterDto filter)
@@ -48,7 +52,13 @@ namespace ShiftManagerApi.Services
           Name = s.Name,
           Description = s.Description,
           DurationMinutes = s.DurationMinutes,
-          IsActive = s.IsActive
+          IsActive = s.IsActive,
+          Images = s.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl
+          }).ToList()
         }).ToListAsync();
       return new PaginatedDto<ServiceDto>
       {
@@ -61,7 +71,9 @@ namespace ShiftManagerApi.Services
 
     public async Task<ServiceDto> GetById(long id)
     {
-      var service = await _context.Service.FirstOrDefaultAsync(s => s.Id == id);
+      var service = await _context.Service
+        .Include(s => s.Images)
+        .FirstOrDefaultAsync(s => s.Id == id);
 
       if (service == null) throw new KeyNotFoundException("Servicio no encontrado");
 
@@ -71,7 +83,13 @@ namespace ShiftManagerApi.Services
           Name = service.Name,
           Description = service.Description,
           DurationMinutes = service.DurationMinutes,
-          IsActive = service.IsActive
+          IsActive = service.IsActive,
+          Images = service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl
+          }).ToList()
       };
       return serviceDto;
     }
@@ -123,5 +141,62 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
+    public async Task<List<ServiceImageDto>> AddImages(long serviceId, List<IFormFile> files)
+    {
+      var service = await _context.Service.FirstOrDefaultAsync(s => s.Id == serviceId);
+      if (service == null)
+        throw new KeyNotFoundException("Servicio no encontrado");
+
+      if (files == null || files.Count == 0)
+        throw new InvalidOperationException("No se enviaron archivos para guardar");
+
+      var createdImages = new List<ServiceImage>();
+
+      foreach (var file in files)
+      {
+        if (file != null && file.Length > 0)
+        {
+          var fileName = await _fileService.SaveFile(file, FOLDER_PATH);
+          var serviceImage = new ServiceImage
+          {
+            ServiceId = serviceId,
+            ImageUrl = $"/{FOLDER_PATH}/{fileName}"
+          };
+          createdImages.Add(serviceImage);
+        }
+      }
+
+      if (createdImages.Count > 0)
+      {
+        await _context.ServiceImages.AddRangeAsync(createdImages);
+        await _context.SaveChangesAsync();
+      }
+
+      return createdImages.Select(img => new ServiceImageDto
+      {
+        Id = img.Id,
+        ServiceId = img.ServiceId,
+        ImageUrl = img.ImageUrl
+      }).ToList();
+    }
+
+    public async Task DeleteImage(long serviceId, long imageId)
+    {
+      var serviceImage = await _context.ServiceImages
+        .FirstOrDefaultAsync(img => img.Id == imageId && img.ServiceId == serviceId);
+
+      if (serviceImage == null)
+        throw new KeyNotFoundException("Imagen no encontrada para el servicio especificado");
+
+      var fileName = Path.GetFileName(serviceImage.ImageUrl);
+
+      _context.ServiceImages.Remove(serviceImage);
+      await _context.SaveChangesAsync();
+
+      if (!string.IsNullOrEmpty(fileName))
+      {
+        await _fileService.DeleteFile(fileName, FOLDER_PATH);
+      }
+    }
   }
 }

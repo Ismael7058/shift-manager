@@ -7,5 +7,6 @@ namespace ShiftManagerApi.Dtos
     public string? Description { get; set; }
     public int DurationMinutes { get; set; }
     public bool IsActive { get; set; }
+    public List<ServiceImageDto> Images { get; set; } = new();
   }
 }

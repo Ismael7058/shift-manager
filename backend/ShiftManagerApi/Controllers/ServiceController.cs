@@ -83,5 +83,46 @@ namespace ShiftManagerApi.Controllers
         return Conflict(new { message = ex.Message });
       }
     }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpPost("{id}/images")]
+    public async Task<ActionResult<List<ServiceImageDto>>> AddImages(long id, [FromForm] List<IFormFile> files)
+    {
+      try
+      {
+        if (files == null || files.Count == 0)
+          return BadRequest(new { message = "No se enviaron archivos válidos." });
+
+        var images = await _serviceService.AddImages(id, files);
+        return Ok(images);
+      }
+      catch (KeyNotFoundException ex)
+      {
+        return NotFound(new { message = ex.Message });
+      }
+      catch (InvalidOperationException ex)
+      {
+        return BadRequest(new { message = ex.Message });
+      }
+    }
+
+    [Authorize(Policy = "Administrador")]
+    [HttpDelete("{serviceId}/images/{imageId}")]
+    public async Task<ActionResult> DeleteImage(long serviceId, long imageId)
+    {
+      try
+      {
+        await _serviceService.DeleteImage(serviceId, imageId);
+        return NoContent();
+      }
+      catch (KeyNotFoundException ex)
+      {
+        return NotFound(new { message = ex.Message });
+      }
+      catch (Exception)
+      {
+        return StatusCode(500, new { message = "Ocurrió un error inesperado al eliminar la imagen del servicio." });
+      }
+    }
   }
 }

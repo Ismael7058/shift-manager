@@ -19,6 +19,7 @@ namespace ShiftManagerApi.Data
     public DbSet<WorkSchedules> WorkSchedules { get; set; } = null!;
     public DbSet<Shift> Shift { get; set; } = null!;
     public DbSet<ShiftItems> ShiftItems { get; set; } = null!;
+    public DbSet<ServiceImage> ServiceImages { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -66,6 +67,16 @@ namespace ShiftManagerApi.Data
         entity.HasOne(ms => ms.Service)
               .WithMany(s => s.ProviderService)
               .HasForeignKey(ms => ms.ServiceId);
+      });
+
+      modelBuilder.Entity<ServiceImage>(entity =>
+      {
+        entity.HasKey(si => si.Id);
+
+        entity.HasOne(si => si.Service)
+              .WithMany(s => s.Images)
+              .HasForeignKey(si => si.ServiceId)
+              .OnDelete(DeleteBehavior.Cascade);
       });
 
       modelBuilder.Entity<WorkSchedules>(entity =>
