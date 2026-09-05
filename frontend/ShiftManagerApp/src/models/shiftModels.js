@@ -325,6 +325,7 @@
 
 /**
  * @typedef {Object} WorkSchedulesFilterDto
+ * @property {number} [providerId]
  * @property {number} [dayOfWeek]
  * @property {number} [isActive]
  * @property {string} [sortBy]
