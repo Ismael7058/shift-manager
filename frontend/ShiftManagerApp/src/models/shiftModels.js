@@ -121,12 +121,20 @@
  */
 
 /**
+ * @typedef {Object} ServiceImageDto
+ * @property {number} id
+ * @property {number} serviceId
+ * @property {string} imageUrl
+ */
+
+/**
  * @typedef {Object} ServiceDto
  * @property {number} id
  * @property {string} name
  * @property {string} [description]
  * @property {number} durationMinutes
  * @property {boolean} isActive
+ * @property {ServiceImageDto[]} [images] 
  */
 
 /**

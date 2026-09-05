@@ -94,8 +94,36 @@ export const ServicesProvider = ({ children }) => {
     }
   };
 
+  const uploadServiceImages = async (serviceId, files) => {
+    setLoading(true);
+    try {
+      const response = await ServiceService.uploadImages(serviceId, files);
+      addNotification("Imágenes subidas con éxito", 'success');
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al subir las imágenes", 'error');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteServiceImage = async (serviceId, imageId) => {
+    setLoading(true);
+    try {
+      await ServiceService.deleteImage(serviceId, imageId);
+      addNotification("Imagen eliminada con éxito", 'success');
+      return true;
+    } catch (error) {
+      addNotification(error.message || "Error al eliminar la imagen", 'error');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <ServicesContext.Provider value={{ services, service, loading, pagination, getServices, getService, createService, updateService, changeStatusService }}>
+    <ServicesContext.Provider value={{ services, service, loading, pagination, getServices, getService, createService, updateService, changeStatusService, uploadServiceImages, deleteServiceImage }}>
       {children}
     </ServicesContext.Provider>
   );

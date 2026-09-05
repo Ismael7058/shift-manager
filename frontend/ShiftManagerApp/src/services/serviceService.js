@@ -63,5 +63,37 @@ export const ServiceService = {
         method: 'PATCH',
         body: JSON.stringify(status)
       }
-    )
+    ),
+
+  /**
+   * Sube una o múltiples imágenes a un servicio
+   * @param {number} serviceId 
+   * @param {File[]|FileList|FormData} files - Array o FileList de archivos o FormData directo
+   * @returns {Promise<ServiceImageDto[]>}
+   */
+  uploadImages: (serviceId, files) => {
+    const formData = files instanceof FormData ? files : new FormData();
+
+    if (!(files instanceof FormData)) {
+      const fileList = Array.isArray(files) ? files : Array.from(files);
+      fileList.forEach((file) => formData.append('files', file));
+    }
+
+    return apiFetch(`/services/${serviceId}/images`, {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+
+  /**
+   * Elimina una imagen específica de un servicio
+   * @param {number} serviceId 
+   * @param {number} imageId 
+   * @returns {Promise<null>}
+   */
+  deleteImage: (serviceId, imageId) =>
+    apiFetch(`/services/${serviceId}/images/${imageId}`, {
+      method: 'DELETE'
+    })
 };
