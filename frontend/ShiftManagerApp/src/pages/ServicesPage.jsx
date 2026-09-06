@@ -2,10 +2,11 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useService } from '../context/ServicesContext';
 import Table from '../components/ui/Table';
 import CreateForm from '../components/service/CreateForm';
-import UpdateForm from '../components/service/UpdateForm';
 import ChangeStatusModal from '../components/service/ChangeStatusModal';
 import Pagination from '../components/ui/Pagination';
+import { Link } from 'react-router-dom';
 
+const BASE_URL = 'http://localhost:5256';
 const ServicesPage = () => {
   const { services, loading, pagination, getServices } = useService();
   const [modalType, setModalType] = useState(null);
@@ -75,6 +76,28 @@ const ServicesPage = () => {
   // Columnas de la tabla de Servicios
   const columns = useMemo(() => [
     { key: 'id', label: 'Código' },
+    {
+      key: 'image',
+      label: 'Imagen',
+      render: (service) => {
+        const firstImg = service.images && service.images.length > 0 ? service.images[0].imageUrl : null;
+        const fullImgSrc = firstImg ? (firstImg.startsWith('http') ? firstImg : `${BASE_URL}${firstImg}`) : null;
+        if (fullImgSrc) {
+          return (
+            <img
+              src={fullImgSrc}
+              alt={service.name}
+              className="w-8 h-8 rounded-lg object-cover border border-white/20 shadow-sm"
+            />
+          );
+        }
+        return (
+          <div className="w-8 h-8 rounded-lg bg-neutral-800 text-neutral-400 flex items-center justify-center font-bold text-xs border border-white/10">
+            -
+          </div>
+        );
+      }
+    },
     { key: 'name', label: 'Nombre' },
     { key: 'description', label: 'Descripción' },
     {
@@ -96,15 +119,12 @@ const ServicesPage = () => {
       label: 'Acciones',
       render: (service) => (
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setModalData(service);
-              setModalType('edit');
-            }}
+          <Link
+            to={`/servicios/${service.id}`}
             className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
           >
-            Editar
-          </button>
+            Ver
+          </Link>
           <button
             onClick={() => {
               setModalData(service);
@@ -226,14 +246,6 @@ const ServicesPage = () => {
       {/* Crear */}
       <CreateForm
         isOpen={modalType === 'create'}
-        onClose={closeModal}
-        onSuccess={refreshList}
-      />
-
-      {/* Editar */}
-      <UpdateForm
-        isOpen={modalType === 'edit'}
-        service={modalData}
         onClose={closeModal}
         onSuccess={refreshList}
       />
