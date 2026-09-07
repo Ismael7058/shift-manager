@@ -46,6 +46,16 @@ namespace ShiftManagerApi.Services
         throw new InvalidOperationException("No puede indicar que no asistio a un turno que no ha comenzado.");
       }
 
+      if(!clientId.HasValue && status == ShiftStatus.canceled && DateTime.UtcNow > shift.StartAt.AddHours(-24) && shift.Status == ShiftStatus.confirmed)
+      {
+        throw new InvalidOperationException("No puede cancelar un turno con menos de 24 horas de anticipacion.");
+      }
+
+      if(clientId.HasValue && status == ShiftStatus.canceled && DateTime.UtcNow >= shift.StartAt)
+      {
+        throw new InvalidOperationException("No puede cancelar un turno pasado.");
+      }
+
       if (shift.Status == status) return;
 
       shift.Status = status;
