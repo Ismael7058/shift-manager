@@ -43,5 +43,19 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
+    [HttpGet("{id}/restricted-dates")]
+    public async Task<ActionResult<List<DateRangeDto>>> GetRestrictedDates(long id, [FromQuery] DateTime? dateFrom, [FromQuery] DateTime? dateTo)
+    {
+      try
+      {
+        var response = await _providerService.GetRestrictedDates(id, dateFrom, dateTo);
+        return Ok(response);
+      }
+      catch (KeyNotFoundException ex)
+      {
+        return NotFound(new { message = ex.Message });
+      }
+    }
+
   }
 }

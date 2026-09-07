@@ -87,6 +87,44 @@ namespace ShiftManagerApi.Services
 
       return userDto;
     }
+
+    public async Task<List<DateRangeDto>> GetRestrictedDates(long providerId, DateTime? dateFrom = null, DateTime? dateTo = null)
+    {
+      var providerExists = await _context.UserAuths
+        .AsNoTracking()
+        .AnyAsync(u => u.UserId == providerId && u.IsActive == true && u.UserRole.Any(ur => ur.Role.Name == "Proveedor"));
+
+      if (!providerExists)
+        throw new KeyNotFoundException("Proveedor no encontrado o inactivo.");
+
+      var now = DateTime.UtcNow;
+      var query = _context.Shift
+        .AsNoTracking()
+        .Where(s => s.ProviderId == providerId && (s.Status == ShiftStatus.pending || s.Status == ShiftStatus.confirmed));
+
+      if (dateFrom.HasValue)
+      {
+        query = query.Where(s => s.EndAt >= dateFrom.Value);
+      }
+      else
+      {
+        query = query.Where(s => s.EndAt > now);
+      }
+
+      if (dateTo.HasValue)
+      {
+        query = query.Where(s => s.StartAt <= dateTo.Value);
+      }
+
+      return await query
+        .OrderBy(s => s.StartAt)
+        .Select(s => new DateRangeDto
+        {
+          StartAt = s.StartAt,
+          EndAt = s.EndAt
+        })
+        .ToListAsync();
+    }
   }
 
 }
