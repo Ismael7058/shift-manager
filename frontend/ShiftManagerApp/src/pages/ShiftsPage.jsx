@@ -8,6 +8,7 @@ import { useService } from '../context/ServicesContext';
 import { useProvider } from '../context/ProviderContext';
 import { useClient } from '../context/ClientContext';
 import Select2 from '../components/ui/forms/Select2';
+import { parseDateToLocal } from '../utils/dateUtils';
 
 const ShiftsPage = () => {
   const { shifts, loading, pagination, getShifts } = useShift();
@@ -32,7 +33,7 @@ const ShiftsPage = () => {
     maxPrice: '',
     status: '',
     sortBy: 'startAt',
-    isDescending: false,
+    isDescending: true,
     pageNumber: 1,
     pageSize: 10
   });
@@ -178,23 +179,27 @@ const ShiftsPage = () => {
   // Columnas para la tabla
   const columns = useMemo(() => [
     {
-      key: 'startAt',
-      label: 'Inicio',
-      render: (shift) => new Date(shift.startAt).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      key: 'date',
+      label: 'Fecha',
+      render: (shift) => {
+        const start = parseDateToLocal(shift.startAt);
+        if (!start) return '-';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${start.getFullYear()}`;
+      }
     },
     {
-      key: 'endAt',
-      label: 'Fin',
-      render: (shift) => new Date(shift.endAt).toLocaleString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      key: 'time',
+      label: 'Horario',
+      render: (shift) => {
+        const start = parseDateToLocal(shift.startAt);
+        const end = parseDateToLocal(shift.endAt);
+        if (!start) return '-';
+        const pad = (n) => String(n).padStart(2, '0');
+        const startTime = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+        const endTime = end ? `${pad(end.getHours())}:${pad(end.getMinutes())}` : '--:--';
+        return `${startTime} a ${endTime}`;
+      }
     },
     {
       key: 'providerFullName',
