@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from '../ui/Calendar';
 import Time from '../ui/Time';
+import { parseDateToLocal } from '../../utils/dateUtils';
 
 const SelectDateTime = ({
   availableDays = [],
@@ -72,14 +73,16 @@ const SelectDateTime = ({
 
     // Dias no disponibles
     const isDayExplicitlyNotAvailable = daysNotAvailable.some(range => {
-      const restStart = new Date(range.StartAt);
-      const restEnd = new Date(range.EndAt);
+      const parsedStart = parseDateToLocal(range.StartAt);
+      const parsedEnd = parseDateToLocal(range.EndAt);
+      if (!parsedStart || !parsedEnd) return false;
+
       const [hS, mS] = availability.StartTime.split(':').map(Number);
       const [hE, mE] = availability.EndTime.split(':').map(Number);
       const shiftStart = new Date(date).setHours(hS, mS, 0, 0);
       const shiftEnd = new Date(date).setHours(hE, mE, 0, 0);
 
-      return restStart <= shiftStart && restEnd >= shiftEnd;
+      return parsedStart.getTime() <= shiftStart && parsedEnd.getTime() >= shiftEnd;
     });
 
     if (isDayExplicitlyNotAvailable) {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { parseDateToLocal } from '../../utils/dateUtils';
 
 const Calendar = ({ selectedDate, onSelectDate, availableDays = [], daysNotAvailable = [] }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -64,15 +65,17 @@ const Calendar = ({ selectedDate, onSelectDate, availableDays = [], daysNotAvail
 
     // Bloquear el dia solo si la restriccion cubre el dia laboral
     const isRestricted = daysNotAvailable.some(range => {
-      const restStart = new Date(range.StartAt);
-      const restEnd = new Date(range.EndAt);
+      const parsedStart = parseDateToLocal(range.StartAt);
+      const parsedEnd = parseDateToLocal(range.EndAt);
+      if (!parsedStart || !parsedEnd) return false;
+
       const [hS, mS] = schedule.StartTime.split(':').map(Number);
       const [hE, mE] = schedule.EndTime.split(':').map(Number);
       
       const shiftStart = new Date(date).setHours(hS, mS, 0, 0);
       const shiftEnd = new Date(date).setHours(hE, mE, 0, 0);
 
-      return restStart <= shiftStart && restEnd >= shiftEnd;
+      return parsedStart.getTime() <= shiftStart && parsedEnd.getTime() >= shiftEnd;
     });
     if (isRestricted) return false;
 

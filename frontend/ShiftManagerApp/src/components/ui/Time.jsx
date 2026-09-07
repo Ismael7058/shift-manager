@@ -1,4 +1,5 @@
 import React from 'react';
+import { parseDateToLocal } from '../../utils/dateUtils';
 
 const Time = ({ 
   startTime,
@@ -46,8 +47,12 @@ const Time = ({
     const slotEnd = new Date(selectedDate).setHours(h, m + minTotalRestrict, 0, 0);
 
     const isRestricted = daysNotAvailable.some(range => {
-      const restStart = new Date(range.StartAt).getTime();
-      const restEnd = new Date(range.EndAt).getTime();
+      const parsedStart = parseDateToLocal(range.StartAt);
+      const parsedEnd = parseDateToLocal(range.EndAt);
+      if (!parsedStart || !parsedEnd) return false;
+
+      const restStart = parsedStart.getTime();
+      const restEnd = parsedEnd.getTime();
       return slotStart < restEnd && slotEnd > restStart;
     });
 
