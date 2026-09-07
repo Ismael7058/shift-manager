@@ -8,6 +8,8 @@ import { useProvider } from '../context/ProviderContext';
 import { useClient } from '../context/ClientContext';
 import Select2 from '../components/ui/forms/Select2';
 import { parseDateToLocal } from '../utils/dateUtils';
+import { UserService } from '../services/userService';
+import { useNotification } from '../context/NotificationContext';
 
 const getTodayLocal = () => {
   const d = new Date();
@@ -22,15 +24,23 @@ const ShiftsPage = () => {
   const { services, getServices } = useService();
   const { providers, getProviders } = useProvider();
   const { clients, getClients } = useClient();
+  const { addNotification } = useNotification();
+
+  const [userCreate, setUserCreate] = useState([]);
+  const [userCancel, setUserCancel] = useState([]);
 
   const [serviceQuery, setServiceQuery] = useState('');
   const [providerQuery, setProviderQuery] = useState('');
   const [clientQuery, setClientQuery] = useState('');
+  const [creatorQuery, setCreatorQuery] = useState('');
+  const [cancelerQuery, setCancelerQuery] = useState('');
 
   const [filters, setFilters] = useState({
     serviceId: '',
     providerId: '',
     clientId: '',
+    createdById: '',
+    canceledById: '',
     dateFrom: '',
     dateTo: '',
     minPrice: '',
@@ -49,6 +59,8 @@ const ShiftsPage = () => {
         getShifts(
           filters.providerId,
           filters.clientId,
+          filters.createdById,
+          filters.canceledById,
           filters.serviceId,
           filters.dateFrom,
           filters.dateTo,
@@ -101,6 +113,56 @@ const ShiftsPage = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [clientQuery]);
 
+  // User - Create
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: creatorQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCreate(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los creadores", 'error')
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [creatorQuery]);
+
+  // User - Cancel
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: cancelerQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCancel(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los canceladores", 'error')
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [cancelerQuery]);
+
+
+
   // Opciones formateadas para Select2
   const serviceItems = useMemo(() => {
     return (services || []).map(s => ({
@@ -123,6 +185,19 @@ const ShiftsPage = () => {
     }));
   }, [clients]);
 
+  const userCreateItems = useMemo(() => {
+    return (userCreate || []).map(u => ({
+      id: u.id,
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username || u.email || `Usuario #${u.id}`
+    }));
+  }, [userCreate]);
+
+  const userCancelItems = useMemo(() => {
+    return (userCancel || []).map(u => ({
+      id: u.id,
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username || u.email || `Usuario #${u.id}`
+    }));
+  }, [userCancel]);
 
   // Handlers para filtros
   const updateFilter = (key, value) => {
@@ -288,11 +363,10 @@ const ShiftsPage = () => {
         <button
           type="button"
           onClick={() => handleTabChange('all')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
-            isAll
-              ? 'bg-neutral-800 text-white border-white/20 shadow-md'
-              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-white hover:border-white/20'
-          }`}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isAll
+            ? 'bg-neutral-800 text-white border-white/20 shadow-md'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-white hover:border-white/20'
+            }`}
         >
           <span className="material-symbols-outlined text-[16px]">list_alt</span>
           <span>Todos los turnos</span>
@@ -301,11 +375,10 @@ const ShiftsPage = () => {
         <button
           type="button"
           onClick={() => handleTabChange('today')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
-            isTodayConfirmed
-              ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 shadow-md font-bold'
-              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-emerald-400 hover:border-emerald-500/30'
-          }`}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isTodayConfirmed
+            ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 shadow-md font-bold'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-emerald-400 hover:border-emerald-500/30'
+            }`}
         >
           <span className="material-symbols-outlined text-[16px]">today</span>
           <span>Agenda de Hoy (Confirmados)</span>
@@ -314,11 +387,10 @@ const ShiftsPage = () => {
         <button
           type="button"
           onClick={() => handleTabChange('pending')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
-            isPendingOnly
-              ? 'bg-yellow-600/20 text-yellow-300 border-yellow-500/40 shadow-md font-bold'
-              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-yellow-400 hover:border-yellow-500/30'
-          }`}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isPendingOnly
+            ? 'bg-yellow-600/20 text-yellow-300 border-yellow-500/40 shadow-md font-bold'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-yellow-400 hover:border-yellow-500/30'
+            }`}
         >
           <span className="material-symbols-outlined text-[16px]">pending_actions</span>
           <span>Por Confirmar</span>
@@ -376,6 +448,38 @@ const ShiftsPage = () => {
               labelKey="name"
             />
           </div>
+          {/* Usuario Creador */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Creado por
+            </label>
+            <Select2
+              items={userCreateItems}
+              value={filters.createdById}
+              onSelect={(id) => updateFilter('createdById', id)}
+              onSearch={(query) => setCreatorQuery(query)}
+              placeholder="Buscar creador..."
+              valueKey="id"
+              labelKey="name"
+            />
+          </div>
+
+          {/* Usuario Cancelador */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Cancelado por
+            </label>
+            <Select2
+              items={userCancelItems}
+              value={filters.canceledById}
+              onSelect={(id) => updateFilter('canceledById', id)}
+              onSearch={(query) => setCancelerQuery(query)}
+              placeholder="Buscar cancelador..."
+              valueKey="id"
+              labelKey="name"
+            />
+          </div>
+
         </div>
 
         {/* Fila 2: Fechas, Precios y Ordenamiento (3 columnas balanceadas) */}

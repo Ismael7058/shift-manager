@@ -199,6 +199,8 @@
 /**
  * @typedef {Object} ShiftFilterDto
  * @property {number} [serviceId]
+ * @property {number} [createdById]
+ * @property {number} [canceledById]
  * @property {string} [dateFrom] - Formato ISO string
  * @property {string} [dateTo] - Formato ISO string
  * @property {number} [minPrice]
