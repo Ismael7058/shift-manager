@@ -320,6 +320,12 @@ namespace ShiftManagerApi.Services
       if (filter.MaxPrice.HasValue)
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) <= filter.MaxPrice);
       
+      // Filtrar por usuario creador y cancelador
+      if (filter.CreatedById.HasValue)
+        query = query.Where(ms => ms.CreatedById == filter.CreatedById);
+      if (filter.CanceledById.HasValue)
+        query = query.Where(ms => ms.CanceledById == filter.CanceledById);
+      
       if (!string.IsNullOrWhiteSpace(filter.Statuses))
       {
           var statusList = filter.Statuses

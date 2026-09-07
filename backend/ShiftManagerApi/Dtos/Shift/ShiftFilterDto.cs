@@ -31,6 +31,9 @@ namespace ShiftManagerApi.Dtos
     public string? ProviderName { get; set; }
     public string? ClientName { get; set; }
 
+    public long? CreatedById { get; set; }
+    public long? CanceledById { get; set; }
+
     public string? SortBy { get; set; }
     public bool IsDescending { get; set; }
 
