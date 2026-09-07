@@ -7,7 +7,6 @@ import ChangeStatusShiftModal from '../components/shifts/ChangeStatusShiftModal'
 import { parseDateToLocal } from '../utils/dateUtils';
 
 
-
 const ShiftDetailPage = () => {
   const { id } = useParams();
   const { shift, loading, getShift } = useShift();
@@ -167,18 +166,13 @@ const ShiftDetailPage = () => {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 rounded border border-white/10 font-semibold uppercase tracking-wider">
-                    Cliente Titular
+                  <span className="text-[10px] bg-white/5 text-white/60 px-2 py-0.5 font-semibold uppercase tracking-wider">
+                    Cliente
                   </span>
-                  <span className="text-[11px] text-white/40 font-mono">ID #{shift.clientId}</span>
                 </div>
                 <h3 className="text-base font-bold text-white truncate">
                   {shift.clientFullName || `Cliente #${shift.clientId}`}
                 </h3>
-                <p className="text-xs text-white/50 flex items-center gap-1 mt-0.5">
-                  <span className="material-symbols-outlined text-[14px] text-white/40">tag</span>
-                  Turno TRN-{shift.id}
-                </p>
               </div>
             </div>
 
@@ -440,6 +434,69 @@ const ShiftDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Auditoria */}
+      {user?.roleActive === 'Administrador' && (
+        <div className="mt-6 bg-neutral-900 border border-white/10 rounded-xl p-6 shadow-2xl backdrop-blur-sm text-white">
+          <div className="flex items-center gap-2 border-b border-white/10 pb-4 mb-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              3. Auditoría
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Creador */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="material-symbols-outlined text-cyan-400 text-base">person_add</span>
+                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Creado por</p>
+              </div>
+              <p className="text-sm font-semibold text-white">{shift?.createdByUser?.fullName || 'Desconocido'}</p>
+              <div className="mt-2">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  Rol: {shift?.createdByRole || 'N/A'}
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-500 mt-2">
+                {shift?.createdAt && new Date(shift.createdAt).toLocaleString('es-AR')}
+              </p>
+            </div>
+            {/* Confirmador */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="material-symbols-outlined text-emerald-400 text-base">verified</span>
+                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Confirmado por</p>
+              </div>
+              {shift?.confirmedByUser ? (
+                <div>
+                  <p className="text-sm font-semibold text-white">{shift.confirmedByUser.fullName}</p>
+                  <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    Confirmado
+                  </span>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 italic mt-1">Sin confirmar</p>
+              )}
+            </div>
+            {/* Cancelador */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="material-symbols-outlined text-rose-400 text-base">cancel</span>
+                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest">Cancelado por</p>
+              </div>
+              {shift?.canceledByUser ? (
+                <div>
+                  <p className="text-sm font-semibold text-white">{shift.canceledByUser.fullName}</p>
+                  <span className="inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    Cancelado
+                  </span>
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-500 italic mt-1">No cancelado</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Estado */}
       <ChangeStatusShiftModal
