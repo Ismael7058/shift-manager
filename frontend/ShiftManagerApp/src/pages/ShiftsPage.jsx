@@ -2,13 +2,20 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useShift } from '../context/ShiftsContext';
 import Table from '../components/ui/Table';
-import Modal from '../components/ui/Modal';
 import Pagination from '../components/ui/Pagination';
 import { useService } from '../context/ServicesContext';
 import { useProvider } from '../context/ProviderContext';
 import { useClient } from '../context/ClientContext';
 import Select2 from '../components/ui/forms/Select2';
 import { parseDateToLocal } from '../utils/dateUtils';
+
+const getTodayLocal = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const ShiftsPage = () => {
   const { shifts, loading, pagination, getShifts } = useShift();
@@ -19,9 +26,6 @@ const ShiftsPage = () => {
   const [serviceQuery, setServiceQuery] = useState('');
   const [providerQuery, setProviderQuery] = useState('');
   const [clientQuery, setClientQuery] = useState('');
-
-  const [modalType, setModalType] = useState(null);
-  const [modalData, setModalData] = useState(null);
 
   const [filters, setFilters] = useState({
     serviceId: '',
@@ -37,11 +41,6 @@ const ShiftsPage = () => {
     pageNumber: 1,
     pageSize: 10
   });
-
-  const closeModal = () => {
-    setModalType(null);
-    setModalData(null);
-  };
 
   // Shifts
   useEffect(() => {
@@ -126,16 +125,8 @@ const ShiftsPage = () => {
 
 
   // Handlers para filtros
-  const handleServiceSelect = (id) => {
-    setFilters(prev => ({ ...prev, serviceId: id, pageNumber: 1 }));
-  };
-
-  const handleProviderSelect = (id) => {
-    setFilters(prev => ({ ...prev, providerId: id, pageNumber: 1 }));
-  };
-
-  const handleClientSelect = (id) => {
-    setFilters(prev => ({ ...prev, clientId: id, pageNumber: 1 }));
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value, pageNumber: 1 }));
   };
 
   const handleStatusToggle = (statusKey) => {
@@ -148,26 +139,6 @@ const ShiftsPage = () => {
     });
   };
 
-  const handleDateFromChange = (e) => {
-    setFilters(prev => ({ ...prev, dateFrom: e.target.value, pageNumber: 1 }));
-  };
-
-  const handleDateToChange = (e) => {
-    setFilters(prev => ({ ...prev, dateTo: e.target.value, pageNumber: 1 }));
-  };
-
-  const handleMinPriceChange = (e) => {
-    setFilters(prev => ({ ...prev, minPrice: e.target.value, pageNumber: 1 }));
-  };
-
-  const handleMaxPriceChange = (e) => {
-    setFilters(prev => ({ ...prev, maxPrice: e.target.value, pageNumber: 1 }));
-  };
-
-  const handleSortByChange = (e) => {
-    setFilters(prev => ({ ...prev, sortBy: e.target.value, pageNumber: 1 }));
-  };
-
   const handleToggleDescending = () => {
     setFilters(prev => ({ ...prev, isDescending: !prev.isDescending, pageNumber: 1 }));
   };
@@ -175,6 +146,55 @@ const ShiftsPage = () => {
   const handlePageChange = (newPage) => {
     setFilters(prev => ({ ...prev, pageNumber: newPage }));
   };
+
+  const handleTabChange = (tabId) => {
+    const today = getTodayLocal();
+    if (tabId === 'today') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: today,
+        dateTo: today,
+        status: ['confirmed'],
+        pageNumber: 1
+      }));
+    } else if (tabId === 'pending') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: '',
+        dateTo: '',
+        status: ['pending'],
+        pageNumber: 1
+      }));
+    } else if (tabId === 'all') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: '',
+        dateTo: '',
+        status: '',
+        pageNumber: 1
+      }));
+    }
+  };
+
+  const todayStr = getTodayLocal();
+  const isTodayConfirmed =
+    filters.dateFrom === todayStr &&
+    filters.dateTo === todayStr &&
+    Array.isArray(filters.status) &&
+    filters.status.length === 1 &&
+    filters.status[0] === 'confirmed';
+
+  const isPendingOnly =
+    !filters.dateFrom &&
+    !filters.dateTo &&
+    Array.isArray(filters.status) &&
+    filters.status.length === 1 &&
+    filters.status[0] === 'pending';
+
+  const isAll =
+    !filters.dateFrom &&
+    !filters.dateTo &&
+    (!filters.status || filters.status.length === 0);
 
   // Columnas para la tabla
   const columns = useMemo(() => [
@@ -214,16 +234,17 @@ const ShiftsPage = () => {
       key: 'status',
       label: 'Estado',
       render: (shift) => {
+        let text = '';
         let statusClass = '';
         switch (shift.status?.toLowerCase()) {
-          case 'confirmed': statusClass = 'text-green-400'; break;
-          case 'pending': statusClass = 'text-yellow-400'; break;
-          case 'canceled':
-          case 'no_show': statusClass = 'text-red-400'; break;
-          case 'completed': statusClass = 'text-blue-400'; break;
-          default: statusClass = 'text-white/80';
+          case 'confirmed': text = "Confirmado"; statusClass = 'text-green-400'; break;
+          case 'pending': text = "Pendiente"; statusClass = 'text-yellow-400'; break;
+          case 'canceled': text = "Cancelado"; statusClass = 'text-red-400'; break;
+          case 'no_show': text = "No Asistió"; statusClass = 'text-red-400'; break;
+          case 'completed': text = "Completado"; statusClass = 'text-blue-400'; break;
+          default: text = shift.status; statusClass = 'text-white/80';
         }
-        return <span className={statusClass}>{shift.status}</span>;
+        return <span className={statusClass}>{text}</span>;
       }
     },
     {
@@ -262,6 +283,48 @@ const ShiftsPage = () => {
         </Link>
       </div>
 
+      {/* Vistas Rápidas (Tabs) */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => handleTabChange('all')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
+            isAll
+              ? 'bg-neutral-800 text-white border-white/20 shadow-md'
+              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-white hover:border-white/20'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">list_alt</span>
+          <span>Todos los turnos</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('today')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
+            isTodayConfirmed
+              ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 shadow-md font-bold'
+              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-emerald-400 hover:border-emerald-500/30'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">today</span>
+          <span>Agenda de Hoy (Confirmados)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('pending')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${
+            isPendingOnly
+              ? 'bg-yellow-600/20 text-yellow-300 border-yellow-500/40 shadow-md font-bold'
+              : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-yellow-400 hover:border-yellow-500/30'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+          <span>Por Confirmar</span>
+        </button>
+      </div>
+
       {/* Filtros */}
       <div className="bg-neutral-900/50 border border-white/10 rounded-xl p-4 mb-6 transition-all space-y-4">
         {/* Fila 1: Búsquedas con Select2 (3 columnas) */}
@@ -274,7 +337,7 @@ const ShiftsPage = () => {
             <Select2
               items={serviceItems}
               value={filters.serviceId}
-              onSelect={handleServiceSelect}
+              onSelect={(id) => updateFilter('serviceId', id)}
               onSearch={(query) => setServiceQuery(query)}
               placeholder="Buscar servicio..."
               valueKey="id"
@@ -290,7 +353,7 @@ const ShiftsPage = () => {
             <Select2
               items={providerItems}
               value={filters.providerId}
-              onSelect={handleProviderSelect}
+              onSelect={(id) => updateFilter('providerId', id)}
               onSearch={(query) => setProviderQuery(query)}
               placeholder="Buscar proveedor..."
               valueKey="id"
@@ -306,7 +369,7 @@ const ShiftsPage = () => {
             <Select2
               items={clientItems}
               value={filters.clientId}
-              onSelect={handleClientSelect}
+              onSelect={(id) => updateFilter('clientId', id)}
               onSearch={(query) => setClientQuery(query)}
               placeholder="Buscar cliente..."
               valueKey="id"
@@ -326,7 +389,7 @@ const ShiftsPage = () => {
               <input
                 type="date"
                 value={filters.dateFrom}
-                onChange={handleDateFromChange}
+                onChange={(e) => updateFilter('dateFrom', e.target.value)}
                 onClick={(e) => e.target.showPicker && e.target.showPicker()}
                 className="px-2.5 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none focus:border-indigo-500 transition-colors w-full h-[38px] cursor-pointer [color-scheme:dark]"
                 title="Fecha Desde"
@@ -334,7 +397,7 @@ const ShiftsPage = () => {
               <input
                 type="date"
                 value={filters.dateTo}
-                onChange={handleDateToChange}
+                onChange={(e) => updateFilter('dateTo', e.target.value)}
                 onClick={(e) => e.target.showPicker && e.target.showPicker()}
                 className="px-2.5 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none focus:border-indigo-500 transition-colors w-full h-[38px] cursor-pointer [color-scheme:dark]"
                 title="Fecha Hasta"
@@ -352,14 +415,14 @@ const ShiftsPage = () => {
                 type="number"
                 placeholder="Mín"
                 value={filters.minPrice}
-                onChange={handleMinPriceChange}
+                onChange={(e) => updateFilter('minPrice', e.target.value)}
                 className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-indigo-500 transition-colors w-full h-[38px]"
               />
               <input
                 type="number"
                 placeholder="Máx"
                 value={filters.maxPrice}
-                onChange={handleMaxPriceChange}
+                onChange={(e) => updateFilter('maxPrice', e.target.value)}
                 className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-indigo-500 transition-colors w-full h-[38px]"
               />
             </div>
@@ -373,7 +436,7 @@ const ShiftsPage = () => {
               </label>
               <select
                 value={filters.sortBy}
-                onChange={handleSortByChange}
+                onChange={(e) => updateFilter('sortBy', e.target.value)}
                 className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none cursor-pointer focus:border-indigo-500 transition-colors w-full h-[38px]"
               >
                 <option value="startAt" className="bg-neutral-900">Fecha</option>
@@ -456,36 +519,6 @@ const ShiftsPage = () => {
           />
         </div>
       )}
-
-      <Modal
-        isOpen={modalType === 'shift'}
-        onClose={closeModal}
-        title='Detalle del Turno'
-      >
-        {modalData && (
-          <div className="text-white space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-white/40">Cliente</p>
-                <p>{modalData.clientFullName}</p>
-              </div>
-              <div>
-                <p className="text-white/40">Proveedor</p>
-                <p>{modalData.providerFullName}</p>
-              </div>
-            </div>
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-white/40 mb-2">Servicios contratados:</p>
-              <ul className="list-disc list-inside text-sm space-y-1">
-                {modalData.items.map((item) => (
-                  <li key={item.id}>{item.nameService} - ${item.priceAtMoment}</li>
-                ))}
-              </ul>
-            </div>
-            <p className="text-xl font-bold pt-4 text-right">Total: ${modalData.totalAmount}</p>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };
