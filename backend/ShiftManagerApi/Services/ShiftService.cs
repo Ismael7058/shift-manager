@@ -15,7 +15,7 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task ChangeStatus(long? providerId, long? clientId, long shiftId, ShiftStatus status)
+    public async Task ChangeStatus(long? providerId, long? clientId, long shiftId, ShiftStatus status, long userId)
     {
       var query = _context.Shift.AsQueryable();
 
@@ -30,6 +30,8 @@ namespace ShiftManagerApi.Services
 
       var shift = await query.FirstOrDefaultAsync(s => s.Id == shiftId);
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
+
+      if (shift.Status == status) return;
 
       if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed || shift.Status == ShiftStatus.no_show)
       {
@@ -56,13 +58,21 @@ namespace ShiftManagerApi.Services
         throw new InvalidOperationException("No puede cancelar un turno pasado.");
       }
 
-      if (shift.Status == status) return;
+      if (status == ShiftStatus.confirmed)
+      {
+        shift.ConfirmedById = userId;
+      }
 
+      if (status == ShiftStatus.canceled)
+      {
+        shift.CanceledById = userId;
+      }
+    
       shift.Status = status;
       await _context.SaveChangesAsync();
     }
 
-    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto, bool isConfirm)
+    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto, bool isConfirm, long userId, string activeRole)
     {
       var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -125,7 +135,10 @@ namespace ShiftManagerApi.Services
             StartAt = createDto.StartAt,
             EndAt = endAt,
             Status = isConfirm ? ShiftStatus.confirmed : ShiftStatus.pending,          
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ConfirmedById = isConfirm? userId : null,
+            CreatedById = userId,
+            CreatedByRole = activeRole
           };
 
           _context.Shift.Add(newShift);
@@ -146,6 +159,8 @@ namespace ShiftManagerApi.Services
 
           var clientProfile = await _context.UserProfiles.FindAsync(cliente.UserId);
           var providerProfile = await _context.UserProfiles.FindAsync(provider.UserId);
+          var userCreate = await _context.UserProfiles.FindAsync(userId);
+
 
           return new ShiftDto
           {
@@ -164,7 +179,23 @@ namespace ShiftManagerApi.Services
               NameService = es.Service.Name,
               DurationMinutes = es.DurationMinutes,
               PriceAtMoment = es.Price
-            }).ToList()
+            }).ToList(),
+            
+            CreatedById = newShift.CreatedById,
+            CreatedByRole = newShift.CreatedByRole,
+            ConfirmedById = newShift.ConfirmedById,
+            CanceledById = newShift.CanceledById,
+            CreatedByUser = new UserResumDto
+            {
+              Id = userId,
+              FullName = $"{userCreate?.FirstName} {userCreate?.LastName}".Trim()
+            },
+            ConfirmedByUser = isConfirm ? new UserResumDto
+            {
+              Id = userId,
+              FullName = $"{userCreate?.FirstName} {userCreate?.LastName}".Trim()
+            } : null,
+            CanceledByUser = null
           };
         }
         catch
@@ -193,6 +224,34 @@ namespace ShiftManagerApi.Services
 
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
 
+      var createdUser = await _context.UserProfiles
+        .Where(up => up.Id == shift.CreatedById)
+        .Select(up => new UserResumDto
+        {
+          Id = up.Id,
+          FullName = $"{up.FirstName} {up.LastName}"
+        }).FirstOrDefaultAsync();
+
+      var confirmedUser = shift.ConfirmedById.HasValue
+        ? await _context.UserProfiles
+            .Where(up => up.Id == shift.ConfirmedById.Value)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefaultAsync()
+        : null;
+
+      var canceledUser = shift.CanceledById.HasValue
+        ? await _context.UserProfiles
+            .Where(up => up.Id == shift.CanceledById.Value)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefaultAsync()
+        : null;
+
       return new ShiftDto
       {
         Id = shift.Id,
@@ -210,7 +269,14 @@ namespace ShiftManagerApi.Services
           NameService = si.Service.Name,
           DurationMinutes = si.Service.DurationMinutes,
           PriceAtMoment = si.PriceAtMoment
-        }).ToList()
+        }).ToList(),
+        CreatedById = shift.CreatedById,
+        CreatedByRole = shift.CreatedByRole,
+        ConfirmedById = shift.ConfirmedById,
+        CanceledById = shift.CanceledById,
+        CreatedByUser = createdUser ?? new UserResumDto { Id = shift.CreatedById, FullName = "Desconocido" },
+        ConfirmedByUser = confirmedUser,
+        CanceledByUser = canceledUser
       };
     }
 
@@ -302,7 +368,32 @@ namespace ShiftManagerApi.Services
             NameService = si.Service.Name,
             DurationMinutes = si.Service.DurationMinutes,
             PriceAtMoment = si.PriceAtMoment
-          }).ToList()
+          }).ToList(),
+          CreatedById = s.CreatedById,
+          CreatedByRole = s.CreatedByRole,
+          ConfirmedById = s.ConfirmedById,
+          CanceledById = s.CanceledById,
+          CreatedByUser = _context.UserProfiles
+            .Where(up => up.Id == s.CreatedById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault()!,
+          ConfirmedByUser = s.ConfirmedById == null ? null : _context.UserProfiles
+            .Where(up => up.Id == s.ConfirmedById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault(),
+          CanceledByUser = s.CanceledById == null ? null : _context.UserProfiles
+            .Where(up => up.Id == s.CanceledById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault()
         }
         ).ToListAsync();
 

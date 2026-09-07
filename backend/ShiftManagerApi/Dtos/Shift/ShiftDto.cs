@@ -14,5 +14,12 @@ namespace ShiftManagerApi.Dtos
     public List<ShiftItemDto> Items { get; init; } = new();
 
     public decimal TotalAmount => Items.Sum(x => x.PriceAtMoment);
+    public long CreatedById { get; init; }
+    public string CreatedByRole { get; init; } = string.Empty;
+    public long? ConfirmedById { get; init; }
+    public long? CanceledById { get; init; }
+    public UserResumDto CreatedByUser { get; set; } = null!;
+    public UserResumDto? ConfirmedByUser { get; set; }
+    public UserResumDto? CanceledByUser { get; set; }
   }
 }

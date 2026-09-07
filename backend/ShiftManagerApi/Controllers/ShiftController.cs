@@ -68,8 +68,8 @@ namespace ShiftManagerApi.Controllers
         var activeRole = GetActiveRole();
         var response = activeRole switch
         {
-          "Cliente" => await _shiftService.Create(GetUserId(), createDto, false),
-          _ => await _shiftService.Create(clientId, createDto, true)
+          "Cliente" => await _shiftService.Create(GetUserId(), createDto, false, GetUserId(), activeRole),
+          _ => await _shiftService.Create(clientId, createDto, true, GetUserId(), activeRole)
         };
 
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
@@ -97,23 +97,24 @@ namespace ShiftManagerApi.Controllers
 
     [Authorize(Policy = "AnyAuthenticatedRole")]
     [HttpPatch("{id}/status")]
-    public async Task<ActionResult> ChangeStatus(long id, ShiftStatus status)
+    public async Task<ActionResult> ChangeStatus(long id, [FromBody] ShiftStatus status)
     {
       try
       {
         var activeRole = GetActiveRole();
+        
         switch (activeRole)
         {
           case "Proveedor":
-            await _shiftService.ChangeStatus(GetUserId(), null, id, status);
+            await _shiftService.ChangeStatus(GetUserId(), null, id, status, GetUserId());
             break;
 
           case "Cliente":
-            await _shiftService.ChangeStatus(null, GetUserId(), id, status);
+            await _shiftService.ChangeStatus(null, GetUserId(), id, status, GetUserId());
             break;
 
           default:
-            await _shiftService.ChangeStatus(null, null, id, status);
+            await _shiftService.ChangeStatus(null, null, id, status, GetUserId());
             break;
         }
 

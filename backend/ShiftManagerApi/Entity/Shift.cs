@@ -10,6 +10,12 @@ namespace ShiftManagerApi.Entity
     public ShiftStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
 
+    public long CreatedById { get; set; }
+    public string CreatedByRole { get; set; } = null!;
+    public long? ConfirmedById { get; set; }
+    public long? CanceledById { get; set; }
+
+
     public UserAuth Provider { get; set; } = null!;
     public UserAuth Client { get; set; } = null!;
     public List<ShiftItems> ShiftItems { get; set; } = new();
