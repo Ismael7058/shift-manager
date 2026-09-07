@@ -21,8 +21,9 @@ namespace ShiftManagerApi.Services
 
       if (providerId.HasValue){
         var availableStates = new[] { ShiftStatus.confirmed, ShiftStatus.completed, ShiftStatus.no_show, ShiftStatus.canceled };
-        if (!availableStates.Contains(status)) throw new InvalidOperationException($"Un proveedor no puede cambiar el estado a {status}.");
+        if (!availableStates.Contains(status)) throw new InvalidOperationException("El estado ingresado no es válido.");
       }
+
       if (providerId.HasValue) query = query.Where(s => s.ProviderId == providerId);
 
       if (clientId.HasValue) query = query.Where(s => s.ClientId == clientId);
@@ -30,9 +31,19 @@ namespace ShiftManagerApi.Services
       var shift = await query.FirstOrDefaultAsync(s => s.Id == shiftId);
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
 
-      if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed)
+      if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed || shift.Status == ShiftStatus.no_show)
       {
-        throw new InvalidOperationException("El turno no puede ser modificado porque ya se encuentra en un estado final.");
+        throw new InvalidOperationException("No puede modificar el estado de un turno finalizado.");
+      }
+
+      if (status == ShiftStatus.completed && shift.StartAt > DateTime.UtcNow)
+      {
+        throw new InvalidOperationException("No puede completar un turno que no ha comenzado.");
+      }
+
+      if (status == ShiftStatus.no_show && shift.StartAt > DateTime.UtcNow)
+      {
+        throw new InvalidOperationException("No puede indicar que no asistio a un turno que no ha comenzado.");
       }
 
       if (shift.Status == status) return;
