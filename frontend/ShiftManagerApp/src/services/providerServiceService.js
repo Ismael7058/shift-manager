@@ -10,7 +10,7 @@ export const ProviderServiceService = {
    * @returns {Promise<PaginatedDto<ProviderServiceDto>>}
    */
   getAllServiceOfProvider: (providerId, serviceId, filter) =>
-    apiFetch(`/provider-service?providerId=${providerId}&serviceId=${serviceId}&Name=${filter.name}&MinDurationMinutes=${filter.minDurationMinutes}&MaxDurationMinutes=${filter.maxDurationMinutes}&MinPrice=${filter.minPrice}&MaxPrice=${filter.maxPrice}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&PageSize=${filter.pageSize}`),
+    apiFetch(`/provider-services?providerId=${providerId}&serviceId=${serviceId}&Name=${filter.name}&MinDurationMinutes=${filter.minDurationMinutes}&MaxDurationMinutes=${filter.maxDurationMinutes}&MinPrice=${filter.minPrice}&MaxPrice=${filter.maxPrice}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&PageSize=${filter.pageSize}`),
 
   /**
    * Obtiene un de servicio de un proveedor
@@ -19,7 +19,7 @@ export const ProviderServiceService = {
    * @returns {Promise<ProviderServiceDto>}
    */
   getServiceOfProvider: (serviceId, providerId) =>
-    apiFetch(`/provider-service/${serviceId}?providerId=${providerId}`),
+    apiFetch(`/provider-services/${serviceId}?providerId=${providerId}`),
 
   /**
    * 
@@ -29,7 +29,7 @@ export const ProviderServiceService = {
    */
   createServiceOfProvider: (providerId, create) =>
     apiFetch(
-      `/provider-service?providerId=${providerId}`,
+      `/provider-services?providerId=${providerId}`,
       {
         method: 'POST',
         body: JSON.stringify(create)
@@ -45,13 +45,13 @@ export const ProviderServiceService = {
    */
   updateServiceOfProvider: (serviceId, providerId, update) =>
     apiFetch(
-      `/provider-service/${serviceId}?providerId=${providerId}`,
+      `/provider-services/${serviceId}?providerId=${providerId}`,
       {
         method: 'PUT',
         body: JSON.stringify(update)
       }
     ),
-  
+
   /**
    * Desactiva un servicio de un proveedor
    * @param {number} serviceId
@@ -60,7 +60,7 @@ export const ProviderServiceService = {
    */
   softDeleteServiceOfProvider: (serviceId, providerId) =>
     apiFetch(
-      `/provider-service/${serviceId}?providerId=${providerId}`,
+      `/provider-services/${serviceId}?providerId=${providerId}`,
       {
         method: 'PATCH'
       }
@@ -74,7 +74,7 @@ export const ProviderServiceService = {
    */
   activeServiceOfProvider: (serviceId, providerId) =>
     apiFetch(
-      `/provider-service/${serviceId}/active?providerId=${providerId}`,
+      `/provider-services/${serviceId}/active?providerId=${providerId}`,
       {
         method: 'PATCH'
       }
