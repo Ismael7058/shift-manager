@@ -58,8 +58,30 @@ export const ProviderProvider = ({ children }) => {
     };
   };
 
+  const getProviderById = async (providerId) => {
+    setLoading(true);
+    try {
+      const response = await ProviderService.getProviderById(providerId);
+      return response;
+    } catch (error) {
+      addNotification(error.message || "Error al obtener el proveedor", 'error');
+    } finally {
+      setLoading(false);
+    };
+  };
+
+  const getRestrictedDates = async (providerId, dateFrom, dateTo) => {
+    try {
+      const response = await ProviderService.getRestrictedDates(providerId, dateFrom, dateTo);
+      return response || [];
+    } catch (error) {
+      addNotification(error.message || "Error al obtener la disponibilidad del proveedor", 'error');
+      return [];
+    }
+  };
+
   return (
-    <ProviderContext.Provider value={{ providers, providerServices, loading, pagination, getProviders, getServicesOfProvider }}>
+    <ProviderContext.Provider value={{ providers, providerServices, loading, pagination, getProviders, getServicesOfProvider, getProviderById, getRestrictedDates }}>
       {children}
     </ProviderContext.Provider>
   );
