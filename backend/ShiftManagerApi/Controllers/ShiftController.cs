@@ -68,8 +68,8 @@ namespace ShiftManagerApi.Controllers
         var activeRole = GetActiveRole();
         var response = activeRole switch
         {
-          "Cliente" => await _shiftService.Create(GetUserId(), createDto),
-          _ => await _shiftService.Create(clientId, createDto)
+          "Cliente" => await _shiftService.Create(GetUserId(), createDto, false),
+          _ => await _shiftService.Create(clientId, createDto, true)
         };
 
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);

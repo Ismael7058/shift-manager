@@ -41,7 +41,7 @@ namespace ShiftManagerApi.Services
       await _context.SaveChangesAsync();
     }
 
-    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto)
+    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto, bool isConfirm)
     {
       var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -103,7 +103,7 @@ namespace ShiftManagerApi.Services
             ClientId = clientId,
             StartAt = createDto.StartAt,
             EndAt = endAt,
-            Status = ShiftStatus.pending,          
+            Status = isConfirm ? ShiftStatus.confirmed : ShiftStatus.pending,          
             CreatedAt = DateTime.UtcNow
           };
 
