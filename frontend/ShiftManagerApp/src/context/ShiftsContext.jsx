@@ -41,7 +41,7 @@ export const ShiftsProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ShiftService.getShift(shiftId);
-      setShift(response.items || null);
+      setShift(response || null);
 
       return response;
     } catch (error) {
@@ -83,13 +83,13 @@ export const ShiftsProvider = ({ children }) => {
   const changeStatusShift = async (shiftId, status) => {
     setLoading(true);
     try {
-      const response = await ShiftService.updateShift(shiftId, status);
-      setShift(response.items || null);
-      addNotification(response.message || "El turno ha cambiado de estado", 'success');
+      const response = await ShiftService.changeStatusShift(shiftId, status);
+      setShift({ ...shift, status: status.status });
+      addNotification("El turno ha cambiado de estado", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al cambiar el estado del turno", 'error');
+      addNotification("Error al cambiar el estado del turno", 'error');
     } finally {
       setLoading(false);
     };
