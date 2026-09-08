@@ -8,9 +8,11 @@ import { useWorkSchedules } from '../context/WorkSchedulesContext';
 import SelectDateTime from '../components/shifts/SelectDateTime';
 import DetailsShift from '../components/shifts/DetailsShift';
 import SearchableSelect from '../components/ui/forms/SearchableSelect';
+import { useAuth } from '../context/AuthContext';
 
 const ShiftCreatePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { addNotification } = useNotification();
   const { clients, loading: loadingClients, getClients } = useClient();
   const { providers, providerServices, loading: loadingProviders, getProviders, getServicesOfProvider, getRestrictedDates } = useProvider();
@@ -33,9 +35,10 @@ const ShiftCreatePage = () => {
   const [providerSearch, setProviderSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+
   // Carga inicial
   useEffect(() => {
-    if (getClients) {
+    if (getClients && user?.roleActive !== 'Cliente') {
       getClients('', 'name', false, 1, 50);
     }
     if (getProviders) {
@@ -43,14 +46,17 @@ const ShiftCreatePage = () => {
     }
   }, []);
 
-  // Busqueda de clientes
-  useEffect(() => {
-    if (!getClients) return;
-    const timer = setTimeout(() => {
-      getClients(clientSearch, 'name', false, 1, 50);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [clientSearch]);
+
+  if (user?.roleActive !== 'Cliente') {
+    // Busqueda de clientes
+    useEffect(() => {
+      if (!getClients) return;
+      const timer = setTimeout(() => {
+        getClients(clientSearch, 'name', false, 1, 50);
+      }, 300);
+      return () => clearTimeout(timer);
+    }, [clientSearch]);
+  }
 
   // Cargar servicios, horarios y fechas restringidas
   useEffect(() => {
@@ -98,7 +104,7 @@ const ShiftCreatePage = () => {
 
   // Crear turno
   const handleCreateShift = async () => {
-    if (!selectedClient) {
+    if (!selectedClient && user?.roleActive !== 'Cliente') {
       addNotification('Debes seleccionar un cliente.', 'error');
       return;
     }
@@ -127,7 +133,7 @@ const ShiftCreatePage = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await createShift(selectedClient.id, selectedProvider.id, startAtLocalString, items);
+      const res = await createShift(selectedClient ? selectedClient.id : user.id, selectedProvider.id, startAtLocalString, items);
       if (res !== undefined) {
         navigate('/turnos');
       }
@@ -246,27 +252,29 @@ const ShiftCreatePage = () => {
           <div className="bg-neutral-900/50 border border-white/10 rounded-2xl p-5 shadow-xl space-y-4 relative z-20">
             <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/5 pb-3">
               <span className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs font-bold">1</span>
-              Cliente y Profesional
+              {user?.roleActive === 'Cliente' ? 'Profesional' : 'Cliente y Profesional'}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <SearchableSelect
-                label="Cliente"
-                required
-                placeholder="Buscar por nombre o correo..."
-                selected={selectedClient}
-                items={filteredClients}
-                loading={loadingClients}
-                emptyMessage="No se encontraron clientes"
-                searchValue={clientSearch}
-                onSearchChange={setClientSearch}
-                onSelect={setSelectedClient}
-                onClear={() => setSelectedClient(null)}
-                getLabel={(c) => `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.email}
-                getSublabel={(c) => c.email || `@${c.username}`}
-                getAvatarText={(c) => `${c.firstName?.[0] || ''}${c.lastName?.[0] || ''}`.toUpperCase() || 'C'}
-                accentColor="cyan"
-              />
+            <div className={`grid grid-cols-1 gap-4 ${user?.roleActive !== 'Cliente' ? 'md:grid-cols-2' : ''}`}>
+              {user?.roleActive !== 'Cliente' && (
+                <SearchableSelect
+                  label="Cliente"
+                  required
+                  placeholder="Buscar por nombre o correo..."
+                  selected={selectedClient}
+                  items={filteredClients}
+                  loading={loadingClients}
+                  emptyMessage="No se encontraron clientes"
+                  searchValue={clientSearch}
+                  onSearchChange={setClientSearch}
+                  onSelect={setSelectedClient}
+                  onClear={() => setSelectedClient(null)}
+                  getLabel={(c) => `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.email}
+                  getSublabel={(c) => c.email || `@${c.username}`}
+                  getAvatarText={(c) => `${c.firstName?.[0] || ''}${c.lastName?.[0] || ''}`.toUpperCase() || 'C'}
+                  accentColor="cyan"
+                />
+              )}
 
               <SearchableSelect
                 label="Profesional"
@@ -395,7 +403,7 @@ const ShiftCreatePage = () => {
         {/*Flotante del Turno */}
         <div className="lg:col-span-5 xl:col-span-4">
           <DetailsShift
-            selectedClient={selectedClient}
+            selectedClient={user?.roleActive === 'Cliente' ? user : selectedClient}
             selectedProvider={selectedProvider}
             selectedServices={selectedServices}
             services={availableServices}
