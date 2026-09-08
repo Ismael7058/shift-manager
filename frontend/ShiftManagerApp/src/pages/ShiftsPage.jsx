@@ -10,6 +10,7 @@ import Select2 from '../components/ui/forms/Select2';
 import { parseDateToLocal } from '../utils/dateUtils';
 import { UserService } from '../services/userService';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
 const getTodayLocal = () => {
   const d = new Date();
@@ -20,6 +21,7 @@ const getTodayLocal = () => {
 };
 
 const ShiftsPage = () => {
+  const { user } = useAuth();
   const { shifts, loading, pagination, getShifts } = useShift();
   const { services, getServices } = useService();
   const { providers, getProviders } = useProvider();
@@ -37,7 +39,7 @@ const ShiftsPage = () => {
 
   const [filters, setFilters] = useState({
     serviceId: '',
-    providerId: '',
+    providerId: user?.roleActive === 'Proveedor' ? user.id : '',
     clientId: '',
     createdById: '',
     canceledById: '',
@@ -91,77 +93,82 @@ const ShiftsPage = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [serviceQuery]);
 
-  // Providers
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (getProviders) {
-        getProviders(providerQuery, 'name', false, false, false, false, 1, 10);
-      }
-    }, 500);
+  if (user?.roleActive != 'Proveedor') {
+    // Providers
+    useEffect(() => {
+      const delayDebounceFn = setTimeout(() => {
+        if (getProviders) {
+          getProviders(providerQuery, 'name', false, false, false, false, 1, 10);
+        }
+      }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [providerQuery]);
+      return () => clearTimeout(delayDebounceFn);
+    }, [providerQuery]);
+  }
 
-  // Clients
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (getClients) {
-        getClients(clientQuery, 'name', false, 1, 10);
-      }
-    }, 500);
+  if (user?.roleActive != 'Cliente') {
+    // Clients
+    useEffect(() => {
+      const delayDebounceFn = setTimeout(() => {
+        if (getClients) {
+          getClients(clientQuery, 'name', false, 1, 10);
+        }
+      }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [clientQuery]);
+      return () => clearTimeout(delayDebounceFn);
+    }, [clientQuery]);
+  }
 
-  // User - Create
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const response = await UserService.getUsers({
-          name: creatorQuery,
-          email: '',
-          username: '',
-          role: '',
-          isActive: '',
-          sortBy: 'name',
-          isDescending: false,
-          pageNumber: 1,
-          pageSize: 10
-        });
-        setUserCreate(response.items || []);
-      } catch (err) {
-        addNotification("Error al obtener los creadores", 'error')
-      }
-    }, 400);
+  if (user?.roleActive === 'Administrador') {
+    // User - Create
+    useEffect(() => {
+      const delayDebounceFn = setTimeout(async () => {
+        try {
+          const response = await UserService.getUsers({
+            name: creatorQuery,
+            email: '',
+            username: '',
+            role: '',
+            isActive: '',
+            sortBy: 'name',
+            isDescending: false,
+            pageNumber: 1,
+            pageSize: 10
+          });
+          setUserCreate(response.items || []);
+        } catch (err) {
+          addNotification("Error al obtener los creadores", 'error')
+        }
+      }, 400);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [creatorQuery]);
+      return () => clearTimeout(delayDebounceFn);
+    }, [creatorQuery]);
 
-  // User - Cancel
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const response = await UserService.getUsers({
-          name: cancelerQuery,
-          email: '',
-          username: '',
-          role: '',
-          isActive: '',
-          sortBy: 'name',
-          isDescending: false,
-          pageNumber: 1,
-          pageSize: 10
-        });
-        setUserCancel(response.items || []);
-      } catch (err) {
-        addNotification("Error al obtener los canceladores", 'error')
-      }
-    }, 400);
+    // User - Cancel
+    useEffect(() => {
+      const delayDebounceFn = setTimeout(async () => {
+        try {
+          const response = await UserService.getUsers({
+            name: cancelerQuery,
+            email: '',
+            username: '',
+            role: '',
+            isActive: '',
+            sortBy: 'name',
+            isDescending: false,
+            pageNumber: 1,
+            pageSize: 10
+          });
+          setUserCancel(response.items || []);
+        } catch (err) {
+          addNotification("Error al obtener los canceladores", 'error')
+        }
+      }, 400);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [cancelerQuery]);
+      return () => clearTimeout(delayDebounceFn);
+    }, [cancelerQuery]);
 
-
+  }
 
   // Opciones formateadas para Select2
   const serviceItems = useMemo(() => {
@@ -185,6 +192,7 @@ const ShiftsPage = () => {
     }));
   }, [clients]);
 
+
   const userCreateItems = useMemo(() => {
     return (userCreate || []).map(u => ({
       id: u.id,
@@ -198,6 +206,8 @@ const ShiftsPage = () => {
       name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username || u.email || `Usuario #${u.id}`
     }));
   }, [userCancel]);
+
+
 
   // Handlers para filtros
   const updateFilter = (key, value) => {
@@ -301,6 +311,10 @@ const ShiftsPage = () => {
       label: 'Proveedor',
     },
     {
+      key: 'clientFullName',
+      label: 'Cliente',
+    },
+    {
       key: 'items',
       label: 'Servicios',
       render: (shift) => shift.items.map(s => s.nameService).join(', ')
@@ -349,13 +363,15 @@ const ShiftsPage = () => {
           </h1>
           <p className="text-xs text-neutral-400 mt-1">Catálogo de turnos disponibles</p>
         </div>
+        {user?.roleActive != 'Proveedor' && (
 
-        <Link
-          to="/turnos/nuevo"
-          className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
-        >
-          + Crear Turno
-        </Link>
+          <Link
+            to="/turnos/nuevo"
+            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+          >
+            Crear Turno
+          </Link>)
+        }
       </div>
 
       {/* Vistas Rápidas (Tabs) */}
@@ -416,70 +432,77 @@ const ShiftsPage = () => {
               labelKey="name"
             />
           </div>
+          {user?.roleActive != 'Proveedor' && (<>
+            {/* Proveedor */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Proveedor
+              </label>
+              <Select2
+                items={providerItems}
+                value={filters.providerId}
+                onSelect={(id) => updateFilter('providerId', id)}
+                onSearch={(query) => setProviderQuery(query)}
+                placeholder="Buscar proveedor..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>)
+          }
+          {user?.roleActive != 'Cliente' && (<>
+            {/* Cliente */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Cliente
+              </label>
+              <Select2
+                items={clientItems}
+                value={filters.clientId}
+                onSelect={(id) => updateFilter('clientId', id)}
+                onSearch={(query) => setClientQuery(query)}
+                placeholder="Buscar cliente..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>
+          )}
+          {user?.roleActive === 'Administrador' && (<>
+            {/* Usuario Creador */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Creado por
+              </label>
+              <Select2
+                items={userCreateItems}
+                value={filters.createdById}
+                onSelect={(id) => updateFilter('createdById', id)}
+                onSearch={(query) => setCreatorQuery(query)}
+                placeholder="Buscar creador..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
 
-          {/* Proveedor */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-              Proveedor
-            </label>
-            <Select2
-              items={providerItems}
-              value={filters.providerId}
-              onSelect={(id) => updateFilter('providerId', id)}
-              onSearch={(query) => setProviderQuery(query)}
-              placeholder="Buscar proveedor..."
-              valueKey="id"
-              labelKey="name"
-            />
-          </div>
-
-          {/* Cliente */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-              Cliente
-            </label>
-            <Select2
-              items={clientItems}
-              value={filters.clientId}
-              onSelect={(id) => updateFilter('clientId', id)}
-              onSearch={(query) => setClientQuery(query)}
-              placeholder="Buscar cliente..."
-              valueKey="id"
-              labelKey="name"
-            />
-          </div>
-          {/* Usuario Creador */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-              Creado por
-            </label>
-            <Select2
-              items={userCreateItems}
-              value={filters.createdById}
-              onSelect={(id) => updateFilter('createdById', id)}
-              onSearch={(query) => setCreatorQuery(query)}
-              placeholder="Buscar creador..."
-              valueKey="id"
-              labelKey="name"
-            />
-          </div>
-
-          {/* Usuario Cancelador */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-              Cancelado por
-            </label>
-            <Select2
-              items={userCancelItems}
-              value={filters.canceledById}
-              onSelect={(id) => updateFilter('canceledById', id)}
-              onSearch={(query) => setCancelerQuery(query)}
-              placeholder="Buscar cancelador..."
-              valueKey="id"
-              labelKey="name"
-            />
-          </div>
-
+            {/* Usuario Cancelador */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Cancelado por
+              </label>
+              <Select2
+                items={userCancelItems}
+                value={filters.canceledById}
+                onSelect={(id) => updateFilter('canceledById', id)}
+                onSearch={(query) => setCancelerQuery(query)}
+                placeholder="Buscar cancelador..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>
+          )
+          }
         </div>
 
         {/* Fila 2: Fechas, Precios y Ordenamiento (3 columnas balanceadas) */}
