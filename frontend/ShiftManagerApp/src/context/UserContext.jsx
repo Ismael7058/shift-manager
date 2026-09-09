@@ -32,7 +32,7 @@ export const UserProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los usuarios", 'error');
+      addNotification(error?.message || "Error al obtener los usuarios", 'error');
     } finally {
       setLoading(false)
     };
@@ -46,7 +46,7 @@ export const UserProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el usuario", 'error');
+      addNotification(error?.message || "Error al obtener el usuario", 'error');
     } finally {
       setLoading(false)
     };
@@ -57,11 +57,11 @@ export const UserProvider = ({ children }) => {
     try {
       const response = await UserService.createUser({ firstName, lastName, dateOfBirth, gender, phoneNumber, username, email, password, confirmPassword, rolesId });
       setUser(response || null);
-      addNotification(response.message || "Usuario registrado con éxito", 'success');
+      addNotification(response?.message || "Usuario registrado con éxito", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al registrar el usuario", 'error')
+      addNotification(error?.message || "Error al registrar el usuario", 'error')
     } finally {
       setLoading(false)
     };
@@ -83,7 +83,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Usuario actualizado con éxito", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el usuario", 'error')
+      addNotification(error?.message || "Error al actualizar el usuario", 'error')
     } finally {
       setLoading(false)
     };
@@ -105,7 +105,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Email actualizado con éxito", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el email", 'error')
+      addNotification(error?.message || "Error al actualizar el email", 'error')
     } finally {
       setLoading(false)
     };
@@ -127,7 +127,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Username actualizado con éxito", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el username", 'error')
+      addNotification(error?.message || "Error al actualizar el username", 'error')
     } finally {
       setLoading(false)
     };
@@ -142,7 +142,7 @@ export const UserProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar la contraseña", 'error')
+      addNotification(error?.message || "Error al actualizar la contraseña", 'error')
     } finally {
       setLoading(false)
     };
@@ -163,7 +163,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Imagen del usuario actualizada", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al cambiar la imagen del usuario", 'error');
+      addNotification(error?.message || "Error al cambiar la imagen del usuario", 'error');
       throw error;
     } finally {
       setLoading(false);
@@ -185,7 +185,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Imagen del usuario eliminada", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al eliminar la imagen del usuario", 'error');
+      addNotification(error?.message || "Error al eliminar la imagen del usuario", 'error');
       throw error;
     } finally {
       setLoading(false);
@@ -207,7 +207,7 @@ export const UserProvider = ({ children }) => {
       addNotification("Roles del usuario actualizados", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar los roles del usuario", 'error');
+      addNotification(error?.message || "Error al actualizar los roles del usuario", 'error');
       throw error;
     } finally {
       setLoading(false);
@@ -221,15 +221,19 @@ export const UserProvider = ({ children }) => {
       addNotification("Estado del usuario actualizado", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el estado del usuario", 'error');
+      addNotification(error?.message || "Error al actualizar el estado del usuario", 'error');
       throw error;
     } finally {
       setLoading(false);
     }
   };
 
+  const setUserContext = (user) => {
+    setUser(user);
+  };
+
   return (
-    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, updatePictureUser, deletePictureUser, editRoleUser, changeStatusUser }}>
+    <UserContext.Provider value={{ loading, users, pagination, user, getUsers, getUser, createUser, updateUser, editEmailUser, editUsernameUser, editPasswordUser, updatePictureUser, deletePictureUser, editRoleUser, changeStatusUser, setUserContext }}>
       {children}
     </UserContext.Provider>
   );

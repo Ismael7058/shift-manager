@@ -240,7 +240,7 @@ const UsersPage = () => {
       ) : (
         <Table columns={columns} data={users} />
       )}
-      {!loading && pagination && (
+      {pagination && (
         <div className="mt-4">
           <Pagination
             totalCount={pagination.totalCount}
