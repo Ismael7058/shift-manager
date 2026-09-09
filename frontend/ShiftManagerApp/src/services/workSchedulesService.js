@@ -8,7 +8,7 @@ export const WorkSchedulesService = {
    * @returns {Promise<PaginatedDto<WorkSchedulesDto>>}
    */
   getAllWorkSchedules: (filter) =>
-    apiFetch(`/work-schedules?providerId=${filter.providerId}&DayOfWeek=${filter.dayOfWeek}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
+    apiFetch(`/work-schedules?providerId=${filter.providerId}&DayOfWeek=${filter.dayOfWeek}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&PageSize=${filter.pageSize}`),
 
   /**
    * Obtiene un horario de trabajo a partir de su id
