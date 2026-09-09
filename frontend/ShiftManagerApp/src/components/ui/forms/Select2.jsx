@@ -40,7 +40,10 @@ const Select2 = ({
   useEffect(() => {
     if (isOpen) return;
 
-    const selectedItem = items.find(item => item[valueKey] === value);
+    const selectedItem = (value !== '' && value !== null && value !== undefined)
+      ? items.find(item => String(item[valueKey]) === String(value))
+      : null;
+
     if (selectedItem) {
       setSearchTerm(selectedItem[labelKey]);
     } else if (!value) {
