@@ -101,40 +101,45 @@ const ProviderPage = () => {
       label: 'Acciones',
       className: 'w-1 whitespace-nowrap text-right',
       render: (provider) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1.5">
+          {/* Ver Detalle (Solo ícono) */}
           <button
             type="button"
             title="Ver detalle del proveedor"
-            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-white/20 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+            className="w-[26px] h-[26px] rounded-md bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-white/20 transition-all flex items-center justify-center cursor-pointer active:scale-95"
             onClick={() => handleOpenProviderModal(provider)}
           >
-            <span className="material-symbols-outlined text-[15px]">visibility</span>
+            <span className="material-symbols-outlined text-[15px] leading-none select-none">visibility</span>
           </button>
+
           {user?.roleActive === 'Administrador' && (
             <>
+              {/* Servicios */}
               <Link
                 to={`/proveedores/${provider.id}/servicios`}
                 title="Gestionar servicios"
-                className="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/25 hover:border-cyan-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+                className="h-[26px] px-2 rounded-md bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/25 hover:border-cyan-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
               >
-                <span className="material-symbols-outlined text-[15px]">spa</span>
                 <span>Servicios</span>
               </Link>
+
+              {/* Horarios */}
               <Link
                 to={`/proveedores/${provider.id}/horarios`}
                 title="Gestionar horarios"
-                className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+                className="h-[26px] px-2 rounded-md bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/25 hover:border-violet-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
               >
-                <span className="material-symbols-outlined text-[15px]">schedule</span>
                 <span>Horarios</span>
               </Link>
             </>
           )}
-          <Link to={`/turnos?providerId=${provider.id}`}
+
+          {/* Turnos */}
+          <Link
+            to={`/turnos?providerId=${provider.id}`}
             title="Ver turnos"
-            className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+            className="h-[26px] px-2 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            <span className="material-symbols-outlined text-[15px]">calendar_today</span>
             <span>Turnos</span>
           </Link>
         </div>

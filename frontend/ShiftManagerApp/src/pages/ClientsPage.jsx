@@ -95,13 +95,12 @@ const ClientsPage = () => {
       label: 'Acciones',
       className: 'w-1 whitespace-nowrap text-right',
       render: (client) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-1.5">
           <Link
             to={`/turnos?clientId=${client.id}`}
             title="Ver turnos de este cliente"
-            className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+            className="h-[26px] px-2 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            <span className="material-symbols-outlined text-[15px]">calendar_today</span>
             <span>Turnos</span>
           </Link>
         </div>

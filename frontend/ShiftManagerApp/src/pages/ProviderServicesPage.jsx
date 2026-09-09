@@ -144,6 +144,7 @@ const ProviderServicesPage = () => {
     {
       key: 'status',
       label: 'Estado',
+      className: 'w-1 whitespace-nowrap',
       render: (service) => {
         if (service.status === 1) {
           return (
@@ -169,25 +170,28 @@ const ProviderServicesPage = () => {
     {
       key: 'actions',
       label: 'Acciones',
+      className: 'w-1 whitespace-nowrap text-right',
       render: (service) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1.5">
           <button
             type="button"
             onClick={() => openEditModal(service)}
-            className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            title="Editar servicio"
+            className="h-[26px] px-2.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            Editar
+            <span>Editar</span>
           </button>
           {service.status !== 2 && (
             <button
               type="button"
               onClick={() => openStatusModal(service)}
-              className={`px-3 py-1 font-semibold text-xs rounded-lg transition-colors cursor-pointer ${service.status === 1
-                ? 'bg-amber-600/80 hover:bg-amber-600 text-white'
-                : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+              title={service.status === 1 ? 'Desactivar servicio' : 'Activar servicio'}
+              className={`w-[76px] h-[26px] rounded-md text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95 ${service.status === 1
+                ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 hover:border-amber-500/40'
+                : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/40'
                 }`}
             >
-              {service.status === 1 ? 'Desactivar' : 'Activar'}
+              <span>{service.status === 1 ? 'Desactivar' : 'Activar'}</span>
             </button>
           )}
         </div>

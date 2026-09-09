@@ -94,14 +94,17 @@ const CreateProviderServiceModal = ({
 
     setSubmitting(true);
     try {
-      await createServiceOfProvider(
+      const response = await createServiceOfProvider(
         providerId,
         Number(formData.serviceId),
         Number(formData.durationMinutes),
         Number(formData.price)
       );
-      onClose();
-      if (onSuccess) onSuccess();
+      if (response) {
+        onClose();
+        if (onSuccess) onSuccess();
+      }
+    } catch {
     } finally {
       setSubmitting(false);
     }

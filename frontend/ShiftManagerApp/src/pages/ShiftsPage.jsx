@@ -351,14 +351,14 @@ const ShiftsPage = () => {
         let text = '';
         let statusClass = '';
         switch (shift.status?.toLowerCase()) {
-          case 'confirmed': text = "Confirmado"; statusClass = 'text-green-400'; break;
-          case 'pending': text = "Pendiente"; statusClass = 'text-yellow-400'; break;
-          case 'canceled': text = "Cancelado"; statusClass = 'text-red-400'; break;
-          case 'no_show': text = "No Asistió"; statusClass = 'text-red-400'; break;
-          case 'completed': text = "Completado"; statusClass = 'text-blue-400'; break;
-          default: text = shift.status; statusClass = 'text-white/80';
+          case 'confirmed': text = "Confirmado"; statusClass = 'bg-green-500/20 text-green-400 border border-green-500/30 hover:border-green-500/40'; break;
+          case 'pending': text = "Pendiente"; statusClass = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:border-yellow-500/40'; break;
+          case 'canceled': text = "Cancelado"; statusClass = 'bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/40'; break;
+          case 'no_show': text = "No Asistió"; statusClass = 'bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/40'; break;
+          case 'completed': text = "Completado"; statusClass = 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:border-blue-500/40'; break;
+          default: text = shift.status; statusClass = 'text-white/80'; break;
         }
-        return <span className={`font-medium ${statusClass}`}>{text}</span>;
+        return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusClass}`}>{text}</span>;
       }
     },
     {
@@ -372,12 +372,13 @@ const ShiftsPage = () => {
       label: 'Acciones',
       className: 'w-1 whitespace-nowrap text-right',
       render: (shift) => (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end">
           <Link
             to={`/turnos/${shift.id}`}
-            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            title="Ver detalle del turno"
+            className="h-[26px] px-2.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            Ver
+            <span>Ver</span>
           </Link>
         </div>
       )

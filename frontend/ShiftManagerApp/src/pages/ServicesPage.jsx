@@ -75,10 +75,11 @@ const ServicesPage = () => {
 
   // Columnas de la tabla de Servicios
   const columns = useMemo(() => [
-    { key: 'id', label: 'Código' },
+    { key: 'id', label: 'Código', className: 'w-1 whitespace-nowrap' },
     {
       key: 'image',
       label: 'Imagen',
+      className: 'w-1 whitespace-nowrap',
       render: (service) => {
         const firstImg = service.images && service.images.length > 0 ? service.images[0].imageUrl : null;
         const fullImgSrc = firstImg ? (firstImg.startsWith('http') ? firstImg : `${BASE_URL}${firstImg}`) : null;
@@ -98,18 +99,42 @@ const ServicesPage = () => {
         );
       }
     },
-    { key: 'name', label: 'Nombre' },
-    { key: 'description', label: 'Descripción' },
+    {
+      key: 'name',
+      label: 'Nombre',
+      render: (service) => (
+        <span
+          className="block max-w-[160px] lg:max-w-[200px] truncate font-semibold text-white text-sm"
+          title={service.name}
+        >
+          {service.name}
+        </span>
+      )
+    },
+    {
+      key: 'description',
+      label: 'Descripción',
+      render: (service) => (
+        <span
+          className="block max-w-[180px] lg:max-w-[240px] xl:max-w-[300px] truncate text-xs text-neutral-300"
+          title={service.description}
+        >
+          {service.description || '-'}
+        </span>
+      )
+    },
     {
       key: 'durationMinutes',
       label: 'Duración Base',
+      className: 'w-1 whitespace-nowrap',
       render: (service) => `${service.durationMinutes} min`
     },
     {
       key: 'isActive',
       label: 'Estado',
+      className: 'w-1 whitespace-nowrap',
       render: (service) => (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${service.isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${service.isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
           {service.isActive ? 'Activo' : 'Inactivo'}
         </span>
       )
@@ -117,25 +142,29 @@ const ServicesPage = () => {
     {
       key: 'actions',
       label: 'Acciones',
+      className: 'w-1 whitespace-nowrap text-right',
       render: (service) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-1.5">
           <Link
             to={`/servicios/${service.id}`}
-            className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            title="Ver y editar servicio"
+            className="h-[26px] px-2.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            Ver
+            <span>Ver</span>
           </Link>
           <button
+            type="button"
             onClick={() => {
               setModalData(service);
               setModalType('status');
             }}
-            className={`px-3 py-1 font-semibold text-xs rounded-lg transition-colors cursor-pointer ${service.isActive
-              ? 'bg-amber-600/80 hover:bg-amber-600 text-white'
-              : 'bg-emerald-600/80 hover:bg-emerald-600 text-white'
+            title={service.isActive ? 'Desactivar servicio' : 'Activar servicio'}
+            className={`w-[76px] h-[26px] rounded-md text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95 ${service.isActive
+              ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/25 hover:border-amber-500/40'
+              : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 hover:border-emerald-500/40'
               }`}
           >
-            {service.isActive ? 'Desactivar' : 'Activar'}
+            <span>{service.isActive ? 'Desactivar' : 'Activar'}</span>
           </button>
         </div>
       )

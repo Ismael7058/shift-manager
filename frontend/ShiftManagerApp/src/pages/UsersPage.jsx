@@ -89,20 +89,37 @@ const UsersPage = () => {
 
   // Columnas de la tabla de Usuarios
   const columns = useMemo(() => [
-    { key: 'id', label: 'Código' },
+    { key: 'id', label: 'Código', className: 'w-1 whitespace-nowrap' },
     { key: 'name', label: 'Nombre', render: (user) => user.firstName + ' ' + user.lastName },
     { key: 'email', label: 'Email' },
     { key: 'username', label: 'Usuario' },
     { key: 'role', label: 'Roles', render: (user) => user.roles.join(', ') },
-    { key: 'isActive', label: 'Estado', render: (user) => user.isActive ? 'Activo' : 'Inactivo' },
     {
-      key: 'actions', label: 'Acciones', render: (user) => (
-        <div className="flex items-center gap-2">
+      key: 'isActive',
+      label: 'Estado',
+      className: 'w-1 whitespace-nowrap',
+      render: (user) => (
+        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+          user.isActive
+            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+        }`}>
+          {user.isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      label: 'Acciones',
+      className: 'w-1 whitespace-nowrap text-right',
+      render: (user) => (
+        <div className="flex items-center justify-end">
           <Link
             to={`/usuarios/${user.id}`}
-            className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            title="Ver detalle del usuario"
+            className="h-[26px] px-2.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
           >
-            Ver
+            <span>Ver</span>
           </Link>
         </div>
       )
