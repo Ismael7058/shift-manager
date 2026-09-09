@@ -50,6 +50,7 @@ namespace ShiftManagerApi.Services
           LastName = u.UserProfile.LastName,
           Username = u.Username,
           Email = u.Email,
+          PhoneNumber = u.UserProfile.PhoneNumber,
           PictureURL = u.UserProfile.PictureURL
         }).ToListAsync();
 
