@@ -38,8 +38,8 @@ const ChangeStatusProviderScheduleModal = ({
     >
       <div className="space-y-5 text-white">
         <p className="text-sm text-neutral-300 leading-relaxed">
-          ¿Estas seguro de que deseas {isActive ? 'Desactivar' : 'Activar'.toLowerCase()} el horario del día{' '}
-          <span className="font-semibold text-white">{DAYS[schedule.dayOfWeek]}</span> ({schedule.startTime?.slice(0, 5)} - {schedule.endTime?.slice(0, 5)}) para este proveedor?{' '}
+          ¿Estas seguro de que deseas {isActive ? 'desactivar' : 'activar'} el horario del día{' '}
+          <span className="font-semibold text-white">{DAYS[schedule.dayOfWeek]}</span> ({schedule.startTime?.slice(0, 5)} - {schedule.endTime?.slice(0, 5)})?{' '}
           {isActive
             ? 'Dejara de estar disponible.'
             : 'Volvera a estar disponible.'}

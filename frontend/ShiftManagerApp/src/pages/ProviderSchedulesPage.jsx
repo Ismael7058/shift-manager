@@ -1,18 +1,19 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useWorkSchedules } from '../context/WorkSchedulesContext';
 import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
 import CreateProviderScheduleModal from '../components/provider/CreateProviderScheduleModal';
 import EditProviderScheduleModal from '../components/provider/EditProviderScheduleModal';
 import ChangeStatusProviderScheduleModal from '../components/provider/ChangeStatusProviderScheduleModal';
+import { useAuth } from '../context/AuthContext';
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const ProviderSchedulesPage = () => {
+  const { user } = useAuth();
   const { id: providerId } = useParams();
-  const location = useLocation();
-  const providerName = location.state?.providerName || null;
+  const currentProviderId = providerId || user?.id;
 
   const {
     workSchedules,
@@ -36,9 +37,9 @@ const ProviderSchedulesPage = () => {
   });
 
   const refreshList = () => {
-    if (!providerId) return;
+    if (!currentProviderId) return;
     getAllWorkSchedules(
-      providerId,
+      currentProviderId,
       filters.dayOfWeek,
       filters.isActive,
       filters.sortBy,
@@ -50,7 +51,7 @@ const ProviderSchedulesPage = () => {
 
   useEffect(() => {
     refreshList();
-  }, [providerId, filters]);
+  }, [currentProviderId, filters]);
 
 
   const handleDayFilterChange = (e) => {
@@ -165,19 +166,21 @@ const ProviderSchedulesPage = () => {
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              to="/proveedores"
-              className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1"
-            >
-              <span>← Volver a Proveedores</span>
-            </Link>
-          </div>
+          {providerId && (
+            <div className="flex items-center gap-2 mb-1">
+              <Link
+                to="/proveedores"
+                className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1"
+              >
+                <span>← Volver a Proveedores</span>
+              </Link>
+            </div>
+          )}
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            {providerName ? `Horarios de ${providerName}` : `Horarios del Proveedor #${providerId}`}
+            Horarios de Trabajo
           </h1>
           <p className="text-xs text-neutral-400 mt-1">
-            Gestiona las jornadas laborales y disponibilidad horaria de este proveedor.
+            Gestiona las jornadas laborales y la disponibilidad horaria.
           </p>
         </div>
 
@@ -266,7 +269,7 @@ const ProviderSchedulesPage = () => {
           </div>
           <p className="text-white font-medium text-base">No hay horarios registrados</p>
           <p className="text-xs text-neutral-400 mt-1 max-w-sm mx-auto">
-            Este proveedor aún no tiene franjas horarias configuradas con los filtros actuales.
+            No se encontraron horarios de trabajo.
           </p>
           <button
             type="button"
@@ -296,7 +299,7 @@ const ProviderSchedulesPage = () => {
       <CreateProviderScheduleModal
         isOpen={isCreateOpen}
         onClose={closeModals}
-        providerId={providerId}
+        providerId={currentProviderId}
         onSuccess={refreshList}
       />
 

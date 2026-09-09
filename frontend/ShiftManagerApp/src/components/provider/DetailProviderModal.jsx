@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const BASE_URL = 'http://localhost:5256';
 const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-const DetailProviderModal = ({ isOpen, onClose, provider, schedules = [], loadingSchedules = false }) => {
+const DetailProviderModal = ({ isOpen, onClose, provider, schedules = [], loadingSchedules = false, accessToActions = false }) => {
   const navigate = useNavigate();
   const [imgError, setImgError] = useState(false);
 
@@ -123,25 +123,27 @@ const DetailProviderModal = ({ isOpen, onClose, provider, schedules = [], loadin
           >
             Cerrar
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleNavigateToServices}
-              className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 hover:border-indigo-500/50 font-medium text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-              title="Gestionar Servicios de este proveedor"
-            >
-              <span>Servicios</span>
-            </button>
+          {accessToActions && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleNavigateToServices}
+                className="px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 hover:border-indigo-500/50 font-medium text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Gestionar Servicios de este proveedor"
+              >
+                <span>Servicios</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleNavigateToSchedules}
-              className="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 hover:border-purple-500/50 font-medium text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
-              title="Gestionar Horarios de este proveedor"
-            >
-              <span>Horarios</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={handleNavigateToSchedules}
+                className="px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/30 hover:border-purple-500/50 font-medium text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
+                title="Gestionar Horarios de este proveedor"
+              >
+                <span>Horarios</span>
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

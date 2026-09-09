@@ -49,7 +49,7 @@ const ChangeStatusProviderServiceModal = ({
         ) : (
           <p className="text-sm text-neutral-300 leading-relaxed">
             ¿Estás seguro de que deseas {actionText.toLowerCase()} el servicio{' '}
-            <span className="font-semibold text-white">"{service.name}"</span> para este proveedor?{' '}
+            <span className="font-semibold text-white">"{service.name}"</span>?{' '}
             {isActive
               ? 'Dejará de estar disponible para agendar nuevos turnos.'
               : 'Volverá a estar habilitado para la reserva de turnos.'}
