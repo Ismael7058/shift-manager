@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useShift } from '../context/ShiftsContext';
 import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
@@ -22,6 +22,7 @@ const getTodayLocal = () => {
 
 const ShiftsPage = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { shifts, loading, pagination, getShifts } = useShift();
   const { services, getServices } = useService();
   const { providers, getProviders } = useProvider();
@@ -37,21 +38,26 @@ const ShiftsPage = () => {
   const [creatorQuery, setCreatorQuery] = useState('');
   const [cancelerQuery, setCancelerQuery] = useState('');
 
-  const [filters, setFilters] = useState({
-    serviceId: '',
-    providerId: user?.roleActive === 'Proveedor' ? user.id : '',
-    clientId: '',
-    createdById: '',
-    canceledById: '',
-    dateFrom: '',
-    dateTo: '',
-    minPrice: '',
-    maxPrice: '',
-    status: '',
-    sortBy: 'startAt',
-    isDescending: true,
-    pageNumber: 1,
-    pageSize: 10
+  const [filters, setFilters] = useState(() => {
+    const pId = searchParams.get('providerId') || searchParams.get('provider_id') || '';
+    const cId = searchParams.get('clientId') || searchParams.get('client_id') || '';
+
+    return {
+      serviceId: '',
+      providerId: user?.roleActive === 'Proveedor' ? user.id : pId,
+      clientId: user?.roleActive === 'Cliente' ? user.id : cId,
+      createdById: '',
+      canceledById: '',
+      dateFrom: '',
+      dateTo: '',
+      minPrice: '',
+      maxPrice: '',
+      status: '',
+      sortBy: 'startAt',
+      isDescending: true,
+      pageNumber: 1,
+      pageSize: 10
+    };
   });
 
   // Shifts
@@ -93,82 +99,75 @@ const ShiftsPage = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [serviceQuery]);
 
-  if (user?.roleActive != 'Proveedor') {
-    // Providers
-    useEffect(() => {
-      const delayDebounceFn = setTimeout(() => {
-        if (getProviders) {
-          getProviders(providerQuery, 'name', false, false, false, false, 1, 10);
-        }
-      }, 500);
+  // Providers
+  useEffect(() => {
+    if (user?.roleActive === 'Proveedor' || !getProviders) return;
+    const delayDebounceFn = setTimeout(() => {
+      getProviders(providerQuery, 'name', false, false, false, false, 1, 10);
+    }, 500);
 
-      return () => clearTimeout(delayDebounceFn);
-    }, [providerQuery]);
-  }
+    return () => clearTimeout(delayDebounceFn);
+  }, [providerQuery, user?.roleActive]);
 
-  if (user?.roleActive != 'Cliente') {
-    // Clients
-    useEffect(() => {
-      const delayDebounceFn = setTimeout(() => {
-        if (getClients) {
-          getClients(clientQuery, 'name', false, 1, 10);
-        }
-      }, 500);
+  // Clients
+  useEffect(() => {
+    if (user?.roleActive === 'Cliente' || !getClients) return;
+    const delayDebounceFn = setTimeout(() => {
+      getClients(clientQuery, 'name', false, 1, 10);
+    }, 500);
 
-      return () => clearTimeout(delayDebounceFn);
-    }, [clientQuery]);
-  }
+    return () => clearTimeout(delayDebounceFn);
+  }, [clientQuery, user?.roleActive]);
 
-  if (user?.roleActive === 'Administrador') {
-    // User - Create
-    useEffect(() => {
-      const delayDebounceFn = setTimeout(async () => {
-        try {
-          const response = await UserService.getUsers({
-            name: creatorQuery,
-            email: '',
-            username: '',
-            role: '',
-            isActive: '',
-            sortBy: 'name',
-            isDescending: false,
-            pageNumber: 1,
-            pageSize: 10
-          });
-          setUserCreate(response.items || []);
-        } catch (err) {
-          addNotification("Error al obtener los creadores", 'error')
-        }
-      }, 400);
+  // User - Create
+  useEffect(() => {
+    if (user?.roleActive !== 'Administrador') return;
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: creatorQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCreate(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los creadores", 'error');
+      }
+    }, 400);
 
-      return () => clearTimeout(delayDebounceFn);
-    }, [creatorQuery]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [creatorQuery, user?.roleActive]);
 
-    // User - Cancel
-    useEffect(() => {
-      const delayDebounceFn = setTimeout(async () => {
-        try {
-          const response = await UserService.getUsers({
-            name: cancelerQuery,
-            email: '',
-            username: '',
-            role: '',
-            isActive: '',
-            sortBy: 'name',
-            isDescending: false,
-            pageNumber: 1,
-            pageSize: 10
-          });
-          setUserCancel(response.items || []);
-        } catch (err) {
-          addNotification("Error al obtener los canceladores", 'error')
-        }
-      }, 400);
+  // User - Cancel
+  useEffect(() => {
+    if (user?.roleActive !== 'Administrador') return;
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: cancelerQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCancel(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los canceladores", 'error');
+      }
+    }, 400);
 
-      return () => clearTimeout(delayDebounceFn);
-    }, [cancelerQuery]);
-
-  }
+    return () => clearTimeout(delayDebounceFn);
+  }, [cancelerQuery, user?.roleActive]);
 
   // Opciones formateadas para Select2
   const serviceItems = useMemo(() => {
@@ -179,18 +178,32 @@ const ShiftsPage = () => {
   }, [services]);
 
   const providerItems = useMemo(() => {
-    return (providers || []).map(p => ({
+    const list = (providers || []).map(p => ({
       id: p.id,
       name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || `Proveedor #${p.id}`
     }));
-  }, [providers]);
+    if (filters.providerId && !list.some(p => String(p.id) === String(filters.providerId))) {
+      list.unshift({
+        id: filters.providerId,
+        name: `Proveedor #${filters.providerId}`
+      });
+    }
+    return list;
+  }, [providers, filters.providerId]);
 
   const clientItems = useMemo(() => {
-    return (clients || []).map(c => ({
+    const list = (clients || []).map(c => ({
       id: c.id,
       name: `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.username || c.email || `Cliente #${c.id}`
     }));
-  }, [clients]);
+    if (filters.clientId && !list.some(c => String(c.id) === String(filters.clientId))) {
+      list.unshift({
+        id: filters.clientId,
+        name: `Cliente #${filters.clientId}`
+      });
+    }
+    return list;
+  }, [clients, filters.clientId]);
 
 
   const userCreateItems = useMemo(() => {
@@ -286,6 +299,7 @@ const ShiftsPage = () => {
     {
       key: 'date',
       label: 'Fecha',
+      className: 'w-1 whitespace-nowrap',
       render: (shift) => {
         const start = parseDateToLocal(shift.startAt);
         if (!start) return '-';
@@ -296,6 +310,7 @@ const ShiftsPage = () => {
     {
       key: 'time',
       label: 'Horario',
+      className: 'w-1 whitespace-nowrap',
       render: (shift) => {
         const start = parseDateToLocal(shift.startAt);
         const end = parseDateToLocal(shift.endAt);
@@ -309,19 +324,29 @@ const ShiftsPage = () => {
     {
       key: 'providerFullName',
       label: 'Proveedor',
+      className: 'whitespace-nowrap',
     },
     {
       key: 'clientFullName',
       label: 'Cliente',
+      className: 'whitespace-nowrap',
     },
     {
       key: 'items',
       label: 'Servicios',
-      render: (shift) => shift.items.map(s => s.nameService).join(', ')
+      render: (shift) => {
+        const servicesText = shift.items.map(s => s.nameService).join(', ');
+        return (
+          <span className="block max-w-[200px] truncate text-xs text-neutral-300" title={servicesText}>
+            {servicesText}
+          </span>
+        );
+      }
     },
     {
       key: 'status',
       label: 'Estado',
+      className: 'w-1 whitespace-nowrap',
       render: (shift) => {
         let text = '';
         let statusClass = '';
@@ -333,24 +358,29 @@ const ShiftsPage = () => {
           case 'completed': text = "Completado"; statusClass = 'text-blue-400'; break;
           default: text = shift.status; statusClass = 'text-white/80';
         }
-        return <span className={statusClass}>{text}</span>;
+        return <span className={`font-medium ${statusClass}`}>{text}</span>;
       }
     },
     {
       key: 'totalAmount',
       label: 'Total',
+      className: 'w-1 whitespace-nowrap font-medium',
       render: (shift) => `$${shift.totalAmount.toFixed(2)}`
     },
     {
       key: 'id',
       label: 'Acciones',
-      render: (shift) =>
-        <Link
-          to={`/turnos/${shift.id}`}
-          className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
-        >
-          Ver
-        </Link>
+      className: 'w-1 whitespace-nowrap text-right',
+      render: (shift) => (
+        <div className="flex justify-end">
+          <Link
+            to={`/turnos/${shift.id}`}
+            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+          >
+            Ver
+          </Link>
+        </div>
+      )
     }
   ], []);
 
