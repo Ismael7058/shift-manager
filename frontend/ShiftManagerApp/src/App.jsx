@@ -15,9 +15,9 @@ function App() {
   return (
     <Notification>
       <AuthProvider>
-        <ProfileProvider>
+        <UserProvider>
           <RoleProvider>
-            <UserProvider>
+            <ProfileProvider>
               <ServicesProvider>
                 <ProviderProvider>
                   <WorkSchedulesProvider>
@@ -31,9 +31,9 @@ function App() {
                   </WorkSchedulesProvider>
                 </ProviderProvider>
               </ServicesProvider>
-            </UserProvider>
+            </ProfileProvider>
           </RoleProvider>
-        </ProfileProvider>
+        </UserProvider>
       </AuthProvider>
     </Notification>
   )

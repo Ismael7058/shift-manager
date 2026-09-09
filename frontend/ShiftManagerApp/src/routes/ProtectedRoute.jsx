@@ -3,9 +3,9 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ allowedRoles }) {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <div className="flex justify-center items-center min-h-screen text-slate-500">Cargando sesión...</div>;
   }
 
@@ -13,7 +13,7 @@ export default function ProtectedRoute({ allowedRoles }) {
     return <Navigate to="/" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.idRol)) {
+  if (allowedRoles && !allowedRoles.includes(user.roleActive)) {
     return <Navigate to="/" replace />;
   }
 
