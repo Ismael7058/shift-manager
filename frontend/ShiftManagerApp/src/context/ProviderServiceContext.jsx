@@ -29,7 +29,7 @@ export const ProviderServiceProvider = ({ children }) => {
       });
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los servicios del proveedor", 'error');
+      addNotification(error?.message || "Error al obtener los servicios del proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -42,7 +42,7 @@ export const ProviderServiceProvider = ({ children }) => {
       setProviderService(response || null)
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el servicio del proveedor", 'error');
+      addNotification(error?.message || "Error al obtener el servicio del proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -53,10 +53,10 @@ export const ProviderServiceProvider = ({ children }) => {
     try {
       const response = await ProviderServiceService.createServiceOfProvider(providerId, { serviceId, durationMinutes, price });
       setProviderService(response || null);
-      addNotification(response.message || "Servicio del proveedor creado correctamente", 'success');
+      addNotification(response?.message || "Servicio del proveedor creado correctamente", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al crear el servicio del proveedor", 'error');
+      addNotification(error?.message || "Error al crear el servicio del proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -66,10 +66,10 @@ export const ProviderServiceProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProviderServiceService.updateServiceOfProvider(serviceId, providerId, { durationMinutes, price });
-      addNotification(response.message || "Servicio del proveedor ha sido actualizado", 'success');
+      addNotification(response?.message || "Servicio del proveedor ha sido actualizado", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el servicio de un proveedor", 'error');
+      addNotification(error?.message || "Error al actualizar el servicio de un proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -79,10 +79,11 @@ export const ProviderServiceProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProviderServiceService.softDeleteServiceOfProvider(serviceId, providerId);
-      addNotification(response.message || "Servicio del proveedor ha sido removido", 'success');
+      setProviderService({ ...providerService, status: 0 });
+      addNotification(response?.message || "Servicio del proveedor ha sido removido", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al remover el servicio del proveedor", 'error');
+      addNotification(error?.message || "Error al remover el servicio del proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -92,10 +93,11 @@ export const ProviderServiceProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProviderServiceService.activeServiceOfProvider(serviceId, providerId);
-      addNotification(response.message || "Servicio del proveedor ha sido restaurado", 'success');
+      setProviderService({ ...providerService, status: 1 });
+      addNotification(response?.message || "Servicio del proveedor ha sido restaurado", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al restaurar el servicio del proveedor", 'error');
+      addNotification(error?.message || "Error al restaurar el servicio del proveedor", 'error');
     } finally {
       setLoading(false);
     };

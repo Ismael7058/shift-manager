@@ -6,9 +6,13 @@ import Pagination from '../components/ui/Pagination';
 import CreateProviderServiceModal from '../components/provider/CreateProviderServiceModal';
 import EditProviderServiceModal from '../components/provider/EditProviderServiceModal';
 import ChangeStatusProviderServiceModal from '../components/provider/ChangeStatusProviderServiceModal';
+import { useAuth } from '../context/AuthContext';
 
 const ProviderServicesPage = () => {
+  const { user } = useAuth();
   const { id: providerId } = useParams();
+  const currentProviderId = providerId || user?.id;
+
   const {
     providerServices,
     loading,
@@ -21,7 +25,6 @@ const ProviderServicesPage = () => {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
 
-
   const [filters, setFilters] = useState({
     name: '',
     isActive: '',
@@ -33,11 +36,10 @@ const ProviderServicesPage = () => {
     pageSize: 10
   });
 
-
   const refreshList = () => {
-    if (!providerId) return;
+    if (!currentProviderId) return;
     getServicesOfProvider(
-      providerId,
+      currentProviderId,
       '',
       filters.name,
       '',
@@ -54,7 +56,7 @@ const ProviderServicesPage = () => {
 
   useEffect(() => {
     refreshList();
-  }, [providerId, filters]);
+  }, [currentProviderId, filters]);
 
   // Handlers
   const handleSearchChange = (e) => {
@@ -191,25 +193,27 @@ const ProviderServicesPage = () => {
         </div>
       )
     }
-  ], [providerId]);
+  ], [currentProviderId]);
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link
-              to="/proveedores"
-              className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1"
-            >
-              <span>← Volver a Proveedores</span>
-            </Link>
-          </div>
+          {providerId && (
+            <div className="flex items-center gap-2 mb-1">
+              <Link
+                to="/proveedores"
+                className="text-xs text-white/60 hover:text-white transition-colors flex items-center gap-1"
+              >
+                <span>← Volver a Proveedores</span>
+              </Link>
+            </div>
+          )}
           <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Servicios del Proveedor #{providerId}
+            Servicios
           </h1>
           <p className="text-xs text-neutral-400 mt-1">
-            Gestiona las tarifas, duraciones personalizadas y disponibilidad de servicios de este proveedor.
+            Gestiona las tarifas, duraciones personalizadas y disponibilidad de los servicios.
           </p>
         </div>
 
@@ -305,14 +309,14 @@ const ProviderServicesPage = () => {
       {loading ? (
         <div className="flex items-center justify-center py-16 text-white/50 space-x-2">
           <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-          <span className="text-sm">Cargando servicios del proveedor...</span>
+          <span className="text-sm">Cargando servicios...</span>
         </div>
       ) : providerServices.length === 0 ? (
         <div className="text-center py-20 border border-white/10 rounded-xl bg-neutral-900/50">
           <span className="material-symbols-outlined text-5xl text-neutral-500 mb-2">spa</span>
           <h3 className="text-lg font-semibold text-white">No se encontraron servicios</h3>
           <p className="text-sm text-neutral-400 mt-1">
-            Este proveedor aún no tiene servicios asignados o no coinciden con la búsqueda.
+            No hay servicios asignados o no coinciden con la búsqueda.
           </p>
         </div>
       ) : (
@@ -340,7 +344,7 @@ const ProviderServicesPage = () => {
       <CreateProviderServiceModal
         isOpen={isCreateOpen}
         onClose={closeModals}
-        providerId={providerId}
+        providerId={currentProviderId}
         onSuccess={refreshList}
       />
 
@@ -348,7 +352,7 @@ const ProviderServicesPage = () => {
       <EditProviderServiceModal
         isOpen={isEditOpen}
         onClose={closeModals}
-        providerId={providerId}
+        providerId={currentProviderId}
         service={selectedService}
         onSuccess={refreshList}
       />
@@ -357,7 +361,7 @@ const ProviderServicesPage = () => {
       <ChangeStatusProviderServiceModal
         isOpen={isStatusOpen}
         onClose={closeModals}
-        providerId={providerId}
+        providerId={currentProviderId}
         service={selectedService}
         onSuccess={refreshList}
       />
