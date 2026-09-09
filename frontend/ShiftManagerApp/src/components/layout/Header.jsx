@@ -1,129 +1,208 @@
-import { useState } from 'react'
-import RegisterForm from '../auth/RegisterForm'
-import LoginForm from '../auth/LoginForm'
+import { useState, useEffect, useRef } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import RegisterForm from '../auth/RegisterForm';
+import LoginForm from '../auth/LoginForm';
+import MeProfile from '../profile/MeProfile';
 
-import { useAuth } from '../../context/AuthContext'
+const API_BASE_URL = 'http://localhost:5256';
 
-const Header = ({ element }) => {
-  const [modalType, setModalType] = useState(null)
-  const [isOpen, setIsOpen] = useState(false);
+const Header = () => {
+  const { user, logout } = useAuth();
+  const [modalType, setModalType] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
 
-  const { user, logoutUser } = useAuth();
+  const currentRole = user?.roleActive || 'Cliente';
 
-  const closeModal = () => setModalType(null)
+  const closeModal = () => setModalType(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error("Error al cerrar sesión:", err.message);
-    }
+    setShowProfileMenu(false);
+    await logout();
   };
 
+  const renderNavItem = (to, label, end = false) => (
+    <li key={to}>
+      <NavLink
+        to={to}
+        end={end}
+        className={({ isActive }) =>
+          `text-base transition-colors py-1 ${isActive
+            ? 'font-semibold text-indigo-400'
+            : 'font-medium text-white/60 hover:text-white'
+          }`
+        }
+      >
+        {label}
+      </NavLink>
+    </li>
+  );
 
   return (
-    <header className="w-full">
-      <nav className="bg-neutral-950/50 backdrop-blur-md border-b border-white/10 px-4 lg:px-7 py-2.5">
-        <div className="flex flex-wrap justify-between items-center mx-auto max-w-7xl">
-          <div className="flex items-center">
-            {element}
-            <a href="/" className="flex items-center text-2xl text-white font-bold tracking-tighter transition-all">
+    <header className="sticky top-0 z-40 w-full max-w-[100vw]">
+      <nav className="relative bg-neutral-950/70 backdrop-blur-md border-b border-white/10 px-7 py-2.5 w-full max-w-[100vw]">
+        <div className="flex justify-between items-center mx-auto max-w-7xl">
+          <div className="flex items-center shrink-0">
+            <Link
+              to="/"
+              className="flex items-center text-2xl text-white font-bold tracking-tighter transition-all hover:opacity-90"
+            >
               Shift
-              <span className='text-white/30'>Manager</span>
-            </a>
+              <span className="text-white/30">Manager</span>
+            </Link>
           </div>
 
-          <div className="flex items-center lg:order-2 gap-2">
+          {user && (
+            <ul className="flex items-center space-x-8">
+              {currentRole === 'Administrador' && (
+                <>
+                  {renderNavItem('/', 'Inicio', true)}
+                  {renderNavItem('/clientes', 'Clientes')}
+                  {renderNavItem('/proveedores', 'Proveedores')}
+                  {renderNavItem('/servicios', 'Servicios')}
+                  {renderNavItem('/turnos', 'Turnos')}
+                  {renderNavItem('/usuarios', 'Usuarios')}
+                </>
+              )}
+
+              {currentRole === 'Proveedor' && (
+                <>
+                  {renderNavItem('/', 'Inicio', true)}
+                  {renderNavItem('/servicios', 'Servicios')}
+                  {renderNavItem('/horarios', 'Horarios')}
+                  {renderNavItem('/turnos', 'Turnos')}
+                </>
+              )}
+
+              {currentRole === 'Recepcion' && (
+                <>
+                  {renderNavItem('/', 'Inicio', true)}
+                  {renderNavItem('/proveedores', 'Proveedores')}
+                  {renderNavItem('/clientes', 'Clientes')}
+                  {renderNavItem('/turnos', 'Turnos')}
+                </>
+              )}
+
+              {currentRole === 'Cliente' && (
+                <>
+                  {renderNavItem('/', 'Inicio', true)}
+                  {renderNavItem('/turnos', 'Turnos', true)}
+                  {renderNavItem('/turnos/nuevo', 'Crear Turnos')}
+                </>
+              )}
+            </ul>
+          )}
+
+          <div className="flex items-center shrink-0">
             {user ? (
-              // Nombre y boton de salir
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-end leading-tight sm:flex">
-                  <span className="text-white font-semibold text-sm">
-                    {user.firstName} {user.lastName}
-                  </span>
-                  <span className="text-white/40 text-[10px]">{user.email}</span>
-                </div>
+              <div className="relative" ref={profileMenuRef}>
                 <button
-                  onClick={handleLogout}
-                  className="text-white/50 hover:text-white border border-white/10 hover:bg-white/5 px-3 py-1.5 rounded-lg text-sm transition-all"
+                  type="button"
+                  onClick={() => setShowProfileMenu((prev) => !prev)}
+                  className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer text-left"
+                  aria-expanded={showProfileMenu}
                 >
-                  Cerrar Sesión
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-white font-semibold text-sm truncate max-w-[160px]">
+                      {user.firstName} {user.lastName}
+                    </span>
+                    <span className="text-white/40 text-[11px] truncate max-w-[160px]">
+                      {user.email}
+                    </span>
+                  </div>
+
+                  {user.pictureURL ? (
+                    <img
+                      src={`${API_BASE_URL}${user.pictureURL}`}
+                      alt={`${user.firstName} ${user.lastName}`}
+                      className="w-9 h-9 rounded-full object-cover border border-white/20 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                      {user.firstName?.charAt(0)}
+                      {user.lastName?.charAt(0)}
+                    </div>
+                  )}
+
+                  <span className="material-symbols-outlined text-[18px] text-white/60">
+                    {showProfileMenu ? 'expand_less' : 'expand_more'}
+                  </span>
                 </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150 border border-white/10 rounded-xl shadow-xl bg-neutral-900">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalType('profile');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-xs text-neutral-200 hover:bg-indigo-600/20 hover:text-indigo-300 flex items-center gap-2.5 transition-colors cursor-pointer font-medium"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-indigo-400">person</span>
+                      Gestionar Perfil
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2.5 text-xs text-red-400 hover:bg-red-500/15 hover:text-red-300 flex items-center gap-2.5 transition-colors cursor-pointer border-t border-white/10 font-medium"
+                    >
+                      <span className="material-symbols-outlined text-[18px] text-red-400">logout</span>
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setModalType('login')}
-                  className="text-white hover:bg-white/10 focus:ring-4 focus:ring-white/10 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 focus:outline-none transition-all"
+                  className="text-white hover:bg-white/10 font-medium rounded-lg text-sm px-4 py-2 transition-all cursor-pointer"
                 >
                   Iniciar Sesión
                 </button>
                 <button
                   onClick={() => setModalType('register')}
-                  className="text-neutral-950 bg-white hover:bg-neutral-200 focus:ring-4 focus:ring-white/20 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 focus:outline-none transition-all"
+                  className="text-neutral-950 bg-white hover:bg-neutral-200 font-medium rounded-lg text-sm px-4 py-2 transition-all cursor-pointer"
                 >
                   Registrarse
                 </button>
-              </>
-            )}
-
-
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="inline-flex items-center justify-center p-2 text-sm text-white/60 rounded-lg lg:hidden hover:bg-white/5 focus:outline-none transition-all"
-              data-collapse-toggle="mobile-menu-2" aria-controls="mobile-menu-2" aria-expanded="false"
-            >
-              <span className="sr-only">{isOpen ? 'Cerrar menú' : 'Abrir menú'}</span>
-              <div className="flex flex-col justify-between w-6 h-4 transform transition-all duration-300 origin-center">
-                {/* Línea Superior */}
-                <div className={`bg-white h-[2px] w-full rounded transform transition-all duration-300 origin-left ${isOpen ? 'rotate-45 translate-x-1 translate-y-[-1px]' : ''}`}></div>
-                {/* Línea Central (se oculta al abrir) */}
-                <div className={`bg-white h-[2px] w-full rounded transform transition-all duration-300 ${isOpen ? 'opacity-0' : ''}`}></div>
-                {/* Línea Inferior */}
-                <div className={`bg-white h-[2px] w-full rounded transform transition-all duration-300 origin-left ${isOpen ? '-rotate-45 translate-x-1 translate-y-[1px]' : ''}`}></div>
               </div>
-            </button>
-          </div>
-
-          <div className={`${isOpen ? 'flex' : 'hidden'} justify-between items-center w-full lg:flex lg:w-auto lg:order-1`} id="mobile-menu-2">
-            <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
-              <li>
-                <a href="/" className="block py-2 pr-4 pl-3 text-white lg:p-0 hover:text-white/80 transition-colors" aria-current="page">Inicio</a>
-              </li>
-              <li>
-                <a href="/docs" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Docs</a>
-              </li>
-              <li>
-                <a href="/turnos" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Turnos</a>
-              </li>
-              <li>
-                <a href="/turnos/crear" className="block py-2 pr-4 pl-3 text-white/50 border-b border-white/5 hover:bg-white/5 lg:hover:bg-transparent lg:border-0 lg:hover:text-white lg:p-0 transition-colors">Agendar</a>
-              </li>
-            </ul>
+            )}
           </div>
         </div>
       </nav>
 
-      {/* Modal de Inicio de Sesion */}
-      <LoginForm
-        isOpen={modalType === 'login'}
-        onClose={closeModal}
-        onSwitch={() => setModalType('register')}
-      />
-
-      {/* Modal de Registro */}
-      <RegisterForm
-        isOpen={modalType === 'register'}
-        onClose={closeModal}
-        onSwitch={() => setModalType('login')}
-      />
-
-
-
+      {user ? (
+        <MeProfile isOpen={modalType === 'profile'} onClose={closeModal} />
+      ) : (
+        <>
+          <LoginForm
+            isOpen={modalType === 'login'}
+            onClose={closeModal}
+            onSwitch={() => setModalType('register')}
+          />
+          <RegisterForm
+            isOpen={modalType === 'register'}
+            onClose={closeModal}
+            onSwitch={() => setModalType('login')}
+          />
+        </>
+      )}
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

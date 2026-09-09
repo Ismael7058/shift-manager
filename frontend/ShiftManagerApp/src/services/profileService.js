@@ -75,7 +75,7 @@ export const ProfileService = {
       '/me/role-active',
       {
         method: 'PATCH',
-        body: JSON.stringify(role)
+        body: JSON.stringify({ Name: role })
       }
     ),
 

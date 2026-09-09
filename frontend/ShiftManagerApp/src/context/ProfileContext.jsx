@@ -3,12 +3,14 @@ import { ProfileService } from '../services/profileService'
 import { handleApiError } from '../utils/apiErrorHandler';
 import { useNotification } from './NotificationContext';
 import { useAuth } from './AuthContext';
+import { useUser } from './UserContext';
 
 const ProfileContext = createContext();
 
 export const ProfileProvider = ({ children }) => {
   const { addNotification } = useNotification();
   const { user, updateUser } = useAuth();
+  const { user: userAdmin, setUserContext } = useUser();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +30,8 @@ export const ProfileProvider = ({ children }) => {
           phoneNumber: response.phoneNumber,
           username: response.username,
           email: response.email,
-          pictureURL: response.pictureURL
+          pictureURL: response.pictureURL,
+          roles: response.roles
         };
 
         updateUser(updatedUser);
@@ -50,6 +53,10 @@ export const ProfileProvider = ({ children }) => {
       if (user) {
         const updatedUser = { ...user, firstName, lastName, dateOfBirth, gender, phoneNumber };
         updateUser(updatedUser);
+      }
+      if (userAdmin && userAdmin.id == response.id) {
+        const updatedUserAdmin = { ...userAdmin, firstName, lastName, dateOfBirth, gender, phoneNumber };
+        setUserContext(updatedUserAdmin);
       }
       if (profile) {
         const updatedProfile = { ...profile, firstName, lastName, dateOfBirth, gender, phoneNumber };
@@ -73,6 +80,10 @@ export const ProfileProvider = ({ children }) => {
         const updatedUser = { ...user, email: email };
         updateUser(updatedUser);
       }
+      if (userAdmin && userAdmin.id == profile.id) {
+        const updatedUserAdmin = { ...userAdmin, email: email };
+        setUserContext(updatedUserAdmin);
+      }
       if (profile) {
         const updatedProfile = { ...profile, email: email };
         setProfile(updatedProfile);
@@ -94,6 +105,10 @@ export const ProfileProvider = ({ children }) => {
       if (user) {
         const updatedUser = { ...user, username: username };
         updateUser(updatedUser);
+      }
+      if (userAdmin && userAdmin.id == profile.id) {
+        const updatedUserAdmin = { ...userAdmin, username: username };
+        setUserContext(updatedUserAdmin);
       }
       if (profile) {
         const updatedProfile = { ...profile, username: username };
@@ -131,6 +146,10 @@ export const ProfileProvider = ({ children }) => {
         const updatedUser = { ...user, pictureURL: response.pictureURL };
         updateUser(updatedUser);
       }
+      if (userAdmin && userAdmin.id == profile.id) {
+        const updatedUserAdmin = { ...userAdmin, pictureURL: response.pictureURL };
+        setUserContext(updatedUserAdmin);
+      }
       if (profile) {
         const updatedProfile = { ...profile, pictureURL: response.pictureURL };
         setProfile(updatedProfile);
@@ -153,7 +172,10 @@ export const ProfileProvider = ({ children }) => {
         const updatedUser = { ...user, pictureURL: null };
         updateUser(updatedUser);
       }
-
+      if (userAdmin && userAdmin.id == profile.id) {
+        const updatedUserAdmin = { ...userAdmin, pictureURL: null };
+        setUserContext(updatedUserAdmin);
+      }
       if (profile) {
         const updatedProfile = { ...profile, pictureURL: null };
         setProfile(updatedProfile);
@@ -173,10 +195,18 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ProfileService.changeRoleActive(role);
-      addNotification(response.message || `Cambio al rol: ${role}`, 'success');
+      if (user) {
+        const updatedUser = { ...user, roleActive: role };
+        updateUser(updatedUser);
+      }
+      if (profile) {
+        const updatedProfile = { ...profile, roleActive: role };
+        setProfile(updatedProfile);
+      }
+      addNotification(response?.message || `Cambio al rol: ${role}`, 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al cambiar de rol", 'error');
+      addNotification(error?.message || "Error al cambiar de rol", 'error');
       throw error;
     } finally {
       setLoading(false);
