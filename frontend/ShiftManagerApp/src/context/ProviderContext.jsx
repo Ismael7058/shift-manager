@@ -31,7 +31,7 @@ export const ProviderProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los proveedores", 'error');
+      addNotification(error?.message || "Error al obtener los proveedores", 'error');
     } finally {
       setLoading(false);
     };
@@ -52,7 +52,7 @@ export const ProviderProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los servicios del proveedor", 'error');
+      addNotification(error?.message || "Error al obtener los servicios del proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -64,7 +64,7 @@ export const ProviderProvider = ({ children }) => {
       const response = await ProviderService.getProviderById(providerId);
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el proveedor", 'error');
+      addNotification(error?.message || "Error al obtener el proveedor", 'error');
     } finally {
       setLoading(false);
     };
@@ -75,7 +75,7 @@ export const ProviderProvider = ({ children }) => {
       const response = await ProviderService.getRestrictedDates(providerId, dateFrom, dateTo);
       return response || [];
     } catch (error) {
-      addNotification(error.message || "Error al obtener la disponibilidad del proveedor", 'error');
+      addNotification(error?.message || "Error al obtener la disponibilidad del proveedor", 'error');
       return [];
     }
   };

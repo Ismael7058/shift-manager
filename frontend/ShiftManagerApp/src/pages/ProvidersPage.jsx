@@ -5,10 +5,12 @@ import { useWorkSchedules } from '../context/WorkSchedulesContext';
 import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
 import ProviderDetailModal from '../components/provider/DetailProviderModal';
+import { useAuth } from '../context/AuthContext';
 
 const BASE_URL = 'http://localhost:5256';
 
 const ProviderPage = () => {
+  const { user } = useAuth();
   const { providers, loading, pagination, getProviders } = useProvider();
   const { workSchedules, getAllWorkSchedules } = useWorkSchedules();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,10 +65,10 @@ const ProviderPage = () => {
 
   // Columnas de la tabla de Proveedores
   const columns = useMemo(() => [
-    { key: 'id', label: 'Código' },
     {
       key: 'picture',
       label: 'Foto',
+      className: 'w-1 whitespace-nowrap',
       render: (provider) => {
         const imgUrl = provider.pictureURL;
         const fullImgSrc = imgUrl ? (imgUrl.startsWith('http') ? imgUrl : `${BASE_URL}${imgUrl}`) : null;
@@ -88,20 +90,57 @@ const ProviderPage = () => {
         );
       }
     },
-    { key: 'name', label: 'Nombre', render: (provider) => provider.firstName + ' ' + provider.lastName },
     {
-      key: 'actions', label: 'Acciones', render: (provider) => (
-        <div className="flex items-center gap-2">
+      key: 'name',
+      label: 'Nombre',
+      className: 'w-full',
+      render: (provider) => provider.firstName + ' ' + provider.lastName
+    },
+    {
+      key: 'actions',
+      label: 'Acciones',
+      className: 'w-1 whitespace-nowrap text-right',
+      render: (provider) => (
+        <div className="flex items-center justify-end gap-2">
           <button
-            className="px-3 py-1 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+            type="button"
+            title="Ver detalle del proveedor"
+            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white border border-white/10 hover:border-white/20 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
             onClick={() => handleOpenProviderModal(provider)}
           >
-            Ver
+            <span className="material-symbols-outlined text-[15px]">visibility</span>
           </button>
+          {user?.roleActive === 'Administrador' && (
+            <>
+              <Link
+                to={`/proveedores/${provider.id}/servicios`}
+                title="Gestionar servicios"
+                className="px-2.5 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/25 hover:border-cyan-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[15px]">spa</span>
+                <span>Servicios</span>
+              </Link>
+              <Link
+                to={`/proveedores/${provider.id}/horarios`}
+                title="Gestionar horarios"
+                className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[15px]">schedule</span>
+                <span>Horarios</span>
+              </Link>
+            </>
+          )}
+          <Link to={`/turnos?providerId=${provider.id}`}
+            title="Ver turnos"
+            className="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[15px]">calendar_today</span>
+            <span>Turnos</span>
+          </Link>
         </div>
       )
     }
-  ], []);
+  ], [user?.roleActive]);
 
 
   return (
@@ -184,6 +223,7 @@ const ProviderPage = () => {
         provider={selectedProvider}
         schedules={workSchedules}
         loadingSchedules={loading}
+        accessToActions={user?.roleActive === 'Administrador'}
       />
     </div>
   );
