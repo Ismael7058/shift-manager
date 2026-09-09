@@ -30,7 +30,7 @@ export const WorkSchedulesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los horarios de trabajo", 'error');
+      addNotification(error?.message || "Error al obtener los horarios de trabajo", 'error');
     } finally {
       setLoading(false)
     }
@@ -44,7 +44,7 @@ export const WorkSchedulesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el horario de trabajo", 'error');
+      addNotification(error?.message || "Error al obtener el horario de trabajo", 'error');
     } finally {
       setLoading(false)
     }
@@ -55,11 +55,11 @@ export const WorkSchedulesProvider = ({ children }) => {
     try {
       const response = await WorkSchedulesService.createWorkSchedule(providerId, { dayOfWeek, startTime, endTime });
       setWorkSchedule(response || null);
-      addNotification(response.message || "Horario de trabajo registrado con éxito", 'success');
+      addNotification(response?.message || "Horario de trabajo registrado con éxito", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al crear el horario de trabajo", 'error');
+      addNotification(error?.message || "Error al crear el horario de trabajo", 'error');
     } finally {
       setLoading(false)
     }
@@ -69,11 +69,11 @@ export const WorkSchedulesProvider = ({ children }) => {
     setLoading(true)
     try {
       const response = await WorkSchedulesService.updateWorkSchedule(workId, { dayOfWeek, startTime, endTime });
-      addNotification(response.message || "Horario de trabajo actualizado con éxito", 'success');
+      addNotification(response?.message || "Horario de trabajo actualizado con éxito", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el horario de trabajo", 'error');
+      addNotification(error?.message || "Error al actualizar el horario de trabajo", 'error');
     } finally {
       setLoading(false)
     }
@@ -83,11 +83,11 @@ export const WorkSchedulesProvider = ({ children }) => {
     setLoading(true)
     try {
       const response = await WorkSchedulesService.changeStatusWorkSchedule(workId, { isActive: status });
-      addNotification(response.message || "El estado del horario de trabajo ha cambiado", 'success');
+      addNotification(response?.message || "El estado del horario de trabajo ha cambiado", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al cambiar el estado del horario de trabajo", 'error');
+      addNotification(error?.message || "Error al cambiar el estado del horario de trabajo", 'error');
     } finally {
       setLoading(false)
     }

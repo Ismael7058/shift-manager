@@ -28,7 +28,7 @@ export const ClientProvider = ({ children }) => {
         pageSize: response.pageSize
       });
     } catch (error) {
-      addNotification(error.message || "Error al obtener los clientes", 'error');
+      addNotification(error?.message || "Error al obtener los clientes", 'error');
     } finally {
       setLoading(false);
     };

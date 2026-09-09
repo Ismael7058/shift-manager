@@ -17,8 +17,8 @@ export const RoleProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los roles", 'error');
-    } finally{
+      addNotification(error?.message || "Error al obtener los roles", 'error');
+    } finally {
       setLoading(false);
     };
   };

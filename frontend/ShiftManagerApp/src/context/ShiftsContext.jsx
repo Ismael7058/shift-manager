@@ -31,7 +31,7 @@ export const ShiftsProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los turnos", 'error');
+      addNotification(error?.message || "Error al obtener los turnos", 'error');
     } finally {
       setLoading(false);
     };
@@ -45,7 +45,7 @@ export const ShiftsProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el turno", 'error');
+      addNotification(error?.message || "Error al obtener el turno", 'error');
     } finally {
       setLoading(false);
     };
@@ -56,11 +56,11 @@ export const ShiftsProvider = ({ children }) => {
     try {
       const response = await ShiftService.createShift(clientId, { providerId, startAt, items });
       setShift(response.items || null);
-      addNotification(response.message || "Turno creado con éxito", 'success');
+      addNotification(response?.message || "Turno creado con éxito", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al crear el turno", 'error');
+      addNotification(error?.message || "Error al crear el turno", 'error');
     } finally {
       setLoading(false);
     };
@@ -70,11 +70,11 @@ export const ShiftsProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await ShiftService.updateShift(shiftId, { providerId, startAt, items });
-      addNotification(response.message || "Turno actualizado con éxito", 'success');
+      addNotification(response?.message || "Turno actualizado con éxito", 'success');
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el turno", 'error');
+      addNotification(error?.message || "Error al actualizar el turno", 'error');
     } finally {
       setLoading(false);
     };

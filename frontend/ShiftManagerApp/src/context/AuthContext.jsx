@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const { addNotification } = useNotification();
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -28,8 +29,7 @@ export const AuthProvider = ({ children }) => {
       }
       return response;
     } catch (error) {
-      addNotification(error.message || 'Credenciales invalidas', 'error');
-      throw error
+      addNotification(error?.message || 'Credenciales invalidas', 'error');
     }
   };
 
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await AuthService.logout();
     } catch (error) {
-      console.warn("Error al cerrar sesion", error);
+      addNotification(error?.message || 'Error al cerrar sesion', 'error');
     }
     setUser(null);
     localStorage.removeItem('user');
@@ -58,8 +58,7 @@ export const AuthProvider = ({ children }) => {
       }
       return response;
     } catch (error) {
-      addNotification(error.message || 'Error al registrar', 'error');
-      throw error;
+      addNotification(error?.message || 'Error al registrar', 'error');
     }
   };
 

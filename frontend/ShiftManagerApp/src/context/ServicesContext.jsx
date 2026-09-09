@@ -30,7 +30,7 @@ export const ServicesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener los servicios", 'error');
+      addNotification(error?.message || "Error al obtener los servicios", 'error');
     } finally {
       setLoading(false)
     }
@@ -44,7 +44,7 @@ export const ServicesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al obtener el servicio", 'error');
+      addNotification(error?.message || "Error al obtener el servicio", 'error');
     } finally {
       setLoading(false)
     }
@@ -60,7 +60,7 @@ export const ServicesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al crear el servicio", 'error')
+      addNotification(error?.message || "Error al crear el servicio", 'error')
     } finally {
       setLoading(false)
     }
@@ -74,7 +74,7 @@ export const ServicesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al actualizar el servicio", 'error')
+      addNotification(error?.message || "Error al actualizar el servicio", 'error')
     } finally {
       setLoading(false)
     }
@@ -88,7 +88,7 @@ export const ServicesProvider = ({ children }) => {
 
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al cambiar el estado del servicio", 'error')
+      addNotification(error?.message || "Error al cambiar el estado del servicio", 'error')
     } finally {
       setLoading(false)
     }
@@ -101,7 +101,7 @@ export const ServicesProvider = ({ children }) => {
       addNotification("Imágenes subidas con éxito", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al subir las imágenes", 'error');
+      addNotification(error?.message || "Error al subir las imágenes", 'error');
       throw error;
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export const ServicesProvider = ({ children }) => {
       addNotification("Imagen eliminada con éxito", 'success');
       return true;
     } catch (error) {
-      addNotification(error.message || "Error al eliminar la imagen", 'error');
+      addNotification(error?.message || "Error al eliminar la imagen", 'error');
       throw error;
     } finally {
       setLoading(false);

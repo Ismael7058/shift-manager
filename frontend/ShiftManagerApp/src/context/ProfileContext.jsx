@@ -184,7 +184,7 @@ export const ProfileProvider = ({ children }) => {
       addNotification("Imagen de perfil eliminada", 'success');
       return response;
     } catch (error) {
-      addNotification(error.message || "Error al eliminar la imagen de perfil", 'error');
+      addNotification(error?.message || "Error al eliminar la imagen de perfil", 'error');
       throw error;
     } finally {
       setLoading(false);
