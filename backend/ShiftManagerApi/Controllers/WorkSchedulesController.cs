@@ -7,7 +7,7 @@ using ShiftManagerApi.Interfaces;
 namespace ShiftManagerApi.Controllers
 {
   [ApiController]
-  [Authorize(Policy = "AdminOProveedor")]
+  [Authorize]
   [Route("work-schedules")]
   public class WorkSchedulesController : ControllerBase
   {
@@ -19,6 +19,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpGet]
+    [Authorize(Policy = "AnyAuthenticatedRole")]
     public async Task<ActionResult<PaginatedDto<WorkSchedulesDto>>> GetAll([FromQuery] long? providerId, [FromQuery] WorkSchedulesFilterDto filterDto)
     {
       filterDto ??= new WorkSchedulesFilterDto();
@@ -32,6 +33,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = "AnyAuthenticatedRole")]
     public async Task<ActionResult<WorkSchedulesDto>> GetById(long id, [FromQuery] long? providerId)
     {
       try
@@ -51,6 +53,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOProveedor")]
     public async Task<ActionResult<WorkSchedulesDto>> Post(long providerId, CreateWorkSchedulesDto createDto)
     {
       try
@@ -72,6 +75,7 @@ namespace ShiftManagerApi.Controllers
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = "AdminOProveedor")]
     public async Task<ActionResult> Put(long id, UpdateWorkSchedulesDto updateDto)
     {
       try
@@ -96,7 +100,8 @@ namespace ShiftManagerApi.Controllers
       }
     }
 
-    [HttpPatch("{id}/active")]
+    [HttpPatch("{id}/status")]
+    [Authorize(Policy = "AdminOProveedor")]
     public async Task<ActionResult> Patch(long id, [FromBody] UpdateStatusDto statusDto)
     {
       try

@@ -25,7 +25,7 @@ namespace ShiftManagerApi.Controllers
       return Ok(response);
     }
 
-    [Authorize(Policy = "Administrador")]
+    [Authorize]
     [HttpGet("{id}")]
     public async Task<ActionResult<ServiceDto>> GetById(long id)
     {
