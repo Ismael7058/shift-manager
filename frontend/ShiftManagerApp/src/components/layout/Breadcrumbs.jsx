@@ -3,16 +3,16 @@ import { useLocation, Link } from 'react-router-dom';
 
 const Breadcrumbs = () => {
   const location = useLocation();
-  
+
   // Dividimos la ruta actual para obtener los segmentos
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   if (location.pathname === '/') return null;
 
   return (
-    <nav className="flex items-center space-x-2 text-sm font-medium mb-2 container mx-auto px-4" aria-label="Breadcrumb">
-      <Link 
-        to="/" 
+    <nav className="container mx-auto p-4 max-w-7xl flex align-items-center" aria-label="Breadcrumb">
+      <Link
+        to="/"
         className="text-white/40 hover:text-white transition-colors"
       >
         Inicio
@@ -26,7 +26,7 @@ const Breadcrumbs = () => {
 
         return (
           <div key={to} className="flex items-center space-x-2">
-            <span className="text-white/10 font-thin">/</span>
+            <span className="text-white/40 font-thin"> / </span>
             {last ? (
               <span className="text-white cursor-default">{name}</span>
             ) : (
