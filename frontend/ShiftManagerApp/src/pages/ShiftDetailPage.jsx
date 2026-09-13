@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import ChangeStatusShiftModal from '../components/shifts/ChangeStatusShiftModal';
 import { parseDateToLocal } from '../utils/dateUtils';
+import GalleryImage from '../components/service/GalleryImage';
+
+const BASE_URL = 'http://localhost:5256';
 
 
 const ShiftDetailPage = () => {
@@ -15,6 +18,8 @@ const ShiftDetailPage = () => {
 
   const [modalAction, setModalAction] = useState(null);
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [previewService, setPreviewService] = useState(null);
+
 
   useEffect(() => {
     if (id) {
@@ -373,24 +378,48 @@ const ShiftDetailPage = () => {
                 shift.items.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="flex items-center justify-between p-3.5 bg-neutral-800/30 border border-white/10 rounded-lg hover:border-white/20 transition-all"
+                    className="flex items-center justify-between p-3.5 bg-neutral-800/30 border border-white/10 rounded-xl hover:border-white/20 transition-all"
                   >
-                    <div className="flex items-center gap-3 min-w-0 pr-3">
-                      <div className="w-9 h-9 rounded-lg bg-neutral-800 flex items-center justify-center text-white/60 border border-white/10 shrink-0">
-                        <span className="material-symbols-outlined text-[18px]">spa</span>
-                      </div>
+                    <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                      {item.images && item.images.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewService({ images: item.images, name: item.nameService });
+                          }}
+                          className="group relative shrink-0 rounded-lg overflow-hidden border border-white/10 hover:border-white/30 transition-all cursor-pointer"
+                          title="Ver fotos del servicio"
+                        >
+                          <img
+                            src={BASE_URL + item.images[0].imageUrl}
+                            alt={item.nameService}
+                            className="w-13 h-13 object-cover transition-all duration-200 group-hover:brightness-60 group-hover:scale-105"
+                          />
+                        </button>
+                      ) : (
+                        <div className="w-13 h-13 rounded-lg bg-neutral-800 flex items-center justify-center text-white/60 border border-white/10 shrink-0">
+                          <span className="material-symbols-outlined text-[18px]">spa</span>
+                        </div>
+                      )}
+
+
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-white truncate">
                           {item.nameService || `Servicio #${item.serviceId}`}
                         </p>
-                        {item.durationMinutes && (
-                          <p className="text-xs text-white/40 flex items-center gap-1 mt-0.5">
-                            <span className="material-symbols-outlined text-[13px]">schedule</span>
-                            {item.durationMinutes} min de duración
-                          </p>
-                        )}
+
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {item.durationMinutes && (
+                            <span className="text-xs text-white/40 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[13px]">schedule</span>
+                              {item.durationMinutes} min de duración
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+
                     <div className="text-right shrink-0">
                       <span className="text-base font-bold text-white">
                         ${Number(item.priceAtMoment || 0).toFixed(2)}
@@ -399,6 +428,7 @@ const ShiftDetailPage = () => {
                     </div>
                   </div>
                 ))
+
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center text-white/40 space-y-2">
                   <span className="material-symbols-outlined text-[32px] text-white/20">spa</span>
@@ -507,6 +537,15 @@ const ShiftDetailPage = () => {
         statusInfo={statusInfo}
         onSuccess={() => getShift(id)}
       />
+      {/* Galería Modal */}
+      <GalleryImage
+        isOpen={Boolean(previewService)}
+        onClose={() => setPreviewService(null)}
+        images={previewService?.images}
+        title={previewService?.name}
+        alt={previewService?.name}
+      />
+
     </div>
   );
 };

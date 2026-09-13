@@ -9,6 +9,7 @@ import SelectDateTime from '../components/shifts/SelectDateTime';
 import DetailsShift from '../components/shifts/DetailsShift';
 import SearchableSelect from '../components/ui/forms/SearchableSelect';
 import { useAuth } from '../context/AuthContext';
+import GalleryImage from '../components/service/GalleryImage';
 
 const ShiftCreatePage = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const ShiftCreatePage = () => {
   const [clientSearch, setClientSearch] = useState('');
   const [providerSearch, setProviderSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewService, setPreviewService] = useState(null);
 
 
   // Carga inicial
@@ -344,13 +346,33 @@ const ShiftCreatePage = () => {
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-white truncate">{service.name}</p>
-                            <p className="text-[11px] text-neutral-400 font-mono">⏱ {service.durationMinutes} min</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-neutral-400 font-mono">
+                              <span className="inline-flex items-center gap-0.5 leading-none">
+                                <span className="material-symbols-outlined text-xs scale-[0.7] origin-center text-neutral-400">schedule</span>
+                                {service.durationMinutes} min
+                              </span>
+                              {service.images && service.images.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewService(service);
+                                  }}
+                                  className="text-neutral-400 hover:text-cyan-400 transition-colors inline-flex items-center justify-center cursor-pointer leading-none"
+                                  title="Ver fotos del servicio"
+                                >
+                                  <span className="material-symbols-outlined text-xs scale-[0.7] origin-center leading-none">image</span>
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        <span className="text-xs font-bold text-cyan-400 shrink-0">
-                          ${(service.price || 0).toLocaleString('es-AR')}
-                        </span>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-xs font-bold text-cyan-400">
+                            ${(service.price || 0).toLocaleString('es-AR')}
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
@@ -416,6 +438,14 @@ const ShiftCreatePage = () => {
           />
         </div>
       </div>
+
+      <GalleryImage
+        isOpen={Boolean(previewService)}
+        onClose={() => setPreviewService(null)}
+        images={previewService?.images}
+        alt={previewService?.name}
+      />
+
     </div>
   );
 };
