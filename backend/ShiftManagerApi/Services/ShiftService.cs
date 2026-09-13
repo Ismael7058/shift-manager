@@ -95,6 +95,7 @@ namespace ShiftManagerApi.Services
         var serviceIds = createDto.Items.Select(i => i.ServiceId).ToList();
         var existServices = await _context.ProviderService
           .Include(ps => ps.Service)
+          .ThenInclude(s => s.Images)
           .Where(ps => ps.ProviderId == createDto.ProviderId && serviceIds.Contains(ps.ServiceId) && ps.Service.IsActive == true)
           .ToListAsync();
 
@@ -178,7 +179,13 @@ namespace ShiftManagerApi.Services
               ServiceId = es.ServiceId,
               NameService = es.Service.Name,
               DurationMinutes = es.DurationMinutes,
-              PriceAtMoment = es.Price
+              PriceAtMoment = es.Price,
+              Images = es.Service.Images.Select(img => new ServiceImageDto
+              {
+                Id = img.Id,
+                ServiceId = img.ServiceId,
+                ImageUrl = img.ImageUrl
+              }).ToList()
             }).ToList(),
             
             CreatedById = newShift.CreatedById,
@@ -219,7 +226,7 @@ namespace ShiftManagerApi.Services
       var shift = await query
         .Include(s => s.Client).ThenInclude(c => c.UserProfile)
         .Include(s => s.Provider).ThenInclude(p => p.UserProfile)
-        .Include(s => s.ShiftItems).ThenInclude(si => si.Service)
+        .Include(s => s.ShiftItems).ThenInclude(si => si.Service).ThenInclude(s => s.Images)
         .FirstOrDefaultAsync(s => s.Id == shiftId);
 
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
@@ -265,10 +272,18 @@ namespace ShiftManagerApi.Services
         CreatedAt = shift.CreatedAt,
         Items = shift.ShiftItems.Select(si => new ShiftItemDto
         {
+          Id = si.Id,
+          ShiftId = si.ShiftId,
           ServiceId = si.ServiceId,
           NameService = si.Service.Name,
           DurationMinutes = si.Service.DurationMinutes,
-          PriceAtMoment = si.PriceAtMoment
+          PriceAtMoment = si.PriceAtMoment,
+          Images = si.Service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl
+          }).ToList()
         }).ToList(),
         CreatedById = shift.CreatedById,
         CreatedByRole = shift.CreatedByRole,
@@ -373,7 +388,13 @@ namespace ShiftManagerApi.Services
             ServiceId = si.ServiceId,
             NameService = si.Service.Name,
             DurationMinutes = si.Service.DurationMinutes,
-            PriceAtMoment = si.PriceAtMoment
+            PriceAtMoment = si.PriceAtMoment,
+            Images = si.Service.Images.Select(img => new ServiceImageDto
+            {
+              Id = img.Id,
+              ServiceId = img.ServiceId,
+              ImageUrl = img.ImageUrl
+            }).ToList()
           }).ToList(),
           CreatedById = s.CreatedById,
           CreatedByRole = s.CreatedByRole,

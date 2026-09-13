@@ -18,7 +18,7 @@ namespace ShiftManagerApi.Services
 
     public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long? userId, long? serviceId, ProviderServiceFilterDto filter)
     {
-      var query = _context.ProviderService.Include(ps => ps.Service).AsNoTracking().AsQueryable();
+      var query = _context.ProviderService.AsNoTracking().AsQueryable();
 
       if(userId.HasValue)
         query = query.Where(ps => ps.ProviderId == userId);
@@ -72,7 +72,13 @@ namespace ShiftManagerApi.Services
           Price = ps.Price,
           Status = ps.Service.IsActive == false 
             ? 2
-            : (ps.DeletedAt != null ? 0 : 1)
+            : (ps.DeletedAt != null ? 0 : 1),
+          Images = ps.Service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl,
+          }).ToList()
         }).ToListAsync();
 
       return new PaginatedDto<ProviderServiceDto>
@@ -86,10 +92,14 @@ namespace ShiftManagerApi.Services
 
     public async Task<ProviderServiceDto> GetById(long userId, long serviceId)
     {
-      var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => 
-        ps.ProviderId == userId 
-        && ps.ServiceId == serviceId
-      );
+      var providerService = await _context.ProviderService
+        .Include(ps => ps.Service)
+        .ThenInclude(s => s.Images)
+        .AsNoTracking()
+        .FirstOrDefaultAsync(ps => 
+          ps.ProviderId == userId 
+          && ps.ServiceId == serviceId
+        );
 
       if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado");
 
@@ -101,7 +111,16 @@ namespace ShiftManagerApi.Services
         Description = providerService.Service.Description,
         DurationMinutes = providerService.DurationMinutes,
         DurationMinutesBase = providerService.Service.DurationMinutes,
-        Price = providerService.Price
+        Price = providerService.Price,
+        Status = providerService.Service.IsActive == false 
+          ? 2 
+          : (providerService.DeletedAt != null ? 0 : 1),
+        Images = providerService.Service.Images.Select(img => new ServiceImageDto
+        {
+          Id = img.Id,
+          ServiceId = img.ServiceId,
+          ImageUrl = img.ImageUrl,
+        }).ToList()
       };
 
       return psDto;
@@ -114,7 +133,9 @@ namespace ShiftManagerApi.Services
         if (providerService != null) throw new InvalidOperationException("El proveedor ya tiene registrado este servicio.");
 
 
-        var service = await _context.Service.Where(s => s.Id == createDto.ServiceId || s.IsActive == false).FirstOrDefaultAsync();
+        var service = await _context.Service
+          .Include(s => s.Images)
+          .FirstOrDefaultAsync(s => s.Id == createDto.ServiceId && s.IsActive);
 
         if (service == null) throw new InvalidOperationException("Servicio no disponible.");
 
@@ -131,13 +152,20 @@ namespace ShiftManagerApi.Services
 
         return new ProviderServiceDto
         {
-        ProviderId = userId,
-        ServiceId = createPS.ServiceId,
-        Name = service.Name,
-        Description = service.Description,
-        DurationMinutes = createPS.DurationMinutes,
-        DurationMinutesBase = service.DurationMinutes,
-        Price = createPS.Price
+          ProviderId = userId,
+          ServiceId = createPS.ServiceId,
+          Name = service.Name,
+          Description = service.Description,
+          DurationMinutes = createPS.DurationMinutes,
+          DurationMinutesBase = service.DurationMinutes,
+          Price = createPS.Price,
+          Status = 1,
+          Images = service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl,
+          }).ToList()
         };
     }
 

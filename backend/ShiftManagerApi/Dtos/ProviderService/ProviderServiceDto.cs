@@ -11,5 +11,6 @@ namespace ShiftManagerApi.Dtos
     public int DurationMinutesBase { get; set; }
     public decimal Price { get; set; }
     public int Status { get; set; }
+    public List<ServiceImageDto> Images { get; set; } = new();
   }
 }
