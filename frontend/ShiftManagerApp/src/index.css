@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: dark;
+}
+
 /* Ocultar barra de desplazamiento visualmente en la ventana principal */
 html,
 body {
@@ -7,6 +11,10 @@ body {
   /* Para Firefox */
   -ms-overflow-style: none;
   /* Para Internet Explorer y Edge */
+}
+
+input[type="date"] {
+  color-scheme: dark;
 }
 
 /* Para Chrome, Safari y navegadores basados en Chromium */
