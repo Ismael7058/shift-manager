@@ -14,10 +14,8 @@ export async function apiFetch(endpoint, options = {}) {
 
   if (options.body instanceof FormData) {
     delete headers['Content-Type'];
-  } else {
-    if (!headers['Content-Type']) {
-      headers['Content-Type'] = 'application/json';
-    }
+  } else if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
   }
 
   // Configuraciones por defecto
@@ -31,17 +29,39 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
+    // Si la sesión expiró en cualquier petición que NO sea el login
+    if (response.status === 401 && !endpoint.includes('/login')) {
+      localStorage.removeItem('user');
+      window.location.href = '/';
+      throw new Error('Sesión expirada o no autorizada.');
+    }
+
+    // 204 No Content no tiene cuerpo que parsear
+    if (response.status === 204) {
+      return null;
+    }
+
     const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
+    if (contentType && contentType.includes("json")) {
       const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.message || 'Ocurrió un error en la solicitud.');
+        const validationError = data.errors ? Object.values(data.errors).flat()[0] : null;
+        const message = validationError || data.message || data.title || 'Ocurrió un error en la solicitud.';
+        const error = Object.assign(new Error(message), {
+          errors: data.errors,
+          status: response.status,
+          data: data
+        });
+        throw error;
       }
+
       return data;
     }
 
     if (!response.ok) {
-      throw new Error('Error en el servidor: ' + response.statusText);
+      const statusInfo = response.statusText ? `${response.status} ${response.statusText}` : `${response.status}`;
+      throw new Error(`Error en el servidor: ${statusInfo}`);
     }
 
     return null;

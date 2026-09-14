@@ -59,7 +59,8 @@ export const AuthProvider = ({ children }) => {
       }
       return response;
     } catch (error) {
-      addNotification(error?.message || 'Error al registrar', 'error');
+      addNotification(error?.message || 'Error al registrar el usuario', 'error');
+      throw error;
     }
   };
 
