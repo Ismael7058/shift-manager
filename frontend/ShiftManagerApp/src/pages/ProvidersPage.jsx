@@ -6,8 +6,7 @@ import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
 import ProviderDetailModal from '../components/provider/DetailProviderModal';
 import { useAuth } from '../context/AuthContext';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../services/api';
 
 const ProviderPage = () => {
   const { user } = useAuth();

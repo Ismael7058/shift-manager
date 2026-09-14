@@ -4,8 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import RegisterForm from '../auth/RegisterForm';
 import LoginForm from '../auth/LoginForm';
 import MeProfile from '../profile/MeProfile';
-
-const API_BASE_URL = 'http://localhost:5256';
+import { API_BASE_URL } from '../../services/api';
 
 const Header = () => {
   const { user, logout } = useAuth();

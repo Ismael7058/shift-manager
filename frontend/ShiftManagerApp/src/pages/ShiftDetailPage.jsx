@@ -8,9 +8,7 @@ import { parseDateToLocal } from '../utils/dateUtils';
 import GalleryImage from '../components/service/GalleryImage';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ShiftInvoicePdf from '../components/pdf/ShiftInvoicePdf';
-
-const BASE_URL = 'http://localhost:5256';
-
+import { BASE_URL } from '../services/api';
 
 const ShiftDetailPage = () => {
   const { id } = useParams();

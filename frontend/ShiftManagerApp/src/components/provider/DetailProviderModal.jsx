@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../../services/api';
 const DAYS_NAME = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const DetailProviderModal = ({ isOpen, onClose, provider, schedules = [], loadingSchedules = false, accessToActions = false }) => {

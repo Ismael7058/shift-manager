@@ -3,8 +3,7 @@ import Modal from '../ui/Modal';
 import Select2 from '../ui/forms/Select2';
 import { useProviderService } from '../../context/ProviderServiceContext';
 import { useService } from '../../context/ServicesContext';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../../services/api';
 
 const CreateProviderServiceModal = ({
   isOpen,

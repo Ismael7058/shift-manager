@@ -1,13 +1,18 @@
 {
     "compilerOptions": {
-        "target": "ES6",
-        "module": "commonjs",
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
         "checkJs": true,
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "types": [
+            "vite/client"
+        ]
     },
     "include": [
         "src/services/**/*",
-        "src/models/**/*"
+        "src/models/**/*",
+        "src/vite-env.d.ts"
     ],
     "exclude": [
         "node_modules",

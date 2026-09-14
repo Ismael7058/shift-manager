@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
 import { useProviderService } from '../../context/ProviderServiceContext';
 import { useService } from '../../context/ServicesContext';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../../services/api';
 
 const EditProviderServiceModal = ({
   isOpen,

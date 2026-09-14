@@ -1,4 +1,5 @@
-const BASE_URL = 'http://localhost:5226/api';
+export const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5256').replace(/\/+$/, '');
+export const API_BASE_URL = BASE_URL;
 
 /**
  * @param {string} endpoint - Ruta del endpoint

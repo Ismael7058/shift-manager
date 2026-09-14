@@ -5,8 +5,8 @@ import CreateForm from '../components/service/CreateForm';
 import ChangeStatusModal from '../components/service/ChangeStatusModal';
 import Pagination from '../components/ui/Pagination';
 import { Link } from 'react-router-dom';
+import { BASE_URL } from '../services/api';
 
-const BASE_URL = 'http://localhost:5256';
 const ServicesPage = () => {
   const { services, loading, pagination, getServices } = useService();
   const [modalType, setModalType] = useState(null);

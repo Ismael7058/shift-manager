@@ -3,8 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useService } from '../context/ServicesContext';
 import { useNotification } from '../context/NotificationContext';
 import ChangeStatusModal from '../components/service/ChangeStatusModal';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../services/api';
 const MAX_IMAGES = 7;
 
 const ServiceUpdatePage = () => {

@@ -4,8 +4,7 @@ import { useUser } from '../context/UserContext';
 import { useRole } from '../context/RoleContext';
 import { useNotification } from '../context/NotificationContext';
 import ChangeStatusUserModal from '../components/users/ChangeStatusUserModal';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../services/api';
 
 const UsersDetailPage = () => {
   const { id } = useParams();

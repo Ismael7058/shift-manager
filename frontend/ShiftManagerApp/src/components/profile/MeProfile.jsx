@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../../services/api';
 
 const MeProfile = ({ isOpen, onClose }) => {
   const { user } = useAuth();

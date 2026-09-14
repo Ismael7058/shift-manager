@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const BASE_URL = 'http://localhost:5256';
+import { BASE_URL } from '../../services/api';
 
 const GalleryImage = ({
   isOpen = false,

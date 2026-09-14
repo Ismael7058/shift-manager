@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { useClient } from '../context/ClientContext';
 import Table from '../components/ui/Table';
 import Pagination from '../components/ui/Pagination';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5256';
+import { API_BASE_URL } from '../services/api';
 
 const ClientsPage = () => {
   const { clients, loading, pagination, getClients } = useClient();
