@@ -18,6 +18,9 @@ namespace ShiftManagerApi.Entity
 
     public UserAuth Provider { get; set; } = null!;
     public UserAuth Client { get; set; } = null!;
+    public UserAuth CreatedBy { get; set; } = null!;
+    public UserAuth? ConfirmedBy { get; set; }
+    public UserAuth? CanceledBy { get; set; }
     public List<ShiftItems> ShiftItems { get; set; } = new();
   }
 

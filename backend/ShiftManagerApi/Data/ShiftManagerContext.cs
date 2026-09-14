@@ -97,6 +97,20 @@ namespace ShiftManagerApi.Data
         .WithMany(p => p.ProvidedShifts)
         .HasForeignKey(s => s.ProviderId);
 
+        entity.HasOne(s => s.CreatedBy)
+        .WithMany()
+        .HasForeignKey(s => s.CreatedById)
+        .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(s => s.ConfirmedBy)
+        .WithMany()
+        .HasForeignKey(s => s.ConfirmedById)
+        .OnDelete(DeleteBehavior.SetNull);
+
+        entity.HasOne(s => s.CanceledBy)
+        .WithMany()
+        .HasForeignKey(s => s.CanceledById)
+        .OnDelete(DeleteBehavior.SetNull);
       });
 
       modelBuilder.Entity<ShiftItems>(entity =>
