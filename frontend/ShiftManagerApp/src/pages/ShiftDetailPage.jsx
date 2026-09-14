@@ -6,6 +6,8 @@ import { useNotification } from '../context/NotificationContext';
 import ChangeStatusShiftModal from '../components/shifts/ChangeStatusShiftModal';
 import { parseDateToLocal } from '../utils/dateUtils';
 import GalleryImage from '../components/service/GalleryImage';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import ShiftInvoicePdf from '../components/pdf/ShiftInvoicePdf';
 
 const BASE_URL = 'http://localhost:5256';
 
@@ -14,7 +16,6 @@ const ShiftDetailPage = () => {
   const { id } = useParams();
   const { shift, loading, getShift } = useShift();
   const { user } = useAuth();
-  const { addNotification } = useNotification();
 
   const [modalAction, setModalAction] = useState(null);
   const [currentTime, setCurrentTime] = useState(() => new Date());
@@ -33,11 +34,6 @@ const ShiftDetailPage = () => {
     }, 10000);
     return () => clearInterval(interval);
   }, []);
-
-
-  const handleDownloadPdf = () => {
-    addNotification('La generación y descarga del comprobante en PDF estará disponible próximamente.', 'info');
-  };
 
 
   const getStatusBadge = (status) => {
@@ -65,8 +61,9 @@ const ShiftDetailPage = () => {
   };
 
   const formatCreatedAt = (iso) => {
-    const d = parseDateToLocal(iso);
-    return d ? `${d.toLocaleDateString('es-ES')} a las ${formatTime(d)}` : '-';
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return !isNaN(d.getTime()) ? `${d.toLocaleDateString('es-AR')} a las ${formatTime(d)}` : '-';
   };
 
   const getClientInitials = (name) => (name ? name.trim().split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase() : 'C');
@@ -145,15 +142,47 @@ const ShiftDetailPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleDownloadPdf}
-            className="px-4 py-2.5 bg-neutral-800/60 hover:bg-neutral-800 text-white border border-white/10 font-semibold text-xs rounded-lg transition-all cursor-pointer flex items-center gap-2 active:scale-[0.98]"
-            title="Descargar comprobante en PDF"
-          >
-            <span className="material-symbols-outlined text-[18px] text-red-400">picture_as_pdf</span>
-            Descargar Comprobante PDF
-          </button>
+          <div>
+            <PDFDownloadLink document={<ShiftInvoicePdf shift={shift} />} fileName={`Comprobante-${shift.id}.pdf`}>
+              {({ loading, error }) => {
+                if (error) return (
+                  <button
+                    type="button"
+                    disabled
+                    className="px-4 py-2.5 bg-red-500/10 text-red-400 border border-red-500/20 font-semibold text-xs rounded-lg flex items-center gap-2 cursor-not-allowed"
+                    title="Ocurrió un error al compilar el PDF"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">error</span>
+                    <span>Error al generar PDF</span>
+                  </button>
+                )
+
+                if (loading) {
+                  return (
+                    <button
+                      type="button"
+                      disabled
+                      className="px-4 py-2.5 bg-neutral-800/60 text-white/50 border border-white/10 font-semibold text-xs rounded-lg flex items-center gap-2 cursor-wait"
+                    >
+                      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span>Generando...</span>
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    className="px-4 py-2.5 bg-neutral-800/60 hover:bg-neutral-800 text-white border border-white/10 font-semibold text-xs rounded-lg transition-all cursor-pointer flex items-center gap-2 active:scale-[0.98]"
+                    title="Descargar comprobante en PDF"
+                  >
+                    <span className="material-symbols-outlined text-[18px] text-red-400">picture_as_pdf</span>
+                    <span>Descargar Comprobante PDF</span>
+                  </button>
+                );
+              }}
+            </PDFDownloadLink>
+
+          </div>
         </div>
       </div>
 
