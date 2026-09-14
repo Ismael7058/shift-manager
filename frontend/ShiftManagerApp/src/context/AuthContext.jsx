@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (error) {
       addNotification(error?.message || 'Credenciales invalidas', 'error');
+      throw error;
     }
   };
 

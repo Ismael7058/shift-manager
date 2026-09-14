@@ -1,4 +1,4 @@
-export const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5256').replace(/\/+$/, '');
+export const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5256/').replace(/\/+$/, '');
 export const API_BASE_URL = BASE_URL;
 
 /**
@@ -31,12 +31,6 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
 
-    if (response.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/';
-      throw new Error('Sesión expirada o no autorizada.');
-    }
-
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
@@ -52,7 +46,9 @@ export async function apiFetch(endpoint, options = {}) {
 
     return null;
   } catch (error) {
-    console.error(`Error Fetching ${endpoint}:`, error);
+    if (error instanceof TypeError || error.message.includes('fetch')) {
+      throw new Error('No se pudo conectar con el servidor. Verifica tu conexión o intenta más tarde.');
+    }
     throw error;
   }
 }
