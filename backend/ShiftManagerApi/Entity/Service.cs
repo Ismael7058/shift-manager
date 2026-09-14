@@ -8,5 +8,6 @@ namespace ShiftManagerApi.Entity
     public int DurationMinutes { get; set; }
     public bool IsActive { get; set; }
     public List<ProviderService> ProviderService { get; set; } = new();
+    public List<ServiceImage> Images { get; set; } = new();
   }
 }

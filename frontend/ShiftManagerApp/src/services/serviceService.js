@@ -1,32 +1,99 @@
-const API_URL = "http://localhost:5256";
+import { apiFetch } from "./api";
 
-/**
- * Obtiene los Servicios.
- * @param {import('../models/shiftModels').ServiceFilterDto} filters
- * @returns {Promise<import('../models/shiftModels').PaginatedDto<import('../models/shiftModels').ServiceDto>>}
- */
-export const servicesRequest = async (filters = {}) => {
-  const params = new URLSearchParams();
-  
-  params.append('SortBy', filters.sortBy);
-  params.append('IsDescending', filters.isDescending ?? true);
-  params.append('PageNumber', filters.pageNumber ?? 1);
-  params.append('PageSize', filters.pageSize ?? 10);
-  
-  if (filters.name) params.append('Name', filters.name);
-  if (filters.isActive) params.append('IsActive', filters.isActive);
+export const ServiceService = {
+  /**
+   * Obtiene una lista de servicios
+   * @param {ServiceFilterDto} filter
+   * @returns {Promise<PaginatedDto<ServiceDto>>}
+   */
+  getServices: (filter) =>
+    apiFetch(`/services?Name=${filter.name}&MinDurationMinutes=${filter.minDurationMinutes}&MaxDurationMinutes=${filter.maxDurationMinutes}&MinPrice=${filter.minPrice}&MaxPrice=${filter.maxPrice}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&PageSize=${filter.pageSize}`),
 
-  const response = await fetch(`${API_URL}/services?${params.toString()}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  });
+  /**
+   * Obtiene un servicio por id
+   * @param {number} serviceId 
+   * @returns {Promise<ServiceDto>}
+   */
+  getService: (serviceId) =>
+    apiFetch(`/services/${serviceId}`),
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Error al obtener mis turnos');
-  }
-  return response.json();
+  /**
+   * Crea un servicio
+   * @param {CreateServiceDto} create 
+   * @returns 
+   */
+  createService: (create) =>
+    apiFetch(
+      '/services',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          Name: create.name,
+          Description: create.description,
+          DurationMinutes: create.durationMinutes
+        })
+      }
+    ),
+
+  /**
+   * Actualiza un servicio
+   * @param {number} serviceId 
+   * @param {UpdateServiceDto} update
+   * @returns {Promise<ServiceDto>}
+   */
+  updateService: (serviceId, update) =>
+    apiFetch(
+      `/services/${serviceId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(update)
+      }
+    ),
+
+  /**
+   * Cambia el estado de un servicio
+   * @param {number} serviceId 
+   * @param {UpdateStatusDto} status
+   * @returns {Promise<any>}
+   */
+  chagenStatusService: (serviceId, status) =>
+    apiFetch(
+      `/services/${serviceId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(status)
+      }
+    ),
+
+  /**
+   * Sube una o múltiples imágenes a un servicio
+   * @param {number} serviceId 
+   * @param {File[]|FileList|FormData} files - Array o FileList de archivos o FormData directo
+   * @returns {Promise<ServiceImageDto[]>}
+   */
+  uploadImages: (serviceId, files) => {
+    const formData = files instanceof FormData ? files : new FormData();
+
+    if (!(files instanceof FormData)) {
+      const fileList = Array.isArray(files) ? files : Array.from(files);
+      fileList.forEach((file) => formData.append('files', file));
+    }
+
+    return apiFetch(`/services/${serviceId}/images`, {
+      method: 'POST',
+      body: formData
+    });
+  },
+
+
+  /**
+   * Elimina una imagen específica de un servicio
+   * @param {number} serviceId 
+   * @param {number} imageId 
+   * @returns {Promise<null>}
+   */
+  deleteImage: (serviceId, imageId) =>
+    apiFetch(`/services/${serviceId}/images/${imageId}`, {
+      method: 'DELETE'
+    })
 };

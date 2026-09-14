@@ -16,18 +16,12 @@ namespace ShiftManagerApi.Services
       _configuration = configuration;
     }
 
-    public string GenerateToken(UserAuth userAuth, UserProfile userProfile, List<string> roles, string activeRole)
+    public string GenerateToken(UserAuth userAuth, List<string> roles, string activeRole)
     {
       var claims = new List<Claim>
       {
         new(JwtRegisteredClaimNames.Sub, userAuth.UserId.ToString()),
         new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-
-        new(ClaimTypes.NameIdentifier, userAuth.UserId.ToString()),
-        new(ClaimTypes.Name, userAuth.Username),
-        new(ClaimTypes.Email, userAuth.Email),
-        new Claim(ClaimTypes.GivenName, userProfile.FirstName),
-        new Claim(ClaimTypes.Surname, userProfile.LastName),
 
         new Claim("active_role", activeRole)
       };
@@ -35,12 +29,13 @@ namespace ShiftManagerApi.Services
 
       var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
       var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+      var expirationInMinutes = _configuration.GetValue<int>("Jwt:ExpirationInMinutes");
 
       var token = new JwtSecurityToken(
           issuer: _configuration["Jwt:Issuer"],
           audience: _configuration["Jwt:Audience"],
           claims: claims,
-          expires: DateTime.UtcNow.AddMinutes(15),
+          expires: DateTime.UtcNow.AddMinutes(expirationInMinutes),
           signingCredentials: creds
       );
       return new JwtSecurityTokenHandler().WriteToken(token);

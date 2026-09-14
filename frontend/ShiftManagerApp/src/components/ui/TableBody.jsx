@@ -18,7 +18,14 @@ const TableBody = ({ data, columns, emptyMessage = "No hay datos disponibles." }
       {data.map((row, rowIndex) => (
         <tr key={row.id || rowIndex} className="hover:bg-neutral-800/30 transition-colors">
           {columns.map((column, colIndex) => (
-            <td key={column.key || colIndex} className="px-6 py-4 whitespace-nowrap text-sm text-white/80">{column.render ? column.render(row) : row[column.key]}</td>
+            <td
+              key={column.key || colIndex}
+              className={`px-4 lg:px-5 py-3.5 text-sm text-white/80 ${
+                column.className?.includes('whitespace-') ? '' : 'whitespace-nowrap'
+              } ${column.className || ''}`}
+            >
+              {column.render ? column.render(row) : row[column.key]}
+            </td>
           ))}
         </tr>
       ))}

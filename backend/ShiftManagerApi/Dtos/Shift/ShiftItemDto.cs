@@ -8,5 +8,6 @@ namespace ShiftManagerApi.Dtos
     public string NameService { get; init; }  = null!;
     public int DurationMinutes { get; init; }
     public decimal PriceAtMoment { get; init; }
+    public List<ServiceImageDto> Images { get; init; } = new();
   }
 }

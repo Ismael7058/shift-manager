@@ -11,16 +11,14 @@ namespace ShiftManagerApi.Controllers
   [Route("me")]
   public class ProfileController : ControllerBase
   {
-
     private readonly IUserAuthService _userAuthService;
     private readonly IAuthService _authService;
-    private readonly ICookieService _cookieService;
 
-    public ProfileController(IUserAuthService userAuthService, IAuthService authService, ICookieService cookieService)
+    public ProfileController(IUserAuthService userAuthService, IAuthService authService)
     {
       _userAuthService = userAuthService;
       _authService = authService;
-      _cookieService = cookieService;
+
     }
 
     [HttpGet]
@@ -28,7 +26,7 @@ namespace ShiftManagerApi.Controllers
     {
       try
       {
-        return Ok(await _userAuthService.GetById(GetUserId(), false));
+        return Ok(await _userAuthService.GetById(GetUserId(), true));
       }
       catch (KeyNotFoundException ex)
       {
@@ -135,6 +133,43 @@ namespace ShiftManagerApi.Controllers
       catch (UnauthorizedAccessException ex)
       {
         return Unauthorized(new { message = ex.Message });
+      }
+    }
+
+    [HttpPost("picture")]
+    public async Task<ActionResult> UpdatePicture(IFormFile? file)
+    {
+      try
+      {
+        var PictureURL = await _userAuthService.UpadetePictureProfile(GetUserId(), file);
+
+        return Ok( new { pictureURL= PictureURL } );
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+    }
+
+    [HttpDelete("picture")]
+    public async Task<ActionResult> DeletePicture()
+    {
+      try
+      {
+        await _userAuthService.DeletePictureProfile(GetUserId());
+
+        return Ok();
+      }
+      catch (InvalidOperationException ex)
+      {
+        return Conflict(new { message = ex.Message });
+      }
+      catch(Exception )
+      {
+        return StatusCode(500, new 
+        { 
+            message = "Ocurrió un error inesperado al eliminar la imagen de perfil." 
+        });
       }
     }
 

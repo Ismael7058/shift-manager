@@ -10,11 +10,14 @@ namespace ShiftManagerApi.Services
   {
     private readonly ShiftManagerContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IFileService _fileService;
+    private const string FOLDER_PATH = "Uploads/Profile";
 
-    public UserAuthService(ShiftManagerContext context, IConfiguration configuration)
+    public UserAuthService(ShiftManagerContext context, IFileService fileService, IConfiguration configuration)
     {
       _context = context;
       _configuration = configuration;
+      _fileService = fileService;
     }
 
     public async Task<PaginatedDto<UserDto>> GetAll(UserFilterDto filter)
@@ -25,12 +28,15 @@ namespace ShiftManagerApi.Services
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
         query = query.Where(u =>
-            u.UserProfile.FirstName.Contains(filter.Name)
-            || u.UserProfile.LastName.Contains(filter.Name)
+            u.UserProfile.FirstName.ToLower().Contains(filter.Name.ToLower())
+            || u.UserProfile.LastName.ToLower().Contains(filter.Name.ToLower())
         );
 
       if (!string.IsNullOrWhiteSpace(filter.Email))
-        query = query.Where(u => u.Email.Contains(filter.Email));
+        query = query.Where(u => u.Email.ToLower().Contains(filter.Email.ToLower()));
+
+      if (!string.IsNullOrWhiteSpace(filter.Username))
+        query = query.Where(u => u.Username.ToLower().Contains(filter.Username.ToLower()));
 
       if (filter.Role != null)
         query = query.Where(u => u.UserRole.Any(r => r.RoleId == filter.Role));
@@ -66,7 +72,9 @@ namespace ShiftManagerApi.Services
           PhoneNumber = u.UserProfile.PhoneNumber,
           Username = u.Username,
           Email = u.Email,
-          Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList()
+          PictureURL = u.UserProfile.PictureURL,
+          Roles = u.UserRole.Select(ur => ur.Role.Name).OrderBy(n => n).ToList(),
+          IsActive = u.IsActive
         }
         )
         .ToListAsync();
@@ -94,7 +102,7 @@ namespace ShiftManagerApi.Services
         }
 
         var roles = await _context.Roles.Where(r => createUserDto.RolesId.Contains(r.Id)).Select(r => r.Name).ToListAsync();
-        if ( createUserDto.RolesId.LongCount() != roles.LongCount() )
+        if (createUserDto.RolesId.LongCount() != roles.LongCount())
         {
           throw new InvalidOperationException("Uno de los roles no fue encontrado");
         }
@@ -183,7 +191,7 @@ namespace ShiftManagerApi.Services
       profile.Gender = updateUserDto.Gender;
       profile.PhoneNumber = updateUserDto.PhoneNumber;
       profile.UserAuth.UpdatedAt = DateTime.UtcNow;
-      
+
 
       await _context.SaveChangesAsync();
     }
@@ -250,7 +258,9 @@ namespace ShiftManagerApi.Services
         Gender = user.UserProfile.Gender.ToString(),
         PhoneNumber = user.UserProfile.PhoneNumber,
         Username = user.Username,
-        Email = user.Email
+        Email = user.Email,
+        PictureURL = user.UserProfile.PictureURL,
+        IsActive = user.IsActive
       };
 
       if (includeRol) userDto.Roles = user.UserRole.Select(ur => ur.Role.Name).ToList();
@@ -270,5 +280,120 @@ namespace ShiftManagerApi.Services
       auth.UpdatedAt = DateTime.UtcNow;
       await _context.SaveChangesAsync();
     }
+
+    public async Task<string?> UpadetePictureProfile(long id, IFormFile? file)
+    {
+      var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
+
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+
+      if (!user.UserAuth.IsActive)
+        throw new InvalidOperationException("Usuario no disponible");
+
+      var priviousPicture = user.PictureURL;
+
+      var pictureURL = (file != null && file.Length > 0) ?
+        $"/{FOLDER_PATH}/{await _fileService.SaveFile(file, FOLDER_PATH)}"
+        : null;
+
+      user.PictureURL = pictureURL;
+      await _context.SaveChangesAsync();
+
+      if (!string.IsNullOrEmpty(priviousPicture))
+        await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
+      // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
+
+      return user.PictureURL;
+    }
+
+    public async Task DeletePictureProfile(long id)
+    {
+      var user = await _context.UserProfiles.Include(up => up.UserAuth).FirstOrDefaultAsync(up => up.Id == id);
+
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+
+      if (!user.UserAuth.IsActive)
+        throw new InvalidOperationException("Usuario no disponible");
+
+      if (string.IsNullOrWhiteSpace(user.PictureURL))
+        return;
+
+      var priviousPicture = user.PictureURL;
+
+      user.PictureURL = null;
+      await _context.SaveChangesAsync();
+
+      await _fileService.DeleteFile(Path.GetFileName(priviousPicture), FOLDER_PATH);
+      // await _fileService.DeleteFile(priviousPicture.Split('/').Last(), FOLDER_PATH);
+    }
+
+    public async Task<List<RoleResponseDto>> EditRoles(long id, List<long> roles)
+    {
+      await using var transaction = await _context.Database.BeginTransactionAsync();
+      try
+      {
+        var user = await _context.UserAuths
+          .Include(ua => ua.UserRole)
+          .FirstOrDefaultAsync(up => up.UserId == id);
+
+        if (user == null)
+          throw new InvalidOperationException("Usuario no encontrado");
+
+        var distinctRoles = roles.Distinct().ToList();
+
+        var existingRoles = await _context.Roles
+          .Where(r => distinctRoles.Contains(r.Id))
+          .Select(r => new RoleResponseDto
+          {
+            Id = r.Id,
+            Name = r.Name
+          })
+          .ToListAsync();
+
+        if (existingRoles.Count != distinctRoles.Count)
+        {
+          throw new InvalidOperationException("Uno de los roles no fue encontrado");
+        }
+
+        // Eliminar los roles previos asignados al usuario
+        if (user.UserRole != null && user.UserRole.Any())
+        {
+          _context.UserRoles.RemoveRange(user.UserRole);
+        }
+
+        var newUserRoles = distinctRoles.Select(roleId => new UserRole
+        {
+          UserId = id,
+          RoleId = roleId,
+          AssignedAt = DateTime.UtcNow
+        });
+
+        await _context.UserRoles.AddRangeAsync(newUserRoles);
+        await _context.SaveChangesAsync();
+
+        await transaction.CommitAsync();
+
+        return existingRoles;
+      }
+      catch
+      {
+        await transaction.RollbackAsync();
+        throw;
+      }
+    }
+
+    public async Task ChangeStatus(long id, UpdateStatusDto status)
+    {
+      var user = await _context.UserAuths.FirstOrDefaultAsync(up => up.UserId == id);
+      if (user == null)
+        throw new InvalidOperationException("Usuario no encontrado");
+      
+      user.IsActive = status.IsActive;
+
+      await _context.SaveChangesAsync();
+    }
+
   }
 }

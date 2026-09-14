@@ -19,6 +19,7 @@ namespace ShiftManagerApi.Data
     public DbSet<WorkSchedules> WorkSchedules { get; set; } = null!;
     public DbSet<Shift> Shift { get; set; } = null!;
     public DbSet<ShiftItems> ShiftItems { get; set; } = null!;
+    public DbSet<ServiceImage> ServiceImages { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,6 +69,16 @@ namespace ShiftManagerApi.Data
               .HasForeignKey(ms => ms.ServiceId);
       });
 
+      modelBuilder.Entity<ServiceImage>(entity =>
+      {
+        entity.HasKey(si => si.Id);
+
+        entity.HasOne(si => si.Service)
+              .WithMany(s => s.Images)
+              .HasForeignKey(si => si.ServiceId)
+              .OnDelete(DeleteBehavior.Cascade);
+      });
+
       modelBuilder.Entity<WorkSchedules>(entity =>
       {
         // Configura la relación uno a muchos con UserAuth
@@ -86,6 +97,20 @@ namespace ShiftManagerApi.Data
         .WithMany(p => p.ProvidedShifts)
         .HasForeignKey(s => s.ProviderId);
 
+        entity.HasOne(s => s.CreatedBy)
+        .WithMany()
+        .HasForeignKey(s => s.CreatedById)
+        .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(s => s.ConfirmedBy)
+        .WithMany()
+        .HasForeignKey(s => s.ConfirmedById)
+        .OnDelete(DeleteBehavior.SetNull);
+
+        entity.HasOne(s => s.CanceledBy)
+        .WithMany()
+        .HasForeignKey(s => s.CanceledById)
+        .OnDelete(DeleteBehavior.SetNull);
       });
 
       modelBuilder.Entity<ShiftItems>(entity =>

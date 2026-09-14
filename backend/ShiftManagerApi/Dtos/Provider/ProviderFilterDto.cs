@@ -9,9 +9,6 @@ namespace ShiftManagerApi.Dtos
 
     public string? SortBy { get; set; }
     public bool IsDescending { get; set; }
-    public bool IncludeServices { get; set; } = false;
-    public bool IncludeWorkSchedules { get; set; } = false;
-    public bool IncludeRestrictedDates { get; set; } = false;
 
     [Range(1, int.MaxValue, ErrorMessage = "PageNumber debe ser mayor a 0")]
     public int PageNumber { get; set; } = 1;

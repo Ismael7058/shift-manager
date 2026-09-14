@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql.Internal;
 using ShiftManagerApi.Data;
 using ShiftManagerApi.Dtos;
 using ShiftManagerApi.Entity;
@@ -15,53 +16,69 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long userId, ProviderServiceFilterDto filter)
+    public async Task<PaginatedDto<ProviderServiceDto>> GetAll(long? userId, long? serviceId, ProviderServiceFilterDto filter)
     {
-      var query = _context.ProviderService
-        .Include(ms => ms.Service)
-        .Where(ms => ms.ProviderId == userId)
-        .AsNoTracking()
-        .AsQueryable();
+      var query = _context.ProviderService.AsNoTracking().AsQueryable();
 
+      if(userId.HasValue)
+        query = query.Where(ps => ps.ProviderId == userId);
+
+      // Filtrar por servicio
+      if(serviceId.HasValue)
+        query = query.Where(ps => ps.ServiceId == serviceId);
       if (!string.IsNullOrWhiteSpace(filter.Name))
-      {
-        query = query.Where(ms => ms.Service.Name.Contains(filter.Name));
-      }
+        query = query.Where(ps => ps.Service.Name.ToLower().Contains(filter.Name.ToLower()));
 
-      if (filter.DurationMinutes.HasValue)
-      {
-        query = query.Where(ms => ms.DurationMinutes == filter.DurationMinutes);
-      }
+      // Filtrar por precio
+      if (filter.MinPrice.HasValue)
+        query = query.Where(ms => ms.Price >= filter.MinPrice);
+      if (filter.MaxPrice.HasValue)
+        query = query.Where(ms => ms.Price <= filter.MaxPrice);
 
-      if (filter.IsActive == 1 || filter.IsActive == 0)
-        query = query.Where(ms => ms.Service.IsActive == (filter.IsActive == 1));
+      // Filtrar por duracion
+      if (filter.MinDurationMinutes.HasValue)
+        query = query.Where(ms => ms.DurationMinutes >= filter.MinDurationMinutes);
+      if (filter.MaxDurationMinutes.HasValue)
+        query = query.Where(ms => ms.DurationMinutes <= filter.MaxDurationMinutes);
 
-      if (filter.Price.HasValue)
+      if (filter.IsActive == 1)
       {
-        query = query.Where(ms => ms.Price == filter.Price);
-      }
+        query = query.Where(ps => ps.DeletedAt == null && ps.Service.IsActive == true);
+      }else if (filter.IsActive == 0)
+      {
+        query = query.Where(ps => ps.DeletedAt != null || ps.Service.IsActive == false);
+      }      
 
       var totalCount = await query.CountAsync();
 
       query = filter.SortBy?.ToLower() switch
       {
-        "name" => filter.IsDescending ? query.OrderByDescending(ms => ms.Service.Name) : query.OrderBy(ms => ms.Service.Name),
-        "price" => filter.IsDescending ? query.OrderByDescending(ms => ms.Price) : query.OrderBy(ms => ms.Price),
-        _ => filter.IsDescending ? query.OrderByDescending(ms => ms.ServiceId) : query.OrderBy(ms => ms.ServiceId)
+        "name" => filter.IsDescending ? query.OrderByDescending(ps => ps.Service.Name) : query.OrderBy(ps => ps.Service.Name),
+        "price" => filter.IsDescending ? query.OrderByDescending(ps => ps.Price) : query.OrderBy(ps => ps.Price),
+        _ => filter.IsDescending ? query.OrderByDescending(ps => ps.ServiceId) : query.OrderBy(ps => ps.ServiceId)
       };
 
       var services = await query
         .Skip((filter.PageNumber - 1) * filter.PageSize)
         .Take(filter.PageSize)
-        .Select(ms => new ProviderServiceDto
+        .Select(ps => new ProviderServiceDto
         {
-          ProviderId = ms.ProviderId,
-          ServiceId = ms.ServiceId,
-          Name = ms.Service.Name,
-          Description = ms.Service.Description,
-          DurationMinutes = ms.DurationMinutes,
-          DurationMinutesBase = ms.Service.DurationMinutes,
-          Price = ms.Price
+          ProviderId = ps.ProviderId,
+          ServiceId = ps.ServiceId,
+          Name = ps.Service.Name,
+          Description = ps.Service.Description,
+          DurationMinutes = ps.DurationMinutes,
+          DurationMinutesBase = ps.Service.DurationMinutes,
+          Price = ps.Price,
+          Status = ps.Service.IsActive == false 
+            ? 2
+            : (ps.DeletedAt != null ? 0 : 1),
+          Images = ps.Service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl,
+          }).ToList()
         }).ToListAsync();
 
       return new PaginatedDto<ProviderServiceDto>
@@ -75,10 +92,14 @@ namespace ShiftManagerApi.Services
 
     public async Task<ProviderServiceDto> GetById(long userId, long serviceId)
     {
-      var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => 
-        ps.ProviderId == userId 
-        && ps.ServiceId == serviceId
-      );
+      var providerService = await _context.ProviderService
+        .Include(ps => ps.Service)
+        .ThenInclude(s => s.Images)
+        .AsNoTracking()
+        .FirstOrDefaultAsync(ps => 
+          ps.ProviderId == userId 
+          && ps.ServiceId == serviceId
+        );
 
       if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado");
 
@@ -90,7 +111,16 @@ namespace ShiftManagerApi.Services
         Description = providerService.Service.Description,
         DurationMinutes = providerService.DurationMinutes,
         DurationMinutesBase = providerService.Service.DurationMinutes,
-        Price = providerService.Price
+        Price = providerService.Price,
+        Status = providerService.Service.IsActive == false 
+          ? 2 
+          : (providerService.DeletedAt != null ? 0 : 1),
+        Images = providerService.Service.Images.Select(img => new ServiceImageDto
+        {
+          Id = img.Id,
+          ServiceId = img.ServiceId,
+          ImageUrl = img.ImageUrl,
+        }).ToList()
       };
 
       return psDto;
@@ -103,7 +133,9 @@ namespace ShiftManagerApi.Services
         if (providerService != null) throw new InvalidOperationException("El proveedor ya tiene registrado este servicio.");
 
 
-        var service = await _context.Service.Where(s => s.Id == createDto.ServiceId).FirstOrDefaultAsync();
+        var service = await _context.Service
+          .Include(s => s.Images)
+          .FirstOrDefaultAsync(s => s.Id == createDto.ServiceId && s.IsActive);
 
         if (service == null) throw new InvalidOperationException("Servicio no disponible.");
 
@@ -120,13 +152,20 @@ namespace ShiftManagerApi.Services
 
         return new ProviderServiceDto
         {
-        ProviderId = userId,
-        ServiceId = createPS.ServiceId,
-        Name = service.Name,
-        Description = service.Description,
-        DurationMinutes = createPS.DurationMinutes,
-        DurationMinutesBase = service.DurationMinutes,
-        Price = createPS.Price
+          ProviderId = userId,
+          ServiceId = createPS.ServiceId,
+          Name = service.Name,
+          Description = service.Description,
+          DurationMinutes = createPS.DurationMinutes,
+          DurationMinutesBase = service.DurationMinutes,
+          Price = createPS.Price,
+          Status = 1,
+          Images = service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl,
+          }).ToList()
         };
     }
 
@@ -135,23 +174,33 @@ namespace ShiftManagerApi.Services
       var providerService = await _context.ProviderService.Include(ps => ps.Service).FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
       if (providerService == null) throw new InvalidOperationException("Servicio del proveedor no encontrado.");
 
-      var service = await _context.Service.Where(s => s.Id == updateDto.ServiceId).FirstOrDefaultAsync();
-      if (service == null) throw new InvalidOperationException("Servicio no disponible.");
-
-      providerService.ServiceId = updateDto.ServiceId;
       providerService.DurationMinutes = updateDto.DurationMinutes;
       providerService.Price = updateDto.Price;
 
       await _context.SaveChangesAsync();
     }
 
-    public async Task Delete(long userId, long serviceId)
+    public async Task SoftDelete(long userId, long serviceId)
     {
       var providerService = await _context.ProviderService.FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
       if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado.");
 
-      _context.ProviderService.Remove(providerService);
+      if (providerService.DeletedAt != null)
+        return;
 
+      providerService.DeletedAt = DateTime.UtcNow;
+      await _context.SaveChangesAsync(); 
+    }
+
+    public async Task Active(long userId, long serviceId)
+    {
+      var providerService = await _context.ProviderService.FirstOrDefaultAsync(ps => ps.ProviderId == userId && ps.ServiceId == serviceId);
+      if (providerService == null) throw new KeyNotFoundException("Servicio del proveedor no encontrado.");
+
+      if (providerService.DeletedAt == null)
+        return;
+
+      providerService.DeletedAt = null;
       await _context.SaveChangesAsync(); 
     }
   }

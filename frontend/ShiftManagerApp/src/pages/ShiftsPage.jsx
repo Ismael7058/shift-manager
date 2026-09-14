@@ -1,180 +1,682 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useTurnos } from '../context/ShiftsContext';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useShift } from '../context/ShiftsContext';
 import Table from '../components/ui/Table';
-import Modal from '../components/ui/Modal';
 import Pagination from '../components/ui/Pagination';
-import FilterShifts from '../components/shifts/FilterShifts';
+import { useService } from '../context/ServicesContext';
+import { useProvider } from '../context/ProviderContext';
+import { useClient } from '../context/ClientContext';
+import Select2 from '../components/ui/forms/Select2';
+import { parseDateToLocal } from '../utils/dateUtils';
+import { UserService } from '../services/userService';
+import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
+const getTodayLocal = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const ShiftsPage = () => {
-  const { shifts, loading, error, pagination, fetchShifts, isGlobal } = useTurnos();
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { shifts, loading, pagination, getShifts } = useShift();
+  const { services, getServices } = useService();
+  const { providers, getProviders } = useProvider();
+  const { clients, getClients } = useClient();
+  const { addNotification } = useNotification();
 
-  const [modalType, setModalType] = useState(null);
-  const [modalData, setModalData] = useState(null);
-  
-  const [filters, setFilters] = useState({
-    searchTerm: '',
-    sortBy: 'startAt',
-    isDescending: true,
-    pageNumber: 1,
-    pageSize: 10,
-    statuses: [],
-    serviceId: ''
+  const [userCreate, setUserCreate] = useState([]);
+  const [userCancel, setUserCancel] = useState([]);
+
+  const [serviceQuery, setServiceQuery] = useState('');
+  const [providerQuery, setProviderQuery] = useState('');
+  const [clientQuery, setClientQuery] = useState('');
+  const [creatorQuery, setCreatorQuery] = useState('');
+  const [cancelerQuery, setCancelerQuery] = useState('');
+
+  const [filters, setFilters] = useState(() => {
+    const pId = searchParams.get('providerId') || searchParams.get('provider_id') || '';
+    const cId = searchParams.get('clientId') || searchParams.get('client_id') || '';
+
+    return {
+      serviceId: '',
+      providerId: user?.roleActive === 'Proveedor' ? user.id : pId,
+      clientId: user?.roleActive === 'Cliente' ? user.id : cId,
+      createdById: '',
+      canceledById: '',
+      dateFrom: '',
+      dateTo: '',
+      minPrice: '',
+      maxPrice: '',
+      status: '',
+      sortBy: 'startAt',
+      isDescending: true,
+      pageNumber: 1,
+      pageSize: 10
+    };
   });
 
-  const closeModal = () => {
-    setModalType(null);
-    setModalData(null);
-  };
-
+  // Shifts
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchShifts(filters);
+      if (getShifts) {
+        getShifts(
+          filters.providerId,
+          filters.clientId,
+          filters.createdById,
+          filters.canceledById,
+          filters.serviceId,
+          filters.dateFrom,
+          filters.dateTo,
+          filters.minPrice,
+          filters.maxPrice,
+          filters.status,
+          '',
+          '',
+          filters.sortBy,
+          filters.isDescending,
+          filters.pageNumber,
+          filters.pageSize
+        );
+      }
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [fetchShifts, filters]);
+  }, [filters]);
 
-  const handleFilterChange = (newFilters) => {
-    setFilters({ ...newFilters, pageNumber: 1 });
+  // Services
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (getServices) {
+        getServices(serviceQuery, '', '', '', '', 1, 'name', false, 1, 10);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [serviceQuery]);
+
+  // Providers
+  useEffect(() => {
+    if (user?.roleActive === 'Proveedor' || !getProviders) return;
+    const delayDebounceFn = setTimeout(() => {
+      getProviders(providerQuery, 'name', false, false, false, false, 1, 10);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [providerQuery, user?.roleActive]);
+
+  // Clients
+  useEffect(() => {
+    if (user?.roleActive === 'Cliente' || !getClients) return;
+    const delayDebounceFn = setTimeout(() => {
+      getClients(clientQuery, 'name', false, 1, 10);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [clientQuery, user?.roleActive]);
+
+  // User - Create
+  useEffect(() => {
+    if (user?.roleActive !== 'Administrador') return;
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: creatorQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCreate(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los creadores", 'error');
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [creatorQuery, user?.roleActive]);
+
+  // User - Cancel
+  useEffect(() => {
+    if (user?.roleActive !== 'Administrador') return;
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const response = await UserService.getUsers({
+          name: cancelerQuery,
+          email: '',
+          username: '',
+          role: '',
+          isActive: '',
+          sortBy: 'name',
+          isDescending: false,
+          pageNumber: 1,
+          pageSize: 10
+        });
+        setUserCancel(response.items || []);
+      } catch (err) {
+        addNotification("Error al obtener los canceladores", 'error');
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [cancelerQuery, user?.roleActive]);
+
+  // Opciones formateadas para Select2
+  const serviceItems = useMemo(() => {
+    return (services || []).map(s => ({
+      id: s.id,
+      name: s.name
+    }));
+  }, [services]);
+
+  const providerItems = useMemo(() => {
+    const list = (providers || []).map(p => ({
+      id: p.id,
+      name: `${p.firstName || ''} ${p.lastName || ''}`.trim() || `Proveedor #${p.id}`
+    }));
+    if (filters.providerId && !list.some(p => String(p.id) === String(filters.providerId))) {
+      list.unshift({
+        id: filters.providerId,
+        name: `Proveedor #${filters.providerId}`
+      });
+    }
+    return list;
+  }, [providers, filters.providerId]);
+
+  const clientItems = useMemo(() => {
+    const list = (clients || []).map(c => ({
+      id: c.id,
+      name: `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.username || c.email || `Cliente #${c.id}`
+    }));
+    if (filters.clientId && !list.some(c => String(c.id) === String(filters.clientId))) {
+      list.unshift({
+        id: filters.clientId,
+        name: `Cliente #${filters.clientId}`
+      });
+    }
+    return list;
+  }, [clients, filters.clientId]);
+
+
+  const userCreateItems = useMemo(() => {
+    return (userCreate || []).map(u => ({
+      id: u.id,
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username || u.email || `Usuario #${u.id}`
+    }));
+  }, [userCreate]);
+
+  const userCancelItems = useMemo(() => {
+    return (userCancel || []).map(u => ({
+      id: u.id,
+      name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.username || u.email || `Usuario #${u.id}`
+    }));
+  }, [userCancel]);
+
+
+
+  // Handlers para filtros
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value, pageNumber: 1 }));
+  };
+
+  const handleStatusToggle = (statusKey) => {
+    setFilters(prev => {
+      const currentStatuses = Array.isArray(prev.status) ? prev.status : [];
+      const newStatuses = currentStatuses.includes(statusKey)
+        ? currentStatuses.filter(s => s !== statusKey)
+        : [...currentStatuses, statusKey];
+      return { ...prev, status: newStatuses, pageNumber: 1 };
+    });
+  };
+
+  const handleToggleDescending = () => {
+    setFilters(prev => ({ ...prev, isDescending: !prev.isDescending, pageNumber: 1 }));
   };
 
   const handlePageChange = (newPage) => {
     setFilters(prev => ({ ...prev, pageNumber: newPage }));
   };
 
+  const handleTabChange = (tabId) => {
+    const today = getTodayLocal();
+    if (tabId === 'today') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: today,
+        dateTo: today,
+        status: ['confirmed'],
+        pageNumber: 1
+      }));
+    } else if (tabId === 'pending') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: '',
+        dateTo: '',
+        status: ['pending'],
+        pageNumber: 1
+      }));
+    } else if (tabId === 'all') {
+      setFilters(prev => ({
+        ...prev,
+        dateFrom: '',
+        dateTo: '',
+        status: '',
+        pageNumber: 1
+      }));
+    }
+  };
+
+  const todayStr = getTodayLocal();
+  const isTodayConfirmed =
+    filters.dateFrom === todayStr &&
+    filters.dateTo === todayStr &&
+    Array.isArray(filters.status) &&
+    filters.status.length === 1 &&
+    filters.status[0] === 'confirmed';
+
+  const isPendingOnly =
+    !filters.dateFrom &&
+    !filters.dateTo &&
+    Array.isArray(filters.status) &&
+    filters.status.length === 1 &&
+    filters.status[0] === 'pending';
+
+  const isAll =
+    !filters.dateFrom &&
+    !filters.dateTo &&
+    (!filters.status || filters.status.length === 0);
+
   // Columnas para la tabla
   const columns = useMemo(() => [
     {
-      key: 'startAt',
-      label: 'Inicio',
-      render: (shift) => new Date(shift.startAt).toLocaleString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      key: 'date',
+      label: 'Fecha',
+      className: 'w-1 whitespace-nowrap',
+      render: (shift) => {
+        const start = parseDateToLocal(shift.startAt);
+        if (!start) return '-';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${pad(start.getDate())}/${pad(start.getMonth() + 1)}/${start.getFullYear()}`;
+      }
     },
     {
-      key: 'endAt',
-      label: 'Fin',
-      render: (shift) => new Date(shift.endAt).toLocaleString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      key: 'time',
+      label: 'Horario',
+      className: 'w-1 whitespace-nowrap',
+      render: (shift) => {
+        const start = parseDateToLocal(shift.startAt);
+        const end = parseDateToLocal(shift.endAt);
+        if (!start) return '-';
+        const pad = (n) => String(n).padStart(2, '0');
+        const startTime = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+        const endTime = end ? `${pad(end.getHours())}:${pad(end.getMinutes())}` : '--:--';
+        return `${startTime} a ${endTime}`;
+      }
     },
     {
       key: 'providerFullName',
       label: 'Proveedor',
+      className: 'whitespace-nowrap',
+    },
+    {
+      key: 'clientFullName',
+      label: 'Cliente',
+      className: 'whitespace-nowrap',
     },
     {
       key: 'items',
       label: 'Servicios',
-      render: (shift) => shift.items.map(s => s.nameService).join(', ')
+      render: (shift) => {
+        const servicesText = shift.items.map(s => s.nameService).join(', ');
+        return (
+          <span className="block max-w-[200px] truncate text-xs text-neutral-300" title={servicesText}>
+            {servicesText}
+          </span>
+        );
+      }
     },
     {
       key: 'status',
       label: 'Estado',
+      className: 'w-1 whitespace-nowrap',
       render: (shift) => {
+        let text = '';
         let statusClass = '';
         switch (shift.status?.toLowerCase()) {
-          case 'confirmed': statusClass = 'text-green-400'; break;
-          case 'pending': statusClass = 'text-yellow-400'; break;
-          case 'canceled':
-          case 'no_show': statusClass = 'text-red-400'; break;
-          case 'completed': statusClass = 'text-blue-400'; break;
-          default: statusClass = 'text-white/80';
+          case 'confirmed': text = "Confirmado"; statusClass = 'bg-green-500/20 text-green-400 border border-green-500/30 hover:border-green-500/40'; break;
+          case 'pending': text = "Pendiente"; statusClass = 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 hover:border-yellow-500/40'; break;
+          case 'canceled': text = "Cancelado"; statusClass = 'bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/40'; break;
+          case 'no_show': text = "No Asistió"; statusClass = 'bg-red-500/20 text-red-400 border border-red-500/30 hover:border-red-500/40'; break;
+          case 'completed': text = "Completado"; statusClass = 'bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:border-blue-500/40'; break;
+          default: text = shift.status; statusClass = 'text-white/80'; break;
         }
-        return <span className={statusClass}>{shift.status}</span>;
+        return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${statusClass}`}>{text}</span>;
       }
     },
     {
       key: 'totalAmount',
       label: 'Total',
+      className: 'w-1 whitespace-nowrap font-medium',
       render: (shift) => `$${shift.totalAmount.toFixed(2)}`
     },
     {
       key: 'id',
       label: 'Acciones',
-      render: (shift) =>
-        <button
-          onClick={() => {
-            setModalType('shift');
-            setModalData(shift);
-          }}
-          className="text-white hover:bg-white/10 focus:ring-4 focus:ring-white/10 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 focus:outline-none transition-all"
-        >
-          Ver
-        </button>
+      className: 'w-1 whitespace-nowrap text-right',
+      render: (shift) => (
+        <div className="flex items-center justify-end">
+          <Link
+            to={`/turnos/${shift.id}`}
+            title="Ver detalle del turno"
+            className="h-[26px] px-2.5 rounded-md bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/25 hover:border-indigo-500/40 text-xs font-medium transition-all flex items-center justify-center cursor-pointer active:scale-95"
+          >
+            <span>Ver</span>
+          </Link>
+        </div>
+      )
     }
   ], []);
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-4xl font-extrabold text-white mb-8 tracking-tight">
-        {isGlobal ? 'Gestión de Turnos' : 'Mis Turnos'}
-      </h1>
-      
-      <FilterShifts filters={filters} onFilterChange={handleFilterChange} />
+    <div className="container mx-auto p-4 max-w-7xl">
+      <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            Gestión de Turnos
+          </h1>
+          <p className="text-xs text-neutral-400 mt-1">Catálogo de turnos disponibles</p>
+        </div>
+        {user?.roleActive != 'Proveedor' && (
 
-      {loading && (
+          <Link
+            to="/turnos/nuevo"
+            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer"
+          >
+            Crear Turno
+          </Link>)
+        }
+      </div>
+
+      {/* Vistas Rápidas (Tabs) */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => handleTabChange('all')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isAll
+            ? 'bg-neutral-800 text-white border-white/20 shadow-md'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-white hover:border-white/20'
+            }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">list_alt</span>
+          <span>Todos los turnos</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('today')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isTodayConfirmed
+            ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 shadow-md font-bold'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-emerald-400 hover:border-emerald-500/30'
+            }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">today</span>
+          <span>Agenda de Hoy (Confirmados)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabChange('pending')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border active:scale-[0.98] ${isPendingOnly
+            ? 'bg-yellow-600/20 text-yellow-300 border-yellow-500/40 shadow-md font-bold'
+            : 'bg-neutral-900/50 text-white/60 border-white/10 hover:text-yellow-400 hover:border-yellow-500/30'
+            }`}
+        >
+          <span className="material-symbols-outlined text-[16px]">pending_actions</span>
+          <span>Por Confirmar</span>
+        </button>
+      </div>
+
+      {/* Filtros */}
+      <div className="bg-neutral-900/50 border border-white/10 rounded-xl p-4 mb-6 transition-all space-y-4">
+        {/* Fila 1: Búsquedas con Select2 (3 columnas) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Servicio */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Servicio
+            </label>
+            <Select2
+              items={serviceItems}
+              value={filters.serviceId}
+              onSelect={(id) => updateFilter('serviceId', id)}
+              onSearch={(query) => setServiceQuery(query)}
+              placeholder="Buscar servicio..."
+              valueKey="id"
+              labelKey="name"
+            />
+          </div>
+          {user?.roleActive != 'Proveedor' && (<>
+            {/* Proveedor */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Proveedor
+              </label>
+              <Select2
+                items={providerItems}
+                value={filters.providerId}
+                onSelect={(id) => updateFilter('providerId', id)}
+                onSearch={(query) => setProviderQuery(query)}
+                placeholder="Buscar proveedor..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>)
+          }
+          {user?.roleActive != 'Cliente' && (<>
+            {/* Cliente */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Cliente
+              </label>
+              <Select2
+                items={clientItems}
+                value={filters.clientId}
+                onSelect={(id) => updateFilter('clientId', id)}
+                onSearch={(query) => setClientQuery(query)}
+                placeholder="Buscar cliente..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>
+          )}
+          {user?.roleActive === 'Administrador' && (<>
+            {/* Usuario Creador */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Creado por
+              </label>
+              <Select2
+                items={userCreateItems}
+                value={filters.createdById}
+                onSelect={(id) => updateFilter('createdById', id)}
+                onSearch={(query) => setCreatorQuery(query)}
+                placeholder="Buscar creador..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+
+            {/* Usuario Cancelador */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Cancelado por
+              </label>
+              <Select2
+                items={userCancelItems}
+                value={filters.canceledById}
+                onSelect={(id) => updateFilter('canceledById', id)}
+                onSearch={(query) => setCancelerQuery(query)}
+                placeholder="Buscar cancelador..."
+                valueKey="id"
+                labelKey="name"
+              />
+            </div>
+          </>
+          )
+          }
+        </div>
+
+        {/* Fila 2: Fechas, Precios y Ordenamiento (3 columnas balanceadas) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          {/* Rango de Fechas */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Rango de Fechas
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => updateFilter('dateFrom', e.target.value)}
+                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                className="px-2.5 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none focus:border-indigo-500 transition-colors w-full h-[38px] cursor-pointer [color-scheme:dark]"
+                title="Fecha Desde"
+              />
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => updateFilter('dateTo', e.target.value)}
+                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                className="px-2.5 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none focus:border-indigo-500 transition-colors w-full h-[38px] cursor-pointer [color-scheme:dark]"
+                title="Fecha Hasta"
+              />
+            </div>
+          </div>
+
+          {/* Rango de Precios */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+              Precio ($)
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="number"
+                placeholder="Mín"
+                value={filters.minPrice}
+                onChange={(e) => updateFilter('minPrice', e.target.value)}
+                className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-indigo-500 transition-colors w-full h-[38px]"
+              />
+              <input
+                type="number"
+                placeholder="Máx"
+                value={filters.maxPrice}
+                onChange={(e) => updateFilter('maxPrice', e.target.value)}
+                className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-indigo-500 transition-colors w-full h-[38px]"
+              />
+            </div>
+          </div>
+
+          {/* Ordenar por y Dirección */}
+          <div className="flex items-end gap-2">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+                Ordenar por
+              </label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => updateFilter('sortBy', e.target.value)}
+                className="px-3 py-2 bg-black border border-white/10 rounded-lg text-xs text-white outline-none cursor-pointer focus:border-indigo-500 transition-colors w-full h-[38px]"
+              >
+                <option value="startAt" className="bg-neutral-900">Fecha</option>
+                <option value="totalAmount" className="bg-neutral-900">Precio</option>
+                <option value="status" className="bg-neutral-900">Estado</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleToggleDescending}
+              className="h-[38px] px-3.5 bg-black border border-white/10 hover:bg-white/10 rounded-lg text-xs text-white transition-colors cursor-pointer flex items-center justify-center shrink-0 font-medium"
+              title={filters.isDescending ? "Orden Descendente" : "Orden Ascendente"}
+            >
+              <span>{filters.isDescending ? "↓ Desc" : "↑ Asc"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Fila 3: Filtro de Estados en barra horizontal dedicada */}
+        <div className="pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-white/40 uppercase tracking-wider mr-1">
+              Estados {filters.status.length > 0 && `(${filters.status.length})`}:
+            </span>
+            {[
+              { id: 'pending', label: 'Pendiente', activeColor: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
+              { id: 'confirmed', label: 'Confirmado', activeColor: 'bg-green-500/20 text-green-300 border-green-500/50' },
+              { id: 'completed', label: 'Completado', activeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/50' },
+              { id: 'canceled', label: 'Cancelado', activeColor: 'bg-red-500/20 text-red-300 border-red-500/50' },
+              { id: 'no_show', label: 'No Asistió', activeColor: 'bg-neutral-600/40 text-neutral-300 border-neutral-500/50' },
+            ].map((item) => {
+              const isSelected = filters.status?.includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleStatusToggle(item.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${isSelected
+                    ? `${item.activeColor} shadow-sm font-semibold`
+                    : 'bg-black border-white/10 text-white/50 hover:text-white hover:border-white/30'
+                    }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {filters.status.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilters(prev => ({ ...prev, status: '', pageNumber: 1 }))}
+              className="text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer"
+            >
+              ✕ Limpiar estados
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
         <div className="flex items-center gap-3 text-white/50 my-8 italic">
           <div className="w-4 h-4 border-2 border-white/20 border-t-white/80 rounded-full animate-spin"></div>
           Cargando turnos...
         </div>
+      ) : (
+        <Table columns={columns} data={shifts} />
       )}
 
-      {!loading && (
-        <Table 
-          columns={columns} 
-          data={shifts} 
-          emptyMessage={
-            error 
-              ? "No se pudo cargar la información de los turnos" 
-              : "No se encontraron elementos con los filtros aplicados"
-          } 
-        />
+      {pagination && (
+        <div className='mt-4'>
+          <Pagination
+            totalCount={pagination.totalCount}
+            pageNumber={pagination.pageNumber}
+            pageSize={pagination.pageSize}
+            totalPages={pagination.totalPages}
+            onPageChange={handlePageChange}
+            searchTerm={filters.searchTerm}
+          />
+        </div>
       )}
-
-      <Pagination 
-        totalCount={pagination.totalCount}
-        pageNumber={pagination.pageNumber}
-        pageSize={pagination.pageSize}
-        totalPages={pagination.totalPages}
-        onPageChange={handlePageChange}
-        searchTerm={filters.searchTerm}
-      />
-
-      <Modal
-        isOpen={modalType === 'shift'} 
-        onClose={closeModal} 
-        title='Detalle del Turno' 
-      >
-        {modalData && (
-          <div className="text-white space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-white/40">Cliente</p>
-                <p>{modalData.clientFullName}</p>
-              </div>
-              <div>
-                <p className="text-white/40">Proveedor</p>
-                <p>{modalData.providerFullName}</p>
-              </div>
-            </div>
-            <div className="border-t border-white/10 pt-4">
-              <p className="text-white/40 mb-2">Servicios contratados:</p>
-              <ul className="list-disc list-inside text-sm space-y-1">
-                {modalData.items.map((item) => (
-                  <li key={item.id}>{item.nameService} - ${item.priceAtMoment}</li>
-                ))}
-              </ul>
-            </div>
-            <p className="text-xl font-bold pt-4 text-right">Total: ${modalData.totalAmount}</p>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

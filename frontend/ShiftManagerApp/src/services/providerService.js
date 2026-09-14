@@ -1,29 +1,45 @@
-const API_URL = "http://localhost:5256/providers";
+import { apiFetch } from "./api";
 
-export const providersRequest = async (filters = {}) => {
-  const params = new URLSearchParams();
+export const ProviderService = {
 
-  if (filters.Name) params.append('Name', filters.Name);
-  if (filters.SortBy) params.append('SortBy', filters.SortBy);
-  params.append('IsDescending', filters.IsDescending ?? false);
-  params.append('IncludeServices', filters.IncludeServices ?? false);
-  params.append('IncludeWorkSchedules', filters.IncludeWorkSchedules ?? false);
-  params.append('IncludeRestrictedDates', filters.IncludeRestrictedDates ?? false);
-  params.append('PageNumber', filters.PageNumber ?? 1);
-  params.append('PageSize', filters.PageSize ?? 10);
+  /**
+   * Obtiene una lista de proveedores disponibles
+   * @param {ProviderFilterDto} filter 
+   * @returns {Promise<PaginatedDto<ProviderDto>>}
+   */
+  getProviders: (filter) =>
+    apiFetch(`/providers?Name=${filter.name}&IncludeWorkSchedules=${filter.includeWorkSchedules}&IncludeServices=${filter.includeServices}&IncludeRestrictedDates=${filter.includeRestrictedDates}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&$PageSize=${filter.pageSize}`),
 
-  const response = await fetch(`${API_URL}?${params.toString()}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-  });
+  /**
+   * Obtiene una lista de los servicios de un proveedor disponibles
+   * @param {number} providerId 
+   * @param {ProviderServiceFilterDto} filter 
+   * @returns {Promise<PaginatedDto<ProviderServiceDto>>}
+   */
+  getServicesOfProvider: (providerId, filter) =>
+    apiFetch(`/providers/${providerId}/services?&Name=${filter.name}&MinDurationMinutes=${filter.minDurationMinutes}&MaxDurationMinutes=${filter.maxDurationMinutes}&MinPrice=${filter.minPrice}&MaxPrice=${filter.maxPrice}&IsActive=${filter.isActive}&SortBy=${filter.sortBy}&IsDescending=${filter.isDescending}&PageNumber=${filter.pageNumber}&PageSize=${filter.pageSize}`),
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Error al obtener los proveedores');
+
+  /**
+   * Obtiene un proveedor por ID
+   * @param {number} providerId 
+   * @returns {Promise<ProviderDto>}
+   */
+  getProviderById: (providerId) =>
+    apiFetch(`/providers/${providerId}`),
+
+  /**
+   * Obtiene las fechas no disponibles / turnos ocupados de un proveedor
+   * @param {number} providerId 
+   * @param {string} [dateFrom]
+   * @param {string} [dateTo]
+   * @returns {Promise<DateRangeDto[]>}
+   */
+  getRestrictedDates: (providerId, dateFrom, dateTo) => {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('dateFrom', dateFrom);
+    if (dateTo) params.append('dateTo', dateTo);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return apiFetch(`/providers/${providerId}/restricted-dates${query}`);
   }
-
-  return response.json();
 };

@@ -28,8 +28,8 @@ namespace ShiftManagerApi.Services
 
       if (!string.IsNullOrWhiteSpace(filter.Name))
         query = query.Where(u =>
-            u.UserProfile.FirstName.Contains(filter.Name)
-            || u.UserProfile.LastName.Contains(filter.Name)
+            u.UserProfile.FirstName.ToLower().Contains(filter.Name.ToLower())
+            || u.UserProfile.LastName.ToLower().Contains(filter.Name.ToLower())
         );
 
       var totalCount = await query.CountAsync();
@@ -54,42 +54,7 @@ namespace ShiftManagerApi.Services
           Id = u.UserId,
           FirstName = u.UserProfile.FirstName,
           LastName = u.UserProfile.LastName,
-          Items = filter.IncludeServices
-            ? u.UserProfile.ProviderService
-                .Where(ps => ps.Service.IsActive)
-                .Select(ps => new ProviderServiceDto
-                {
-                  ProviderId = ps.ProviderId,
-                  ServiceId = ps.ServiceId,
-                  Name = ps.Service.Name,
-                  Description = ps.Service.Description,
-                  DurationMinutes = ps.DurationMinutes,
-                  DurationMinutesBase = ps.Service.DurationMinutes,
-                  Price = ps.Price
-                }).ToList()
-            : new List<ProviderServiceDto>(),
-          Works = filter.IncludeWorkSchedules
-             ? u.WorkSchedules
-              .Where(ws => ws.IsActive)
-              .Select(ws => new WorkSchedulesDto
-              {
-                Id = ws.Id,
-                ProviderId = ws.ProviderId,
-                DayOfWeek = ws.DayOfWeek,
-                StartTime = ws.StartTime,
-                EndTime = ws.EndTime,
-                IsActive = ws.IsActive
-              }).ToList()
-            : new List<WorkSchedulesDto>(),
-          RestrictedDates = filter.IncludeRestrictedDates
-            ? u.ProvidedShifts
-              .Where(ps => (ps.Status == ShiftStatus.pending || ps.Status == ShiftStatus.confirmed) && ps.EndAt > now)
-              .Select(ps => new DateRangeDto
-              {
-                StartAt = ps.StartAt,
-                EndAt = ps.EndAt
-              }).ToList()
-            : new List<DateRangeDto>()
+          PictureURL = u.UserProfile.PictureURL,
         }
 
         )
@@ -102,6 +67,63 @@ namespace ShiftManagerApi.Services
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };
+    }
+
+    public async Task<ProviderDto> GetById(long id)
+    {
+      var user = await _context.UserAuths
+        .Include(u => u.UserProfile)
+        .FirstOrDefaultAsync(u => u.UserId == id);
+
+      if (user == null) throw new KeyNotFoundException("Usuario no encontrado");
+
+      var userDto = new ProviderDto
+      {
+        Id = user.UserId,
+        FirstName = user.UserProfile.FirstName,
+        LastName = user.UserProfile.LastName,
+        PictureURL = user.UserProfile.PictureURL
+      };
+
+      return userDto;
+    }
+
+    public async Task<List<DateRangeDto>> GetRestrictedDates(long providerId, DateTime? dateFrom = null, DateTime? dateTo = null)
+    {
+      var providerExists = await _context.UserAuths
+        .AsNoTracking()
+        .AnyAsync(u => u.UserId == providerId && u.IsActive == true && u.UserRole.Any(ur => ur.Role.Name == "Proveedor"));
+
+      if (!providerExists)
+        throw new KeyNotFoundException("Proveedor no encontrado o inactivo.");
+
+      var now = DateTime.UtcNow;
+      var query = _context.Shift
+        .AsNoTracking()
+        .Where(s => s.ProviderId == providerId && (s.Status == ShiftStatus.pending || s.Status == ShiftStatus.confirmed));
+
+      if (dateFrom.HasValue)
+      {
+        query = query.Where(s => s.EndAt >= dateFrom.Value);
+      }
+      else
+      {
+        query = query.Where(s => s.EndAt > now);
+      }
+
+      if (dateTo.HasValue)
+      {
+        query = query.Where(s => s.StartAt <= dateTo.Value);
+      }
+
+      return await query
+        .OrderBy(s => s.StartAt)
+        .Select(s => new DateRangeDto
+        {
+          StartAt = s.StartAt,
+          EndAt = s.EndAt
+        })
+        .ToListAsync();
     }
   }
 

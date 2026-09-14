@@ -15,14 +15,15 @@ namespace ShiftManagerApi.Services
       _context = context;
     }
 
-    public async Task ChangeStatus(long? providerId, long? clientId, long shiftId, ShiftStatus status)
+    public async Task ChangeStatus(long? providerId, long? clientId, long shiftId, ShiftStatus status, long userId)
     {
       var query = _context.Shift.AsQueryable();
 
       if (providerId.HasValue){
         var availableStates = new[] { ShiftStatus.confirmed, ShiftStatus.completed, ShiftStatus.no_show, ShiftStatus.canceled };
-        if (!availableStates.Contains(status)) throw new InvalidOperationException($"Un proveedor no puede cambiar el estado a {status}.");
+        if (!availableStates.Contains(status)) throw new InvalidOperationException("El estado ingresado no es válido.");
       }
+
       if (providerId.HasValue) query = query.Where(s => s.ProviderId == providerId);
 
       if (clientId.HasValue) query = query.Where(s => s.ClientId == clientId);
@@ -30,18 +31,48 @@ namespace ShiftManagerApi.Services
       var shift = await query.FirstOrDefaultAsync(s => s.Id == shiftId);
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
 
-      if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed)
-      {
-        throw new InvalidOperationException("El turno no puede ser modificado porque ya se encuentra en un estado final.");
-      }
-
       if (shift.Status == status) return;
 
+      if (shift.Status == ShiftStatus.canceled || shift.Status == ShiftStatus.completed || shift.Status == ShiftStatus.no_show)
+      {
+        throw new InvalidOperationException("No puede modificar el estado de un turno finalizado.");
+      }
+
+      if (status == ShiftStatus.completed && shift.StartAt > DateTime.UtcNow)
+      {
+        throw new InvalidOperationException("No puede completar un turno que no ha comenzado.");
+      }
+
+      if (status == ShiftStatus.no_show && shift.StartAt > DateTime.UtcNow)
+      {
+        throw new InvalidOperationException("No puede indicar que no asistio a un turno que no ha comenzado.");
+      }
+
+      if(!clientId.HasValue && status == ShiftStatus.canceled && DateTime.UtcNow > shift.StartAt.AddHours(-24) && shift.Status == ShiftStatus.confirmed)
+      {
+        throw new InvalidOperationException("No puede cancelar un turno con menos de 24 horas de anticipacion.");
+      }
+
+      if(clientId.HasValue && status == ShiftStatus.canceled && DateTime.UtcNow >= shift.StartAt)
+      {
+        throw new InvalidOperationException("No puede cancelar un turno pasado.");
+      }
+
+      if (status == ShiftStatus.confirmed)
+      {
+        shift.ConfirmedById = userId;
+      }
+
+      if (status == ShiftStatus.canceled)
+      {
+        shift.CanceledById = userId;
+      }
+    
       shift.Status = status;
       await _context.SaveChangesAsync();
     }
 
-    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto)
+    public async Task<ShiftDto> Create(long clientId, CreateShiftDto createDto, bool isConfirm, long userId, string activeRole)
     {
       var strategy = _context.Database.CreateExecutionStrategy();
 
@@ -64,6 +95,7 @@ namespace ShiftManagerApi.Services
         var serviceIds = createDto.Items.Select(i => i.ServiceId).ToList();
         var existServices = await _context.ProviderService
           .Include(ps => ps.Service)
+          .ThenInclude(s => s.Images)
           .Where(ps => ps.ProviderId == createDto.ProviderId && serviceIds.Contains(ps.ServiceId) && ps.Service.IsActive == true)
           .ToListAsync();
 
@@ -103,8 +135,11 @@ namespace ShiftManagerApi.Services
             ClientId = clientId,
             StartAt = createDto.StartAt,
             EndAt = endAt,
-            Status = ShiftStatus.pending,          
-            CreatedAt = DateTime.UtcNow
+            Status = isConfirm ? ShiftStatus.confirmed : ShiftStatus.pending,          
+            CreatedAt = DateTime.UtcNow,
+            ConfirmedById = isConfirm? userId : null,
+            CreatedById = userId,
+            CreatedByRole = activeRole
           };
 
           _context.Shift.Add(newShift);
@@ -125,6 +160,8 @@ namespace ShiftManagerApi.Services
 
           var clientProfile = await _context.UserProfiles.FindAsync(cliente.UserId);
           var providerProfile = await _context.UserProfiles.FindAsync(provider.UserId);
+          var userCreate = await _context.UserProfiles.FindAsync(userId);
+
 
           return new ShiftDto
           {
@@ -142,8 +179,30 @@ namespace ShiftManagerApi.Services
               ServiceId = es.ServiceId,
               NameService = es.Service.Name,
               DurationMinutes = es.DurationMinutes,
-              PriceAtMoment = es.Price
-            }).ToList()
+              PriceAtMoment = es.Price,
+              Images = es.Service.Images.Select(img => new ServiceImageDto
+              {
+                Id = img.Id,
+                ServiceId = img.ServiceId,
+                ImageUrl = img.ImageUrl
+              }).ToList()
+            }).ToList(),
+            
+            CreatedById = newShift.CreatedById,
+            CreatedByRole = newShift.CreatedByRole,
+            ConfirmedById = newShift.ConfirmedById,
+            CanceledById = newShift.CanceledById,
+            CreatedByUser = new UserResumDto
+            {
+              Id = userId,
+              FullName = $"{userCreate?.FirstName} {userCreate?.LastName}".Trim()
+            },
+            ConfirmedByUser = isConfirm ? new UserResumDto
+            {
+              Id = userId,
+              FullName = $"{userCreate?.FirstName} {userCreate?.LastName}".Trim()
+            } : null,
+            CanceledByUser = null
           };
         }
         catch
@@ -167,10 +226,38 @@ namespace ShiftManagerApi.Services
       var shift = await query
         .Include(s => s.Client).ThenInclude(c => c.UserProfile)
         .Include(s => s.Provider).ThenInclude(p => p.UserProfile)
-        .Include(s => s.ShiftItems).ThenInclude(si => si.Service)
+        .Include(s => s.ShiftItems).ThenInclude(si => si.Service).ThenInclude(s => s.Images)
         .FirstOrDefaultAsync(s => s.Id == shiftId);
 
       if (shift == null) throw new KeyNotFoundException("Turno no encontrado");
+
+      var createdUser = await _context.UserProfiles
+        .Where(up => up.Id == shift.CreatedById)
+        .Select(up => new UserResumDto
+        {
+          Id = up.Id,
+          FullName = $"{up.FirstName} {up.LastName}"
+        }).FirstOrDefaultAsync();
+
+      var confirmedUser = shift.ConfirmedById.HasValue
+        ? await _context.UserProfiles
+            .Where(up => up.Id == shift.ConfirmedById.Value)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefaultAsync()
+        : null;
+
+      var canceledUser = shift.CanceledById.HasValue
+        ? await _context.UserProfiles
+            .Where(up => up.Id == shift.CanceledById.Value)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefaultAsync()
+        : null;
 
       return new ShiftDto
       {
@@ -185,11 +272,26 @@ namespace ShiftManagerApi.Services
         CreatedAt = shift.CreatedAt,
         Items = shift.ShiftItems.Select(si => new ShiftItemDto
         {
+          Id = si.Id,
+          ShiftId = si.ShiftId,
           ServiceId = si.ServiceId,
           NameService = si.Service.Name,
           DurationMinutes = si.Service.DurationMinutes,
-          PriceAtMoment = si.PriceAtMoment
-        }).ToList()
+          PriceAtMoment = si.PriceAtMoment,
+          Images = si.Service.Images.Select(img => new ServiceImageDto
+          {
+            Id = img.Id,
+            ServiceId = img.ServiceId,
+            ImageUrl = img.ImageUrl
+          }).ToList()
+        }).ToList(),
+        CreatedById = shift.CreatedById,
+        CreatedByRole = shift.CreatedByRole,
+        ConfirmedById = shift.ConfirmedById,
+        CanceledById = shift.CanceledById,
+        CreatedByUser = createdUser ?? new UserResumDto { Id = shift.CreatedById, FullName = "Desconocido" },
+        ConfirmedByUser = confirmedUser,
+        CanceledByUser = canceledUser
       };
     }
 
@@ -198,37 +300,59 @@ namespace ShiftManagerApi.Services
      var query = _context.Shift
         .AsQueryable();
 
+      //Filtrar por proveedor
       if (providerId.HasValue)
-      {
         query = query.Where(ms => ms.ProviderId == providerId);
-      }
+      if (!string.IsNullOrWhiteSpace(filter.ProviderName) && !providerId.HasValue)
+        query = query.Where(u => 
+          u.Provider.UserProfile.FirstName.ToLower().Contains(filter.ProviderName.ToLower())
+          || u.Provider.UserProfile.LastName.ToLower().Contains(filter.ProviderName.ToLower())
+        );
+
+      //Filtrar por cliente
       if (clientId.HasValue)
-      {
         query = query.Where(ms => ms.ClientId == clientId);
+      if (!string.IsNullOrWhiteSpace(filter.ClientName) && !clientId.HasValue)
+      {
+        query = query.Where(u => 
+          u.Client.UserProfile.FirstName.ToLower().Contains(filter.ClientName.ToLower())
+          || u.Client.UserProfile.LastName.ToLower().Contains(filter.ClientName.ToLower())
+        );
       }
+
       if (filter.ServiceId.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Any(si => si.ServiceId == filter.ServiceId));
-      }
+
+      // Filtrar por rango de fechas
       if (filter.DateFrom.HasValue)
-      {
         query = query.Where(ms => ms.StartAt >= filter.DateFrom);
-      }
       if (filter.DateTo.HasValue)
-      {
         query = query.Where(ms => ms.StartAt <= filter.DateTo);
-      }
+
+      // Filtrar por rango de precios
       if (filter.MinPrice.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) >= filter.MinPrice);
-      }
       if (filter.MaxPrice.HasValue)
-      {
         query = query.Where(ms => ms.ShiftItems.Sum(si => si.PriceAtMoment) <= filter.MaxPrice);
-      }
-      if (filter.Statuses != null && filter.Statuses.Any())
+      
+      // Filtrar por usuario creador y cancelador
+      if (filter.CreatedById.HasValue)
+        query = query.Where(ms => ms.CreatedById == filter.CreatedById);
+      if (filter.CanceledById.HasValue)
+        query = query.Where(ms => ms.CanceledById == filter.CanceledById);
+      
+      if (!string.IsNullOrWhiteSpace(filter.Statuses))
       {
-        query = query.Where(ms => filter.Statuses.Contains(ms.Status));
+          var statusList = filter.Statuses
+              .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+              .Select(s => Enum.TryParse<ShiftStatus>(s, ignoreCase: true, out var parsed) ? parsed : (ShiftStatus?)null)
+              .Where(s => s.HasValue)
+              .Select(s => s!.Value)
+              .ToList();
+          if (statusList.Any())
+          {
+              query = query.Where(ms => statusList.Contains(ms.Status));
+          }
       }
 
       var totalCount = await query.CountAsync();
@@ -264,8 +388,39 @@ namespace ShiftManagerApi.Services
             ServiceId = si.ServiceId,
             NameService = si.Service.Name,
             DurationMinutes = si.Service.DurationMinutes,
-            PriceAtMoment = si.PriceAtMoment
-          }).ToList()
+            PriceAtMoment = si.PriceAtMoment,
+            Images = si.Service.Images.Select(img => new ServiceImageDto
+            {
+              Id = img.Id,
+              ServiceId = img.ServiceId,
+              ImageUrl = img.ImageUrl
+            }).ToList()
+          }).ToList(),
+          CreatedById = s.CreatedById,
+          CreatedByRole = s.CreatedByRole,
+          ConfirmedById = s.ConfirmedById,
+          CanceledById = s.CanceledById,
+          CreatedByUser = _context.UserProfiles
+            .Where(up => up.Id == s.CreatedById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault()!,
+          ConfirmedByUser = s.ConfirmedById == null ? null : _context.UserProfiles
+            .Where(up => up.Id == s.ConfirmedById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault(),
+          CanceledByUser = s.CanceledById == null ? null : _context.UserProfiles
+            .Where(up => up.Id == s.CanceledById)
+            .Select(up => new UserResumDto
+            {
+              Id = up.Id,
+              FullName = $"{up.FirstName} {up.LastName}"
+            }).FirstOrDefault()
         }
         ).ToListAsync();
 

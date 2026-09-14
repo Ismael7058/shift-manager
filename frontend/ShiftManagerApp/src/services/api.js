@@ -1,0 +1,58 @@
+export const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5256').replace(/\/+$/, '');
+export const API_BASE_URL = BASE_URL;
+
+/**
+ * @param {string} endpoint - Ruta del endpoint
+ * @param {RequestInit} options - Opciones de fetch
+ * @returns {Promise<any>}
+ */
+export async function apiFetch(endpoint, options = {}) {
+  const url = `${BASE_URL}${endpoint}`;
+
+  /** @type {Record<string, any>} */
+  const headers = { ...options.headers };
+
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  } else {
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+  }
+
+  // Configuraciones por defecto
+  /** @type {RequestInit} */
+  const config = {
+    ...options,
+    headers,
+    credentials: 'include'
+  };
+
+  try {
+    const response = await fetch(url, config);
+
+    if (response.status === 401) {
+      localStorage.removeItem('user');
+      window.location.href = '/';
+      throw new Error('Sesión expirada o no autorizada.');
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Ocurrió un error en la solicitud.');
+      }
+      return data;
+    }
+
+    if (!response.ok) {
+      throw new Error('Error en el servidor: ' + response.statusText);
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error Fetching ${endpoint}:`, error);
+    throw error;
+  }
+}

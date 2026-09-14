@@ -7,6 +7,7 @@ namespace ShiftManagerApi.Dtos
     [RegularExpression(@"^[\p{L}\s]+$", ErrorMessage = "FirstName solo puede contener letras y espacios")]
     public string? Name { get; set; }
     public string? Email { get; set; }
+    public string? Username { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "Role debe ser mayor a 0")]
     public int? Role { get; set; }
     public int? IsActive { get; set; }

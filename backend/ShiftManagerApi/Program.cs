@@ -27,6 +27,9 @@ builder.Services.AddScoped<IProviderServiceService, ProviderServiceService>();
 builder.Services.AddScoped<IWorkSchedulesService, WorkSchedulesService>();
 builder.Services.AddScoped<IShiftService, ShiftService>();
 builder.Services.AddScoped<IProviderService, ProviderService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddDbContext<ShiftManagerContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -70,11 +73,18 @@ builder.Services.AddAuthorization(options =>
   options.AddPolicy("Cliente", policy => policy.RequireClaim("active_role", "Cliente"));
   options.AddPolicy("AdminORecepcion", policy => policy.RequireClaim("active_role", "Administrador","Recepcion"));
   options.AddPolicy("AdminOProveedor", policy => policy.RequireClaim("active_role", "Administrador","Proveedor"));
+  options.AddPolicy("AnyAuthenticatedRole", policy => policy.RequireClaim("active_role", "Administrador","Proveedor", "Recepcion", "Cliente"));
+  options.AddPolicy("NonProvider", policy => policy.RequireClaim("active_role", "Administrador", "Recepcion", "Cliente"));
+  options.AddPolicy("NonReception", policy => policy.RequireClaim("active_role", "Administrador", "Recepcion", "Cliente"));
 });
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -91,21 +101,22 @@ var app = builder.Build();
 
 app.UseCors("AllowFrontend");
 
-using (var scope = app.Services.CreateScope())
-{
-  var dbContext = scope.ServiceProvider.GetRequiredService<ShiftManagerContext>();
-  dbContext.Database.Migrate();
-  DbSeeder.Seed(dbContext);
-}
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ShiftManagerContext>();
+        dbContext.Database.Migrate();
+        DbSeeder.Seed(dbContext);
+    }
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

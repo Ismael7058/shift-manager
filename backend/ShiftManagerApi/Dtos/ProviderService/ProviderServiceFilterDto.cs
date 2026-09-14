@@ -7,11 +7,15 @@ namespace ShiftManagerApi.Dtos
     [RegularExpression(@"^[\p{L}\s]+$", ErrorMessage = "Name solo puede contener letras y espacios")]
     public string? Name { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "DurationMinutes debe ser mayor a 0")]
-    public int? DurationMinutes { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = "MinDurationMinutes debe ser mayor a 0")]
+    public int? MinDurationMinutes { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "MaxDurationMinutes debe ser mayor a 0")]
+    public int? MaxDurationMinutes { get; set; }
 
     [Range(0.01, double.MaxValue, ErrorMessage = "Price debe ser mayor a 0")]
-    public decimal? Price { get; set; }
+    public decimal? MinPrice { get; set; }
+    public decimal? MaxPrice { get; set; }
 
     public int? IsActive { get; set; }
     public string? SortBy { get; set; }
