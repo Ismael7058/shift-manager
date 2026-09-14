@@ -101,18 +101,18 @@ var app = builder.Build();
 
 app.UseCors("AllowFrontend");
 
-using (var scope = app.Services.CreateScope())
-{
-  var dbContext = scope.ServiceProvider.GetRequiredService<ShiftManagerContext>();
-  dbContext.Database.Migrate();
-  DbSeeder.Seed(dbContext);
-}
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ShiftManagerContext>();
+        dbContext.Database.Migrate();
+        DbSeeder.Seed(dbContext);
+    }
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
