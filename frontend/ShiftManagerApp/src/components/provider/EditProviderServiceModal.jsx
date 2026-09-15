@@ -136,7 +136,7 @@ const EditProviderServiceModal = ({
                 <input
                   type="number"
                   required
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}

@@ -256,8 +256,8 @@ const ProviderServicesPage = () => {
               className="px-3 py-2 bg-neutral-900/50 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="" className="bg-neutral-900">Todos</option>
-              <option value="true" className="bg-neutral-900">Activos</option>
-              <option value="false" className="bg-neutral-900">Inactivos</option>
+              <option value="1" className="bg-neutral-900">Activos</option>
+              <option value="0" className="bg-neutral-900">Inactivos</option>
             </select>
           </div>
 

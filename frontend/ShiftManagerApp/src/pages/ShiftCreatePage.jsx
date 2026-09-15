@@ -49,16 +49,14 @@ const ShiftCreatePage = () => {
   }, []);
 
 
-  if (user?.roleActive !== 'Cliente') {
-    // Busqueda de clientes
-    useEffect(() => {
-      if (!getClients) return;
-      const timer = setTimeout(() => {
-        getClients(clientSearch, 'name', false, 1, 50);
-      }, 300);
-      return () => clearTimeout(timer);
-    }, [clientSearch]);
-  }
+  // Busqueda de clientes
+  useEffect(() => {
+    if (user?.roleActive === 'Cliente' || !getClients) return;
+    const timer = setTimeout(() => {
+      getClients(clientSearch, 'name', false, 1, 50);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [clientSearch, user?.roleActive]);
 
   // Cargar servicios, horarios y fechas restringidas
   useEffect(() => {
