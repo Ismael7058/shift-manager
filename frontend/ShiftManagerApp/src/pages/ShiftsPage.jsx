@@ -86,7 +86,7 @@ const ShiftsPage = () => {
     }, 500);
 
     return () => clearTimeout(handler);
-  }, [filters]);
+  }, [filters, user.roleActive]);
 
   // Services
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useShift } from '../context/ShiftsContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -13,7 +13,9 @@ import { BASE_URL } from '../services/api';
 const ShiftDetailPage = () => {
   const { id } = useParams();
   const { shift, loading, getShift } = useShift();
+  const { addNotification } = useNotification();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [modalAction, setModalAction] = useState(null);
   const [currentTime, setCurrentTime] = useState(() => new Date());
@@ -25,6 +27,16 @@ const ShiftDetailPage = () => {
       getShift(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (loading || !shift || !user || shift.id != id) return;
+
+    if (user.roleActive === 'Cliente' && shift.clientId != user.id) {
+      addNotification('No tienes permiso para ver este turno', 'error');
+      navigate('/turnos', { replace: true });
+    }
+  }, [id, shift, user, loading]);
+
 
   useEffect(() => {
     const interval = setInterval(() => {
